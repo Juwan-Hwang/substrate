@@ -1,0 +1,11 @@
+{
+  "name": "aevum",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Run via @substrate/web'",
+    "clean": "rm -rf .turbo"
+  }
+}

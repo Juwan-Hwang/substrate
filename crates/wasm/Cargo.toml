@@ -1,0 +1,13 @@
+[package]
+name = "substrate-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "WASM bindings for Aevum — exposes substrate-core to the browser"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+substrate-core.workspace = true
+wasm-bindgen = "0.2"

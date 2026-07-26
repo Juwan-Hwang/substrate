@@ -1,0 +1,23 @@
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/substrate/substrate"
+description = "Aevum — personal site platform built on Substrate"
+
+[workspace.dependencies]
+substrate-core = { path = "crates/core", version = "0.1.0" }
+substrate-wasm = { path = "crates/wasm", version = "0.1.0" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 1

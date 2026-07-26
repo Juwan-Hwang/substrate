@@ -1,0 +1,23 @@
+{
+  "name": "@substrate/web",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next dist .turbo"
+  },
+  "dependencies": {
+    "@substrate/ui": "workspace:*",
+    "@substrate/content": "workspace:*",
+    "@substrate/graphics": "workspace:*",
+    "@substrate/contracts": "workspace:*",
+    "@substrate/observability": "workspace:*"
+  }
+}
