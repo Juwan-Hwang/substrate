@@ -1,0 +1,223 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════
+   AI Archive — dark "knowledge base" theme.
+   One calm indigo accent on near-black; monospace for AI/numeric cues.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+
+  --color-bg: #07080c;
+  --color-bg-elevated: #0e1018;
+  --color-surface: #14161f;
+  --color-surface-2: #1a1d28;
+  --color-border: #242838;
+  --color-border-subtle: #1c1f2c;
+
+  --color-text: #e7e9f2;
+  --color-text-secondary: #a7adc2;
+  --color-text-muted: #6b7185;
+
+  --color-accent: #6366f1;
+  --color-accent-2: #22d3ee;
+  --color-accent-glow: rgba(99, 102, 241, 0.45);
+
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    min-height: 100dvh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(99, 102, 241, 0.12), transparent 60%),
+      radial-gradient(900px 500px at 0% 110%, rgba(34, 211, 238, 0.08), transparent 55%),
+      var(--color-bg);
+    background-attachment: fixed;
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-accent-glow);
+    color: #fff;
+  }
+}
+
+@layer components {
+  /* Layout */
+  .container-page {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 980px;
+    padding-inline: 1.5rem;
+  }
+
+  /* Surfaces */
+  .card {
+    background: linear-gradient(180deg, var(--color-surface), var(--color-bg-elevated));
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .card:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+  }
+  .card-tight {
+    padding: 1.1rem;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 10px;
+    padding: 0.6rem 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 550;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    border: 1px solid transparent;
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--color-accent);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 85%, #fff 15%);
+  }
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--color-accent);
+    color: #fff;
+  }
+
+  /* Form fields */
+  .input,
+  .textarea {
+    width: 100%;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .input::placeholder,
+  .textarea::placeholder {
+    color: var(--color-text-muted);
+  }
+  .input:focus,
+  .textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-glow);
+  }
+  .textarea {
+    min-height: 9rem;
+    resize: vertical;
+    font-family: var(--font-mono);
+    line-height: 1.55;
+  }
+
+  /* Badges & tags */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+  }
+  .badge-accent {
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+    color: #c7d2fe;
+  }
+  .badge-cyan {
+    background: color-mix(in srgb, var(--color-accent-2) 16%, transparent);
+    border-color: color-mix(in srgb, var(--color-accent-2) 40%, transparent);
+    color: #a5f3fc;
+  }
+
+  /* Text helpers */
+  .text-gradient {
+    background: linear-gradient(110deg, var(--color-accent), var(--color-accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Citation chip inside chat answers */
+  .cite {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.3rem;
+    height: 1.3rem;
+    padding: 0 0.3rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+    color: #c7d2fe;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    text-decoration: none;
+    vertical-align: baseline;
+    transition: background 0.15s ease;
+  }
+  .cite:hover {
+    background: var(--color-accent);
+    color: #fff;
+  }
+
+  /* Score bar */
+  .score-bar {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-border);
+    overflow: hidden;
+  }
+  .score-bar > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-2));
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+}

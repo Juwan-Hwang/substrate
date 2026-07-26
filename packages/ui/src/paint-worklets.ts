@@ -16,6 +16,19 @@
  * declared alongside `background-image: paint(...)` is used instead.
  */
 
+// ── CSS Paint API type augmentation ─────────────────────────────────
+// The Houdini Paint API is not yet in TypeScript's DOM lib. Declare the
+// minimal surface we use so the rest of the module type-checks cleanly.
+
+/** A registered paint worklet — accepts module URLs for `addModule`. */
+interface CSSPaintWorklet {
+  addModule(moduleURL: string): Promise<void>;
+}
+
+/** Augment the global `CSS` value with the optional `paintWorklet` surface. */
+type CSSWithPaintWorklet = typeof CSS & { readonly paintWorklet?: CSSPaintWorklet };
+
+
 // ── Noise Worklet ───────────────────────────────────────────────────
 
 const noiseWorklet = `
@@ -96,13 +109,14 @@ export const paintWorkletSource = `${noiseWorklet}\n${meshWorklet}`;
  * ```
  */
 export async function registerPaintWorklets(): Promise<void> {
-  if (typeof CSS === 'undefined' || !('paintWorklet' in CSS)) return;
+  const css = CSS as CSSWithPaintWorklet;
+  if (typeof CSS === 'undefined' || !('paintWorklet' in css)) return;
 
   const blob = new Blob([paintWorkletSource], { type: 'text/javascript' });
   const url = URL.createObjectURL(blob);
 
   try {
-    await CSS.paintWorklet.addModule(url);
+    await css.paintWorklet.addModule(url);
   } finally {
     URL.revokeObjectURL(url);
   }

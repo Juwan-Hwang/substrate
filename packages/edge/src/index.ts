@@ -165,7 +165,98 @@ app.post('/api/ai/summarize', async (c) => {
   return c.json({ summary: result.response ?? '', model });
 });
 
-export default app;
+// ── Queue consumer ──────────────────────────────────────────────────
+//
+// Processes async tasks dispatched via `c.env.QUEUE.send()`:
+//  - experiment_result: persist experiment results to PostgreSQL
+//  - graph_snapshot: cache latest graph snapshot in Redis
+//  - content_reindex: regenerate embeddings + FTS index for articles
+
+async function handleQueue(batch: MessageBatch<QueueMessage>, env: Env): Promise<void> {
+  for (const message of batch.messages) {
+    const { type, payload } = message.body;
+
+    try {
+      switch (type) {
+        case 'experiment_result': {
+          // Persist experiment result to PostgreSQL via Hyperdrive.
+          const hyperdriveUrl = `postgresql://${env.HYPERDRIVE.user}:${env.HYPERDRIVE.password}@${env.HYPERDRIVE.host}:${env.HYPERDRIVE.port}/${env.HYPERDRIVE.database}`;
+          const { drizzle } = await import('drizzle-orm/postgres-js');
+          const postgres = (await import('postgres')).default;
+          const client = postgres(hyperdriveUrl, { max: 1 });
+          const db = drizzle(client);
+
+          await db.execute(
+            'INSERT INTO experiments (name, subsystem, parameters, result, duration_ms) VALUES ($1, $2, $3, $4, $5)',
+            [
+              (payload as { name: string }).name ?? 'unnamed',
+              (payload as { subsystem: string }).subsystem ?? 'crucible',
+              JSON.stringify((payload as { parameters: Record<string, unknown> }).parameters ?? {}),
+              JSON.stringify((payload as { result: unknown }).result ?? null),
+              (payload as { durationMs: number }).durationMs ?? null,
+            ],
+          );
+          await client.end();
+          break;
+        }
+
+        case 'graph_snapshot': {
+          // Cache the latest graph snapshot in Redis for fast edge reads.
+          const redis = createRedis({ url: env.UPSTASH_REDIS_URL, token: env.UPSTASH_REDIS_TOKEN });
+          await cacheSet(redis, 'graph:latest', payload, 300);
+          break;
+        }
+
+        case 'content_reindex': {
+          // Regenerate embeddings via Workers AI and update pgvector.
+          const articleId = (payload as { articleId?: string }).articleId;
+          if (!articleId) break;
+
+          // Fetch article text from PostgreSQL.
+          const hyperdriveUrl = `postgresql://${env.HYPERDRIVE.user}:${env.HYPERDRIVE.password}@${env.HYPERDRIVE.host}:${env.HYPERDRIVE.port}/${env.HYPERDRIVE.database}`;
+          const { drizzle } = await import('drizzle-orm/postgres-js');
+          const postgres = (await import('postgres')).default;
+          const client = postgres(hyperdriveUrl, { max: 1 });
+          const db = drizzle(client);
+
+          const rows = await db.execute(
+            'SELECT body FROM articles WHERE id = $1',
+            [articleId],
+          );
+          const body = rows.rows.length > 0
+            ? (rows.rows[0] as { body: string }).body
+            : '';
+
+          if (body) {
+            // Generate embedding via Workers AI.
+            const aiResult = await env.AI.run('@cf/baai/bge-base-en-v1.5', { text: [body] });
+            const embedding = aiResult.data?.[0];
+            if (embedding && embedding.length > 0) {
+              const vecStr = `[${embedding.join(',')}]`;
+              await db.execute(
+                'UPDATE articles SET embedding = $1::vector WHERE id = $2',
+                [vecStr, articleId],
+              );
+            }
+          }
+
+          await client.end();
+          break;
+        }
+      }
+
+      message.ack();
+    } catch (err) {
+      console.error(`[queue] ${type} failed:`, err);
+      message.retry({ delaySeconds: 30 });
+    }
+  }
+}
+
+export default {
+  fetch: app.fetch,
+  queue: handleQueue,
+};
 export { ExperimentDO } from './durable-objects';
 export { createRedis, rateLimit, cacheGet, cacheSet, cacheInvalidate } from './redis';
 export { verifyTurnstile, turnstileMiddleware } from './turnstile';

@@ -1,0 +1,22 @@
+---
+name: Lattice — GPU Knowledge Graph Visualiser
+slug: lattice-visualiser
+description: An interactive 3D knowledge graph with WASM-accelerated force-directed layout.
+url: https://aevum.dev/lattice
+repo: https://github.com/aevum/substrate
+status: active
+tags: ["graphics", "r3f", "webgpu"]
+---
+
+# Lattice
+
+Lattice is the visual system of Aevum. It renders knowledge graphs in 3D using
+React Three Fiber and WebGPU, with a Rust/WASM fallback for CPU layout.
+
+## Features
+
+- WebGPU compute shader acceleration (WGSL)
+- Rust/WASM CPU fallback with SIMD
+- Real-time force-directed layout
+- WebGL2 and Canvas 2D fallback chain
+- Performance metrics panel (FPS, node count, layout engine)

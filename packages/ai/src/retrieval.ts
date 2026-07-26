@@ -9,7 +9,22 @@
  * Results are merged via reciprocal rank fusion, then reranked,
  * with source citations attached for transparency.
  */
-import type { RetrievalResult } from './index.js';
+/**
+ * A single retrieved item with provenance for transparent citations.
+ *
+ * `source` records which channel produced the hit so the UI can badge
+ * results; `citation` lets RAG answers reference their evidence.
+ */
+export type RetrievalResult = {
+  id: string;
+  score: number;
+  /** Which retrieval channel produced this result. */
+  source: 'hybrid' | 'fts' | 'vector';
+  /** Provenance for transparent citations in RAG answers. */
+  citation: { type: 'article'; ref: string };
+  /** Set when a cross-encoder reranker has reordered the result. */
+  reranked?: boolean;
+};
 
 export type HybridSearchParams = {
   query: string;

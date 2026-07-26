@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "jsx": "preserve",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "incremental": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@substrate/ui": ["../../packages/ui/src"],
+      "@substrate/ui/*": ["../../packages/ui/src/*"],
+      "@substrate/content": ["../../packages/content/src"],
+      "@substrate/content/*": ["../../packages/content/src/*"],
+      "@substrate/config": ["../../packages/config/src"],
+      "@substrate/config/*": ["../../packages/config/src/*"]
+    }
+  },
+  "include": ["src", "next.config.ts", "next-env.d.ts"],
+  "exclude": ["node_modules", ".next"]
+}

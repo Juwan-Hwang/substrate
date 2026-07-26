@@ -1,0 +1,29 @@
+---
+title: Building Substrate: A Graphics-First Personal Site Foundation
+slug: building-substrate
+date: 2026-07-20
+excerpt: How we designed an opinionated platform for personal sites with WebGPU, WASM, and edge-native architecture.
+tags: ["architecture", "webgpu", "wasm"]
+draft: false
+---
+
+# Building Substrate
+
+Substrate is an **opinionated, graphics-first personal-site foundation**. It combines Next.js 16, React 19, Three.js WebGPU, Rust/WASM, Cloudflare Workers, and PostgreSQL into a single coherent platform.
+
+## Design Principles
+
+1. **Graphics-first** — WebGPU and R3F are first-class, not bolted on.
+2. **Edge-native** — Cloudflare Workers, Durable Objects, and Hyperdrive.
+3. **Type-safe end-to-end** — Zod schemas flow from database to API to UI.
+4. **Feature manifest** — every capability is explicitly toggled, not implied.
+
+## Architecture
+
+The platform is organised into three subsystems:
+
+- **Lattice** — GPU knowledge graph visualiser with WASM-accelerated layout.
+- **Crucible** — Runnable experiment benchmark lab.
+- **Archive** — Articles, projects, and notes with hybrid search.
+
+Each subsystem maps to a package boundary and a feature flag in the manifest.

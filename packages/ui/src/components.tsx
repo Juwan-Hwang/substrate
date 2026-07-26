@@ -45,6 +45,9 @@ export type ButtonProps = PrimitiveProps &
     onClick?: () => void;
   };
 
+/** Variant names accepted by {@link Button}. */
+export type ButtonVariant = VariantProps<typeof buttonVariants>['variant'];
+
 export const Button = ({
   children,
   className,
@@ -88,6 +91,9 @@ export const GlassCard = ({ children, className, style }: PrimitiveProps) => (
     {children}
   </div>
 );
+
+/** Props accepted by {@link GlassCard}. */
+export type GlassCardProps = PrimitiveProps;
 
 export type SwitchProps = {
   checked: boolean;

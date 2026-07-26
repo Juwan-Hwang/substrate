@@ -11,6 +11,16 @@
  *   OTEL_SERVICE_NAME            — defaults to "aevum-web"
  */
 export async function register() {
+  // Initialise feature manifest first — other modules reference it.
+  const { initFeatures, fullPlatformFeatures, validateEnv } = await import('@substrate/config/features');
+  initFeatures(fullPlatformFeatures);
+
+  // Warn about missing env vars for enabled features.
+  const missing = validateEnv();
+  if (missing.length > 0) {
+    console.warn(`[features] Missing env vars: ${missing.join(', ')}`);
+  }
+
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { startOTEL } = await import('@substrate/observability');
 

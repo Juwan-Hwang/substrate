@@ -1,0 +1,30 @@
+---
+title: Hybrid Search: Combining PostgreSQL FTS with pgvector
+slug: hybrid-search
+date: 2026-07-15
+excerpt: A practical guide to building hybrid search with reciprocal rank fusion.
+tags: ["search", "postgresql", "ai"]
+draft: false
+---
+
+# Hybrid Search
+
+Hybrid search combines two retrieval strategies:
+
+- **Keyword search** (PostgreSQL FTS with `tsvector` and `tsquery`)
+- **Semantic search** (pgvector cosine similarity)
+
+## Reciprocal Rank Fusion
+
+Results from both systems are merged using **Reciprocal Rank Fusion (RRF)**:
+
+```
+score(d) = Σ 1 / (k + rank_i(d))
+```
+
+Where `k = 60` is a constant that reduces the influence of highly-ranked items.
+
+## Reranking
+
+Optionally, a cross-encoder reranker can refine the fused results.
+On the client, we use Transformers.js; on the server, an API-based reranker.

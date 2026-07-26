@@ -1,0 +1,34 @@
+---
+title: WebGPU Compute Shaders for Force-Directed Graph Layout
+slug: webgpu-graph-layout
+date: 2026-07-18
+excerpt: Using WGSL compute shaders to accelerate graph layout by 40x compared to JavaScript.
+tags: ["webgpu", "wgsl", "graphics"]
+draft: false
+---
+
+# WebGPU Compute for Graph Layout
+
+The force-directed layout algorithm runs three compute passes on the GPU:
+
+1. **Repulsion** — O(n²) all-pairs repulsive forces, parallelised across nodes.
+2. **Attraction** — spring forces along edges, parallelised across edges.
+3. **Integration** — velocity damping and position update.
+
+## WGSL Shader
+
+The compute shader uses workgroup size 64 and processes nodes in batches:
+
+```wgsl
+@compute @workgroup_size(64)
+fn repulsion(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= params.node_count) { return; }
+  // ... repulsive force calculation
+}
+```
+
+## Fallback Chain
+
+When WebGPU is unavailable, we fall back to a Rust/WASM implementation
+that runs the same algorithm on CPU with SIMD acceleration.
