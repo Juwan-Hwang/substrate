@@ -4,20 +4,47 @@ resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 license = "AGPL-3.0-or-later"
-repository = "https://github.com/substrate/substrate"
+repository = "https://github.com/Juwan-Hwang/substrate"
 description = "Aevum — personal site platform built on Substrate"
 
 [workspace.dependencies]
 substrate-core = { path = "crates/core", version = "0.1.0" }
 substrate-wasm = { path = "crates/wasm", version = "0.1.0" }
 
+# GPU / graphics
+wgpu = "28"
+bytemuck = { version = "1.22", features = ["derive"] }
+glam = { version = "0.30", features = ["bytemuck"] }
+
+# WASM interop
+wasm-bindgen = "0.2.106"
+wasm-bindgen-futures = "0.4.50"
+js-sys = "0.3.77"
+web-sys = "0.3.77"
+serde-wasm-bindgen = "0.6"
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+
+# Utilities
+pollster = "0.4"
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
 panic = "abort"
+strip = true
 
 [profile.dev]
 opt-level = 1
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1

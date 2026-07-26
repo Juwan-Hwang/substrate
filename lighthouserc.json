@@ -1,0 +1,12 @@
+{
+  "collect": {
+    "staticDistDir": "./packages/web/.next"
+  },
+  "assert": {
+    "preset": "lighthouse:recommended"
+  },
+  "upload": {
+    "target": "filesystem",
+    "outputDir": "./lighthouse-reports"
+  }
+}

@@ -1,9 +1,10 @@
 /**
  * @substrate/observability — Telemetry, metrics, and tracing.
  *
- * Unified observability surface for all Aevum subsystems. Captures
- * Lattice render performance, Crucible experiment metrics, and
- * Archive content engagement signals.
+ * OpenTelemetry → Grafana Cloud (Tempo + Loki + Prometheus).
+ * Sentry for error tracking, PostHog for product analytics.
+ * Captures Lattice render performance, Crucible experiment metrics,
+ * and Archive content engagement signals.
  */
 import type { SubsystemName } from '@substrate/contracts';
 
@@ -30,15 +31,48 @@ export interface Logger {
   metric(metric: Metric): void;
 }
 
-export const createLogger = (subsystem: SubsystemName): Logger => {
+export function createLogger(subsystem: SubsystemName): Logger {
   const log = (entry: LogEntry) => {
-    // Placeholder: wire to OTLP exporter in production.
-    if (entry.level === 'error') console.error(`[${subsystem}]`, entry.message);
+    // Wire to OTLP exporter in production.
+    if (entry.level === 'error') console.error(`[${subsystem}]`, entry.message, entry.context ?? '');
   };
   return {
     log: (e) => log({ ...e, subsystem }),
     metric: (m) => {
-      // Placeholder: wire to metrics exporter.
+      // Wire to Prometheus exporter.
     },
   };
+}
+
+// ── Sentry ───────────────────────────────────────────────────────────
+
+export type SentryConfig = {
+  dsn: string;
+  environment: string;
+  release?: string;
 };
+
+export function initSentry(config: SentryConfig) {
+  // Dynamic import to avoid bundling Sentry in edge environments.
+  return import('@sentry/nextjs').then((Sentry) => {
+    Sentry.init({
+      dsn: config.dsn,
+      environment: config.environment,
+      release: config.release,
+      tracesSampleRate: 0.1,
+    });
+  });
+}
+
+// ── PostHog ──────────────────────────────────────────────────────────
+
+export type PostHogConfig = {
+  apiKey: string;
+  host?: string;
+};
+
+export function createPostHog(config: PostHogConfig) {
+  return import('posthog-node').then(({ PostHog }) => {
+    return new PostHog(config.apiKey, { host: config.host ?? 'https://app.posthog.com' });
+  });
+}

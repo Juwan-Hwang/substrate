@@ -6,9 +6,21 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "tsc --noEmit",
-    "lint": "eslint src",
+    "build": "velite && tsc --noEmit",
+    "lint": "biome check src",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist .turbo"
+    "clean": "rm -rf dist .turbo .velite"
+  },
+  "dependencies": {
+    "@substrate/contracts": "workspace:*",
+    "zod": "^3.24.0",
+    "velite": "^0.2.0",
+    "mdx": "^3.1.0",
+    "@mdx-js/react": "^3.1.0",
+    "fumadocs-ui": "^15.0.0",
+    "fumadocs-core": "^15.0.0",
+    "fumadocs-mdx": "^11.0.0",
+    "@orama/orama": "^3.1.0",
+    "@vercel/og": "^0.6.5"
   }
 }

@@ -1,0 +1,17 @@
+{
+  "name": "@substrate/wasm",
+  "type": "module",
+  "description": "WASM bindings for Aevum — exposes substrate-core to the browser with GPU acceleration",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-or-later",
+  "files": [
+    "substrate_wasm_bg.wasm",
+    "substrate_wasm.js",
+    "substrate_wasm.d.ts"
+  ],
+  "main": "substrate_wasm.js",
+  "types": "substrate_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

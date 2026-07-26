@@ -4,47 +4,45 @@
 //! GPU-accelerated graph layout (Lattice) and client-side experiment
 //! execution (Crucible) without a server round-trip.
 
+pub mod graph;
+pub mod gpu;
+
 use wasm_bindgen::prelude::*;
-use substrate_core::graph::{KnowledgeGraph, GraphNode, GraphEdge};
 
-#[wasm_bindgen]
-pub struct WasmGraph {
-    inner: KnowledgeGraph,
-}
-
-#[wasm_bindgen]
-impl WasmGraph {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> WasmGraph {
-        WasmGraph { inner: KnowledgeGraph::default() }
-    }
-
-    pub fn add_node(&mut self, id: String, label: String, x: f32, y: f32) {
-        self.inner.nodes.push(GraphNode {
-            id,
-            label,
-            x,
-            y,
-            z: 0.0,
-            weight: 1.0,
-        });
-    }
-
-    pub fn add_edge(&mut self, source: String, target: String) {
-        self.inner.edges.push(GraphEdge { source, target, weight: 1.0 });
-    }
-
-    pub fn step(&mut self, dt: f32) {
-        self.inner.step_layout(dt);
-    }
-
-    pub fn node_count(&self) -> usize {
-        self.inner.nodes.len()
-    }
-}
+pub use graph::WasmGraph;
+pub use gpu::GpuLayout;
 
 /// Returns the site brand.
 #[wasm_bindgen]
 pub fn site_brand() -> String {
     substrate_core::SITE_BRAND.to_string()
+}
+
+/// Returns the three subsystem names as a comma-separated string.
+#[wasm_bindgen]
+pub fn subsystems() -> String {
+    substrate_core::SUBSYSTEMS.join(",")
+}
+
+/// Detect WebGPU availability in the current browser.
+#[wasm_bindgen]
+pub fn has_webgpu() -> bool {
+    let Some(window) = web_sys::window() else { return false };
+    let navigator = window.navigator();
+    // navigator.gpu is a non-standard property — check via Reflect.
+    let gpu = js_sys::Reflect::get(&navigator, &"gpu".into()).unwrap_or(JsValue::UNDEFINED);
+    !gpu.is_undefined() && !gpu.is_null()
+}
+
+/// Parse frontmatter content (Archive subsystem).
+#[wasm_bindgen]
+pub fn parse_content(raw: &str) -> JsValue {
+    let entry = substrate_core::parse_content(raw);
+    serde_wasm_bindgen::to_value(&entry).unwrap_or(JsValue::NULL)
+}
+
+/// Initialize the WASM panic hook for better error messages in the console.
+#[wasm_bindgen(start)]
+pub fn init() {
+    console_error_panic_hook::set_once();
 }

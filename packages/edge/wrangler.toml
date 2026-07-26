@@ -1,0 +1,35 @@
+name = "aevum-edge"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SITE_BRAND = "Aevum"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "aevum-assets"
+
+[[queues.producers]]
+queue = "aevum-tasks"
+binding = "QUEUE"
+
+[[queues.consumers]]
+queue = "aevum-tasks"
+max_batch_size = 10
+max_batch_timeout = 5
+
+[[durable_objects.bindings]]
+name = "DO"
+class_name = "ExperimentDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ExperimentDO"]
+
+[[hyperdrive.configurations]]
+binding = "HYPERDRIVE"
+localConnectionString = "postgresql://localhost:5432/aevum"
+
+# [env.production]
+# route = "api.aevum.dev/*"

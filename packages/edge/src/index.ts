@@ -1,38 +1,60 @@
 /**
- * @substrate/edge — Edge functions & middleware.
+ * @substrate/edge — Cloudflare Workers edge functions & Hono API.
  *
- * Request handlers for the Crucible experiment runner, API routes for
- * Archive content delivery, and Lattice graph serialization endpoints.
+ * R2 for object storage, Queues for async processing,
+ * Durable Objects for real-time collaboration/presence,
+ * Hyperdrive for high-frequency Postgres access,
+ * Turnstile for bot protection, Upstash Redis for rate limiting.
  */
-import type { Result, SubsystemName } from '@substrate/contracts';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 
-export type EdgeRequest = {
-  method: string;
-  url: string;
-  headers: Record<string, string>;
-  body?: unknown;
+// ── Bindings ─────────────────────────────────────────────────────────
+
+export type Env = {
+  DB: D1Database;
+  R2: R2Bucket;
+  QUEUE: Queue<QueueMessage>;
+  DO: DurableObjectNamespace;
+  HYPERDRIVE: Hyperdrive;
+  REDIS: { get(key: string): Promise<string | null>; set(key: string, val: string, ttl?: number): Promise<void> };
+  TURNSTILE_SECRET: string;
 };
 
-export type EdgeResponse = {
-  status: number;
-  headers?: Record<string, string>;
-  body?: unknown;
+export type QueueMessage = {
+  type: 'experiment_result' | 'graph_snapshot' | 'content_reindex';
+  payload: Record<string, unknown>;
 };
 
-export type EdgeHandler = (req: EdgeRequest) => Promise<Result<EdgeResponse>>;
+// ── Router ───────────────────────────────────────────────────────────
 
-export type RouteEntry = {
-  pattern: string;
-  subsystem: SubsystemName;
-  handler: EdgeHandler;
-};
+const app = new Hono<{ Bindings: Env }>();
 
-export const createRouter = (routes: readonly RouteEntry[]) => {
-  return async (req: EdgeRequest): Promise<Result<EdgeResponse>> => {
-    const match = routes.find((r) => req.url.startsWith(r.pattern));
-    if (!match) {
-      return { ok: false, error: new Error(`No route for ${req.url}`) };
-    }
-    return match.handler(req);
-  };
-};
+app.use('*', cors());
+
+app.get('/health', (c) => c.json({ status: 'ok', brand: 'Aevum' }));
+
+// Lattice: graph data endpoint
+app.get('/api/lattice/graph', async (c) => {
+  const key = 'graph:latest';
+  const cached = await c.env.REDIS.get(key);
+  if (cached) return c.json(JSON.parse(cached));
+  // TODO: fetch from Hyperdrive → Postgres
+  return c.json({ nodes: [], edges: [] });
+});
+
+// Crucible: submit experiment
+app.post('/api/crucible/run', async (c) => {
+  const body = await c.req.json();
+  await c.env.QUEUE.send({ type: 'experiment_result', payload: body });
+  return c.json({ status: 'queued' });
+});
+
+// Archive: content reindex trigger
+app.post('/api/archive/reindex', async (c) => {
+  await c.env.QUEUE.send({ type: 'content_reindex', payload: {} });
+  return c.json({ status: 'queued' });
+});
+
+export default app;
+export { ExperimentDO } from './durable-objects';

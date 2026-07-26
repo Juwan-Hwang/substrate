@@ -7,11 +7,19 @@
   "types": "./src/index.ts",
   "scripts": {
     "build": "tsc --noEmit",
-    "lint": "eslint src",
+    "lint": "biome check src",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist .turbo"
+    "clean": "rm -rf dist .turbo wasm"
   },
   "dependencies": {
-    "@substrate/contracts": "workspace:*"
+    "@substrate/contracts": "workspace:*",
+    "@substrate/wasm": "workspace:*",
+    "three": "^0.185.0",
+    "@react-three/fiber": "^9.1.0",
+    "@react-three/drei": "^10.0.0",
+    "@react-three/postprocessing": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/three": "^0.185.0"
   }
 }

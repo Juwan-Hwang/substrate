@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2024", "DOM", "DOM.Iterable", "DOM.AsyncIterable"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -17,6 +19,17 @@
     "incremental": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "noEmit": true
+    "erasableSyntaxOnly": true,
+    "noEmit": true,
+    "paths": {
+      "@substrate/web": ["./packages/web/src"],
+      "@substrate/ui": ["./packages/ui/src"],
+      "@substrate/content": ["./packages/content/src"],
+      "@substrate/graphics": ["./packages/graphics/src"],
+      "@substrate/contracts": ["./packages/contracts/src"],
+      "@substrate/db": ["./packages/db/src"],
+      "@substrate/edge": ["./packages/edge/src"],
+      "@substrate/observability": ["./packages/observability/src"]
+    }
   }
 }

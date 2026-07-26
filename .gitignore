@@ -44,7 +44,6 @@ pnpm-debug.log*
 # Rust
 target/
 **/*.rs.bk
-Cargo.lock
 
-# WASM
-pkg/
+# WASM build artifacts (keep crates/wasm/pkg for workspace resolution)
+wasm-pack/

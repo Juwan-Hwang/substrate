@@ -3,7 +3,19 @@
   "compilerOptions": {
     "plugins": [{ "name": "next" }],
     "jsx": "preserve",
-    "noEmit": true
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "incremental": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@substrate/ui": ["../../packages/ui/src"],
+      "@substrate/ui/*": ["../../packages/ui/src/*"],
+      "@substrate/content": ["../../packages/content/src"],
+      "@substrate/graphics": ["../../packages/graphics/src"],
+      "@substrate/contracts": ["../../packages/contracts/src"],
+      "@substrate/observability": ["../../packages/observability/src"]
+    }
   },
-  "include": ["src", "next-env.d.ts"]
+  "include": ["src", "next-env.d.ts", "*.ts"],
+  "exclude": ["node_modules", ".next"]
 }

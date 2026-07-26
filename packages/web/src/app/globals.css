@@ -1,0 +1,70 @@
+@import "tailwindcss";
+@import "@substrate/ui/styles.css";
+
+@theme {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --color-accent: var(--color-accent);
+  --color-accent-glow: var(--color-accent-glow);
+
+  --color-bg-base: var(--aevum-bg-base);
+  --color-bg-secondary: var(--aevum-bg-secondary);
+  --color-bg-muted: var(--aevum-bg-muted);
+  --color-bg-elevated: var(--aevum-bg-elevated);
+
+  --color-text-primary: var(--aevum-text-primary);
+  --color-text-secondary: var(--aevum-text-secondary);
+  --color-text-tertiary: var(--aevum-text-tertiary);
+  --color-text-muted: var(--aevum-text-muted);
+
+  --color-border-default: var(--aevum-border-default);
+  --color-border-subtle: var(--aevum-border-subtle);
+  --color-border-strong: var(--aevum-border-strong);
+
+  --color-danger: var(--aevum-color-danger);
+  --color-warning: var(--aevum-color-warning);
+  --color-success: var(--aevum-color-success);
+  --color-info: var(--aevum-color-info);
+
+  --radius-card: var(--aevum-card-radius);
+  --radius-button: var(--aevum-button-radius);
+}
+
+@layer base {
+  body {
+    background: var(--aevum-bg-base);
+    color: var(--aevum-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* View Transitions API */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+    animation-timing-function: var(--aevum-easing-spring);
+  }
+}
+
+@layer utilities {
+  .glass {
+    backdrop-filter: var(--aevum-glass-blur);
+    -webkit-backdrop-filter: var(--aevum-glass-blur);
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-accent), var(--aevum-color-info));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* Container Queries support via Tailwind v4 @container */
+/* CSS Anchor Positioning for popovers */
+@supports (anchor-name: --test) {
+  [data-anchor] {
+    position-anchor: var(--anchor-name);
+  }
+}

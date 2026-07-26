@@ -1,0 +1,46 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", ":automergeMinor"],
+  "schedule": ["before 6am on Monday"],
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "groupName": "biome",
+      "matchPackageNames": ["@biomejs/biome"]
+    },
+    {
+      "groupName": "react",
+      "matchPackagePatterns": ["^react", "^@types/react"]
+    },
+    {
+      "groupName": "next.js",
+      "matchPackagePatterns": ["^next"]
+    },
+    {
+      "groupName": "three.js",
+      "matchPackagePatterns": ["^three", "^@react-three"]
+    },
+    {
+      "groupName": "tailwindcss",
+      "matchPackagePatterns": ["^tailwindcss", "^@tailwindcss"]
+    },
+    {
+      "groupName": "drizzle",
+      "matchPackagePatterns": ["^drizzle-orm", "^drizzle-kit"]
+    },
+    {
+      "groupName": "cloudflare",
+      "matchPackagePatterns": ["^@cloudflare", "^wrangler", "^miniflare"]
+    },
+    {
+      "groupName": "rust",
+      "matchPackagePatterns": ["^wasm-", "^wgpu"],
+      "matchManagers": ["cargo"]
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ]
+}

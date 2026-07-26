@@ -1,0 +1,36 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_gpulayout_free: (a: number, b: number) => void;
+export const __wbg_wasmgraph_free: (a: number, b: number) => void;
+export const gpulayout_create: () => number;
+export const gpulayout_loadGraph: (a: number, b: number, c: number) => number;
+export const gpulayout_nodeCount: (a: number) => number;
+export const gpulayout_readPositions: (a: number) => number;
+export const gpulayout_step: (a: number, b: number) => number;
+export const has_webgpu: () => number;
+export const parse_content: (a: number, b: number) => number;
+export const site_brand: (a: number) => void;
+export const subsystems: (a: number) => void;
+export const wasmgraph_add_edge: (a: number, b: number, c: number, d: number, e: number) => void;
+export const wasmgraph_add_node: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
+export const wasmgraph_edge_count: (a: number) => number;
+export const wasmgraph_from_json: (a: number, b: number, c: number) => number;
+export const wasmgraph_layout: (a: number, b: number) => void;
+export const wasmgraph_new: () => number;
+export const wasmgraph_node_count: (a: number) => number;
+export const wasmgraph_positions: (a: number) => number;
+export const wasmgraph_positions_json: (a: number, b: number) => void;
+export const wasmgraph_step: (a: number, b: number) => void;
+export const wasmgraph_to_json: (a: number, b: number) => void;
+export const init: () => void;
+export const __wasm_bindgen_func_elem_1180: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_1195: (a: number, b: number, c: number, d: number) => void;
+export const __wasm_bindgen_func_elem_265: (a: number, b: number, c: number) => void;
+export const __wbindgen_export: (a: number, b: number) => number;
+export const __wbindgen_export2: (a: number, b: number, c: number, d: number) => number;
+export const __wbindgen_export3: (a: number) => void;
+export const __wbindgen_export4: (a: number, b: number, c: number) => void;
+export const __wbindgen_export5: (a: number, b: number) => void;
+export const __wbindgen_add_to_stack_pointer: (a: number) => number;
+export const __wbindgen_start: () => void;
