@@ -36,7 +36,7 @@
     "@types/react-dom": "^19.2.0"
   },
   "peerDependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "19.3.0-canary-28cd4bb0-20260723",
+    "react-dom": "19.3.0-canary-28cd4bb0-20260723"
   }
 }

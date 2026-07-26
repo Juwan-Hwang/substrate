@@ -5,6 +5,7 @@ const nextConfig = {
     ppr: 'incremental',
     viewTransition: true,
     cacheComponents: true,
+    partialPrefetching: true,
   },
   images: {
     formats: ['image/avif', 'image/webp'],

@@ -111,3 +111,8 @@ export function createGraphLayout(graph: KnowledgeGraph): KnowledgeGraph {
 
 export { createLayoutWorker, supportsOffscreenCanvas } from './layout-worker';
 export type { LayoutWorkerManager, WorkerResponse } from './layout-worker';
+
+// ── Three.js WebGPU Renderer ────────────────────────────────────────
+
+export { createWebGPURenderer, WebGPUCanvas } from './renderer';
+export type { RendererInitOptions } from './renderer';

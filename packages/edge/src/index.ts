@@ -4,7 +4,8 @@
  * R2 for object storage, Queues for async processing,
  * Durable Objects for real-time collaboration/presence,
  * Hyperdrive for high-frequency Postgres access,
- * Turnstile for bot protection, Upstash Redis for rate limiting.
+ * Turnstile for bot protection, Upstash Redis for rate limiting,
+ * Workers AI for edge inference.
  */
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -19,6 +20,7 @@ export type Env = {
   QUEUE: Queue<QueueMessage>;
   DO: DurableObjectNamespace;
   HYPERDRIVE: Hyperdrive;
+  AI: Ai;
   REDIS: { get(key: string): Promise<string | null>; set(key: string, val: string, ttl?: number): Promise<void> };
   TURNSTILE_SECRET: string;
   UPSTASH_REDIS_URL: string;
@@ -38,15 +40,31 @@ app.use('*', cors());
 
 app.get('/health', (c) => c.json({ status: 'ok', brand: 'Aevum' }));
 
-// Lattice: graph data endpoint (cached in Redis)
+// Lattice: graph data endpoint (cached in Redis, fetched via Hyperdrive → Postgres)
 app.get('/api/lattice/graph', async (c) => {
   const redis = createRedis({ url: c.env.UPSTASH_REDIS_URL, token: c.env.UPSTASH_REDIS_TOKEN });
   const key = 'graph:latest';
   const cached = await cacheGet(redis, key);
   if (cached) return c.json(cached);
-  // TODO: fetch from Hyperdrive → Postgres
-  const graph = { nodes: [], edges: [] };
-  await cacheSet(redis, key, graph, 300); // 5 min TTL
+
+  // Fetch from PostgreSQL via Hyperdrive connection pooling.
+  const hyperdriveUrl = `postgresql://${c.env.HYPERDRIVE.user}:${c.env.HYPERDRIVE.password}@${c.env.HYPERDRIVE.host}:${c.env.HYPERDRIVE.port}/${c.env.HYPERDRIVE.database}`;
+  const { drizzle } = await import('drizzle-orm/postgres-js');
+  const postgres = (await import('postgres')).default;
+  const client = postgres(hyperdriveUrl, { max: 1 });
+  const db = drizzle(client);
+
+  const graphSnapshots = await db.execute(
+    'SELECT snapshot FROM graph_snapshots WHERE subsystem = $1 ORDER BY created_at DESC LIMIT 1',
+    ['lattice'],
+  );
+  await client.end();
+
+  const graph = graphSnapshots.rows.length > 0
+    ? (graphSnapshots.rows[0] as { snapshot: unknown }).snapshot
+    : { nodes: [], edges: [] };
+
+  await cacheSet(redis, key, graph, 300);
   return c.json(graph);
 });
 
@@ -82,12 +100,69 @@ app.post('/api/archive/reindex', async (c) => {
   return c.json({ status: 'queued' });
 });
 
-// Archive: full-text search (proxied to Hyperdrive Postgres)
+// Archive: full-text search (via Hyperdrive → PostgreSQL FTS)
 app.post('/api/archive/search', async (c) => {
   const { query, limit = 10 } = await c.req.json();
-  // In production: use ftsWeightedSearchSQL from @substrate/db
-  // executed via Hyperdrive connection.
-  return c.json({ results: [], query, limit });
+
+  const hyperdriveUrl = `postgresql://${c.env.HYPERDRIVE.user}:${c.env.HYPERDRIVE.password}@${c.env.HYPERDRIVE.host}:${c.env.HYPERDRIVE.port}/${c.env.HYPERDRIVE.database}`;
+  const { drizzle } = await import('drizzle-orm/postgres-js');
+  const postgres = (await import('postgres')).default;
+  const client = postgres(hyperdriveUrl, { max: 1 });
+  const db = drizzle(client);
+
+  const results = await db.execute(
+    `SELECT id, slug, title, excerpt,
+            ts_rank_cd(
+              setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+              setweight(to_tsvector('english', coalesce(excerpt, '')), 'B') ||
+              setweight(to_tsvector('english', coalesce(body, '')), 'C'),
+              plainto_tsquery('english', $1)
+            ) AS rank
+     FROM articles
+     WHERE status = 'published'
+       AND (
+         setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+         setweight(to_tsvector('english', coalesce(excerpt, '')), 'B') ||
+         setweight(to_tsvector('english', coalesce(body, '')), 'C')
+       ) @@ plainto_tsquery('english', $1)
+     ORDER BY rank DESC
+     LIMIT $2`,
+    [query, limit],
+  );
+  await client.end();
+
+  return c.json({ results: results.rows, query, limit });
+});
+
+// Workers AI: edge inference — text embeddings for semantic search.
+// Generates 1536-dim embeddings via Cloudflare Workers AI, compatible
+// with pgvector columns in the articles table.
+app.post('/api/ai/embed', async (c) => {
+  const { text, model = '@cf/baai/bge-base-en-v1.5' } = await c.req.json();
+
+  if (!text || typeof text !== 'string') {
+    return c.json({ error: 'Missing "text" field' }, 400);
+  }
+
+  const result = await c.env.AI.run(model, { text: [text] });
+  return c.json({ embedding: result.data?.[0] ?? [], model });
+});
+
+// Workers AI: edge inference — text summarisation for Archive excerpts.
+app.post('/api/ai/summarize', async (c) => {
+  const { text, model = '@cf/meta/llama-3.1-8b-instruct' } = await c.req.json();
+
+  if (!text || typeof text !== 'string') {
+    return c.json({ error: 'Missing "text" field' }, 400);
+  }
+
+  const result = await c.env.AI.run(model, {
+    messages: [
+      { role: 'system', content: 'Summarise the following text in 1-2 sentences.' },
+      { role: 'user', content: text },
+    ],
+  });
+  return c.json({ summary: result.response ?? '', model });
 });
 
 export default app;

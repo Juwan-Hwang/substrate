@@ -38,6 +38,10 @@ new_sqlite_classes = ["ExperimentDO"]
 binding = "HYPERDRIVE"
 localConnectionString = "postgresql://localhost:5432/aevum"
 
+# Cloudflare Workers AI — edge inference binding
+[ai]
+binding = "AI"
+
 # Turso / libSQL (edge read replica)
 # Set via environment variables:
 # TURSO_DATABASE_URL=libsql://aevum.turso.io

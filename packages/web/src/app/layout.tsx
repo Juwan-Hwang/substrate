@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import { NewsletterForm } from '../components/newsletter-form';
@@ -30,14 +31,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <SmoothScroll />
           <PaintRegistrar />
-          {children}
+          <Suspense>
+            {children}
+          </Suspense>
           <footer className="mx-auto max-w-5xl px-6 py-12">
             <div className="aevum-glass-card p-6">
               <h3 className="mb-2 text-lg font-semibold text-text-primary">Stay updated</h3>
               <p className="mb-4 text-sm text-text-secondary">
                 Get notified when new experiments and articles are published.
               </p>
-              <NewsletterForm />
+              <Suspense>
+                <NewsletterForm />
+              </Suspense>
             </div>
           </footer>
         </Providers>

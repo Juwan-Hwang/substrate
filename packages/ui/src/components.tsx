@@ -1,7 +1,10 @@
 /**
  * @substrate/ui — React components ported from Zephyr.
+ * Uses shadcn/ui patterns (cva + Radix Slot) for variant management.
  */
 import type { ReactNode, CSSProperties } from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
 
 export type PrimitiveProps = {
   children?: ReactNode;
@@ -9,13 +12,63 @@ export type PrimitiveProps = {
   style?: CSSProperties;
 };
 
-export type ButtonVariant = 'ghost' | 'accent' | 'danger' | 'warning' | 'success' | 'primary';
+// ── Button (shadcn/ui pattern: cva + Radix Slot) ───────────────────
 
-export type ButtonProps = PrimitiveProps & {
-  variant?: ButtonVariant;
-  disabled?: boolean;
-  busy?: boolean;
-  onClick?: () => void;
+export const buttonVariants = cva('btn', {
+  variants: {
+    variant: {
+      ghost: 'btn-ghost',
+      accent: 'btn-accent',
+      danger: 'btn-danger',
+      warning: 'btn-warning',
+      success: 'btn-success',
+      primary: 'btn-primary',
+    },
+    size: {
+      default: '',
+      sm: 'btn-sm',
+      lg: 'btn-lg',
+      icon: 'btn-icon',
+    },
+  },
+  defaultVariants: {
+    variant: 'ghost',
+    size: 'default',
+  },
+});
+
+export type ButtonProps = PrimitiveProps &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+    disabled?: boolean;
+    busy?: boolean;
+    onClick?: () => void;
+  };
+
+export const Button = ({
+  children,
+  className,
+  variant,
+  size,
+  asChild = false,
+  disabled,
+  busy,
+  onClick,
+  ...props
+}: ButtonProps) => {
+  const Comp = asChild ? Slot : 'button';
+  return (
+    <Comp
+      type={asChild ? undefined : 'button'}
+      className={buttonVariants({ variant, size, className })}
+      disabled={disabled}
+      aria-busy={busy || undefined}
+      onClick={onClick}
+      {...props}
+    >
+      {children}
+    </Comp>
+  );
 };
 
 export const Box = ({ children, className, style }: PrimitiveProps) => (
@@ -34,27 +87,6 @@ export const GlassCard = ({ children, className, style }: PrimitiveProps) => (
   <div className={`aevum-glass-card ${className ?? ''}`} style={style}>
     {children}
   </div>
-);
-
-const variantClass: Record<ButtonVariant, string> = {
-  ghost: 'btn-ghost',
-  accent: 'btn-accent',
-  danger: 'btn-danger',
-  warning: 'btn-warning',
-  success: 'btn-success',
-  primary: 'btn-primary',
-};
-
-export const Button = ({ children, className, variant = 'ghost', disabled, busy, onClick }: ButtonProps) => (
-  <button
-    type="button"
-    className={`btn ${variantClass[variant]} ${className ?? ''}`}
-    disabled={disabled}
-    aria-busy={busy || undefined}
-    onClick={onClick}
-  >
-    {children}
-  </button>
 );
 
 export type SwitchProps = {

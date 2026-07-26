@@ -33,6 +33,14 @@ export function createAI(config: AIConfig): AI {
   if (config.google) {
     providers.set('google', createGoogleGenerativeAI({ apiKey: config.google.apiKey }));
   }
+  if (config.workersAI) {
+    // Workers AI can be used via REST API (provider-adapter.ts) or
+    // via the Cloudflare Workers AI binding (env.AI.run()).
+    // The REST adapter is registered here; the binding is used
+    // directly in edge routes (@substrate/edge).
+    const { createWorkersAIProvider } = require('./provider-adapter.js');
+    providers.set('workers-ai', createWorkersAIProvider(config.workersAI.accountId, config.workersAI.apiToken));
+  }
 
   return { config, providers };
 }
