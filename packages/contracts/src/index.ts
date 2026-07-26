@@ -59,3 +59,48 @@ export const appRouter = t.router({
 });
 
 export type AppRouter = typeof appRouter;
+
+// ── Effect ──────────────────────────────────────────────────────────
+
+export {
+  DatabaseService,
+  LoggerService,
+  AIService,
+  ConsoleLoggerLayer,
+  createDatabaseLayer,
+  createAILayer,
+  runEffect,
+  fetchArticleBySlug,
+  submitExperimentEffect,
+  DatabaseError,
+  ValidationError,
+  NotFoundError,
+} from './effect';
+export type { DatabaseService as DatabaseServiceT, LoggerService as LoggerServiceT, AIService as AIServiceT } from './effect';
+
+// ── XState ──────────────────────────────────────────────────────────
+
+export {
+  experimentMachine,
+  createExperimentActor,
+  rendererMachine,
+  createRendererActor,
+} from './state-machine';
+export type {
+  ExperimentStatus,
+  ExperimentContext,
+  ExperimentEvent,
+  RendererStatus,
+  RendererContext,
+  RendererEvent,
+} from './state-machine';
+
+// ── Zustand stores ──────────────────────────────────────────────────
+
+export { uiStore, latticeStore, crucibleStore } from './store';
+export type { UIState, LatticeState, CrucibleState, Toast } from './store';
+
+// ── OpenAPI ──────────────────────────────────────────────────────────
+
+export { openApiDocument } from './openapi';
+export type { OpenApiDocument } from './openapi';

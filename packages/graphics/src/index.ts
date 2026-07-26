@@ -106,3 +106,8 @@ export async function createLayout(graph: KnowledgeGraph) {
 export function createGraphLayout(graph: KnowledgeGraph): KnowledgeGraph {
   return graph;
 }
+
+// ── Web Worker + OffscreenCanvas ────────────────────────────────────
+
+export { createLayoutWorker, supportsOffscreenCanvas } from './layout-worker';
+export type { LayoutWorkerManager, WorkerResponse } from './layout-worker';

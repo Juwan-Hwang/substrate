@@ -16,6 +16,8 @@
     "rust:build": "cargo build --workspace",
     "rust:test": "cargo test --workspace",
     "wasm:build": "wasm-pack build crates/wasm --target web --release && node -e \"const p=require('./crates/wasm/pkg/package.json');p.name='@substrate/wasm';require('fs').writeFileSync('./crates/wasm/pkg/package.json',JSON.stringify(p,null,2))\"",
+    "wasm:component": "cargo build -p substrate-wasm --no-default-features --features component --target wasm32-wasip2 --release",
+    "wasm:component-embed": "wasm-tools component new target/wasm32-wasip2/release/substrate_wasm.wasm -o crates/wasm/substrate.component.wasm",
     "devshell": "nix develop --impure"
   },
   "devDependencies": {

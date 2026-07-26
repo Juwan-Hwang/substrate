@@ -6,6 +6,13 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 SITE_BRAND = "Aevum"
 
+# Upstash Redis (REST API — no TCP socket needed in Workers)
+# Set via: wrangler secret put UPSTASH_REDIS_URL / UPSTASH_REDIS_TOKEN
+# [vars] cannot hold secrets — use `wrangler secret put` for production.
+
+# Cloudflare Turnstile
+# Set via: wrangler secret put TURNSTILE_SECRET
+
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "aevum-assets"
@@ -30,6 +37,11 @@ new_sqlite_classes = ["ExperimentDO"]
 [[hyperdrive.configurations]]
 binding = "HYPERDRIVE"
 localConnectionString = "postgresql://localhost:5432/aevum"
+
+# Turso / libSQL (edge read replica)
+# Set via environment variables:
+# TURSO_DATABASE_URL=libsql://aevum.turso.io
+# TURSO_AUTH_TOKEN=...
 
 # [env.production]
 # route = "api.aevum.dev/*"

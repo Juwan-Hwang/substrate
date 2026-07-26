@@ -91,3 +91,33 @@ export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
 export type Experiment = typeof experiments.$inferSelect;
 export type GraphSnapshot = typeof graphSnapshots.$inferSelect;
+
+// ── Turso / libSQL (edge database) ──────────────────────────────────
+
+export { createTursoDb, createTursoClient } from './turso';
+export type { TursoConfig } from './turso';
+
+// ── PostgreSQL Full-Text Search ─────────────────────────────────────
+
+export { ftsSearchSQL, ftsWeightedSearchSQL, FTS_INDEX_SQL } from './fts';
+export type { FTSResult, FTSQuery } from './fts';
+
+// ── Drizzle-Zod schemas (auto-generated from table definitions) ─────
+
+export {
+  insertArticleSchema,
+  insertProjectSchema,
+  insertNoteSchema,
+  insertExperimentSchema,
+  insertGraphSnapshotSchema,
+  selectArticleSchema,
+  selectProjectSchema,
+  selectNoteSchema,
+  selectExperimentSchema,
+  selectGraphSnapshotSchema,
+  updateArticleSchema,
+  updateProjectSchema,
+  updateNoteSchema,
+  listArticlesQuerySchema,
+  listExperimentsQuerySchema,
+} from './schemas';

@@ -11,12 +11,19 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 substrate-core.workspace = true
 
-# WASM interop
-wasm-bindgen.workspace = true
-wasm-bindgen-futures.workspace = true
-js-sys.workspace = true
-console_error_panic_hook = "0.1"
-web-sys = { workspace = true, features = [
+# Serialization (always needed)
+serde.workspace = true
+serde_json.workspace = true
+
+# Utilities (always needed)
+bytemuck.workspace = true
+glam.workspace = true
+
+# Browser/WASM bindings (default — for wasm32-unknown-unknown + JS)
+wasm-bindgen = { workspace = true, optional = true }
+wasm-bindgen-futures = { workspace = true, optional = true }
+js-sys = { workspace = true, optional = true }
+web-sys = { workspace = true, optional = true, features = [
     "Window",
     "Navigator",
     "Gpu",
@@ -34,23 +41,33 @@ web-sys = { workspace = true, features = [
     "GpuQueue",
     "Performance",
 ] }
-serde-wasm-bindgen.workspace = true
+serde-wasm-bindgen = { workspace = true, optional = true }
+wgpu = { workspace = true, features = ["webgpu"], optional = true }
+pollster = { workspace = true, optional = true }
+getrandom = { workspace = true, optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
 
-# Serialization
-serde.workspace = true
-serde_json.workspace = true
-
-# GPU / graphics
-wgpu = { workspace = true, features = ["webgpu"] }
-bytemuck.workspace = true
-glam.workspace = true
-
-# Utilities
-pollster.workspace = true
-getrandom.workspace = true
+# WASM Component Model (for wasm32-wasip2 + WASI Preview 2)
+wit-bindgen = { workspace = true, optional = true }
 
 [features]
-default = []
+default = ["js"]
+# Browser/JS bindings via wasm-bindgen + wgpu (target: wasm32-unknown-unknown)
+js = [
+    "dep:wasm-bindgen",
+    "dep:wasm-bindgen-futures",
+    "dep:js-sys",
+    "dep:web-sys",
+    "dep:serde-wasm-bindgen",
+    "dep:wgpu",
+    "dep:pollster",
+    "dep:getrandom",
+    "dep:console_error_panic_hook",
+]
+# WASM Component Model via wit-bindgen (target: wasm32-wasip2)
+component = [
+    "dep:wit-bindgen",
+]
 # Enable std::simd portable vectors (requires nightly).
 simd = []
 

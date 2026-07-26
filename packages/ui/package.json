@@ -11,17 +11,29 @@
     "./tokens.css": "./src/tokens.css",
     "./theme.css": "./src/theme.css",
     "./3d-effect": "./src/3d-effect.ts",
-    "./status-ring": "./src/status-ring.ts"
+    "./status-ring": "./src/status-ring.ts",
+    "./paint-worklets": "./src/paint-worklets.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist .turbo"
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "clean": "rm -rf dist .turbo storybook-static"
   },
   "dependencies": {
     "@substrate/tokens": "workspace:*",
     "@substrate/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "storybook": "^9.0.0",
+    "@storybook/nextjs": "^9.0.0",
+    "@storybook/addon-essentials": "^9.0.0",
+    "@storybook/addon-interactions": "^9.0.0",
+    "@storybook/react": "^9.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0"
   },
   "peerDependencies": {
     "react": "^19.2.0",

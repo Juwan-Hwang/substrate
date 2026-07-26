@@ -1,0 +1,73 @@
+package aevum:substrate;
+
+/// Graph layout interface — exposed by the WASM component.
+interface graph-layout {
+    /// A node in the knowledge graph.
+    record node {
+        id: string,
+        label: string,
+        x: f32,
+        y: f32,
+        z: f32,
+        weight: f32,
+    }
+
+    /// A directed edge between two nodes (by string ID).
+    record edge {
+        source: string,
+        target: string,
+        weight: f32,
+    }
+
+    /// A complete knowledge graph.
+    record graph {
+        nodes: list<node>,
+        edges: list<edge>,
+    }
+
+    /// A flat position array: [x0, y0, z0, x1, y1, z1, ...]
+    type positions = list<f32>;
+
+    /// Create a graph layout engine from a graph definition.
+    /// Returns an opaque handle for subsequent step/read calls.
+    create: func(graph: graph) -> u32;
+
+    /// Run one iteration of force-directed layout with temperature `dt`.
+    step: func(handle: u32, dt: f32);
+
+    /// Run `iterations` steps with cooling.
+    layout: func(handle: u32, iterations: u32);
+
+    /// Read back the current node positions as a flat array.
+    read-positions: func(handle: u32) -> positions;
+
+    /// Get the number of nodes in the graph.
+    node-count: func(handle: u32) -> u32;
+
+    /// Check if WebGPU is available in the current environment.
+    has-webgpu: func() -> bool;
+
+    /// Free a graph handle and its resources.
+    destroy: func(handle: u32);
+}
+
+/// Content parsing interface — exposes frontmatter parsing to the host.
+interface content {
+    /// A parsed content entry.
+    record entry {
+        slug: string,
+        title: string,
+        body: string,
+        tags: list<string>,
+        excerpt: option<string>,
+    }
+
+    /// Parse frontmatter-delimited content.
+    parse: func(raw: string) -> entry;
+}
+
+/// The substrate world — exports graph-layout and content interfaces.
+world substrate {
+    export graph-layout;
+    export content;
+}

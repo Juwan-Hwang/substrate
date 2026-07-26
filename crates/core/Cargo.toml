@@ -10,3 +10,4 @@ serde.workspace = true
 serde_json.workspace = true
 bytemuck.workspace = true
 glam.workspace = true
+wide.workspace = true

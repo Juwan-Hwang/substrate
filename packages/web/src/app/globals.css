@@ -59,12 +59,124 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  /* ── Houdini Paint Worklet ── */
+  /* Custom painted backgrounds via CSS Paint API. */
+  /* Fallback: if the browser doesn't support paint(), a solid color is used. */
+  .paint-noise {
+    background-image: paint(substrate-noise);
+    background-color: var(--aevum-bg-elevated);
+  }
+  .paint-mesh {
+    background-image: paint(substrate-mesh);
+    background-color: var(--aevum-bg-base);
+  }
 }
 
-/* Container Queries support via Tailwind v4 @container */
-/* CSS Anchor Positioning for popovers */
-@supports (anchor-name: --test) {
-  [data-anchor] {
-    position-anchor: var(--anchor-name);
+/* ═══════════════════════════════════════════════════════════════
+   CSS Container Queries
+   Tailwind v4 native @container support — elements respond to
+   their container's size, not the viewport.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Enable container queries on layout containers */
+.card-container {
+  container-type: inline-size;
+  container-name: card;
+}
+
+.sidebar-layout {
+  container-type: inline-size;
+  container-name: sidebar;
+}
+
+/* Responsive card layout based on container width, not viewport */
+@container card (min-width: 400px) {
+  .card-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@container card (min-width: 640px) {
+  .card-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* Sidebar collapse based on container width */
+@container sidebar (max-width: 768px) {
+  .sidebar-nav {
+    display: none;
+  }
+  .sidebar-toggle {
+    display: block;
+  }
+}
+
+@container sidebar (min-width: 769px) {
+  .sidebar-toggle {
+    display: none;
+  }
+}
+
+/* Lattice canvas responsiveness via container queries */
+.lattice-container {
+  container-type: size;
+  container-name: lattice;
+}
+
+@container lattice (orientation: portrait) {
+  .lattice-canvas {
+    aspect-ratio: 3 / 4;
+  }
+}
+
+@container lattice (orientation: landscape) {
+  .lattice-canvas {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CSS Anchor Positioning
+   Popovers, tooltips, and dropdowns anchor to their trigger.
+   Fallback: position: absolute with manual offsets.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Anchor-aware tooltip */
+.anchor-tooltip {
+  anchor-name: --tooltip-anchor;
+  position: fixed;
+  position-anchor: --tooltip-anchor;
+  position-area: top span-left;
+  margin-bottom: 8px;
+}
+
+/* Anchor-aware popover */
+.anchor-popover {
+  anchor-name: --popover-anchor;
+  position: fixed;
+  position-anchor: --popover-anchor;
+  position-area: bottom span-right;
+  margin-top: 8px;
+}
+
+/* Anchor-aware dropdown menu */
+.anchor-dropdown {
+  anchor-name: --dropdown-anchor;
+  position: fixed;
+  position-anchor: --dropdown-anchor;
+  position-area: bottom span-left;
+  margin-top: 4px;
+}
+
+/* Fallback for browsers without anchor positioning */
+@supports not (anchor-name: --test) {
+  .anchor-tooltip,
+  .anchor-popover,
+  .anchor-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
   }
 }

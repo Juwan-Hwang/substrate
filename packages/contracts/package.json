@@ -5,6 +5,14 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./openapi": "./src/openapi.ts",
+    "./auth": "./src/auth.ts",
+    "./effect": "./src/effect.ts",
+    "./state-machine": "./src/state-machine.ts",
+    "./store": "./src/store.ts"
+  },
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "biome check src",
@@ -18,6 +26,7 @@
     "better-auth": "^1.2.0",
     "@tanstack/react-query": "^5.65.0",
     "zustand": "^5.0.0",
-    "xstate": "^5.19.0"
+    "xstate": "^5.19.0",
+    "@asteasolutions/zod-to-openapi": "^7.3.0"
   }
 }

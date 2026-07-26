@@ -18,7 +18,8 @@
     "@substrate/db": "workspace:*",
     "hono": "^4.6.0",
     "@cloudflare/workers-types": "^4.20250101.0",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "@upstash/redis": "^1.34.0"
   },
   "devDependencies": {
     "wrangler": "^4.0.0",

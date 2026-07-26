@@ -65,3 +65,12 @@ export default defineConfig({
 export type Article = s.infer<typeof articleSchema>;
 export type Project = s.infer<typeof projectSchema>;
 export type Note = s.infer<typeof noteSchema>;
+
+// ── Fumadocs ────────────────────────────────────────────────────────
+
+export {
+  docsSource,
+  fumadocsComponents,
+  generateToc,
+  docsOgImage,
+} from './fumadocs';

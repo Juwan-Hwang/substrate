@@ -8,6 +8,7 @@
 pub mod content;
 pub mod experiment;
 pub mod graph;
+pub mod simd;
 
 // Re-export the most-used types at the crate root.
 pub use content::{parse as parse_content, ContentEntry};
@@ -15,6 +16,7 @@ pub use experiment::{run as run_experiment, Experiment, ExperimentResult, Measur
 pub use graph::{
     GraphEdge, GraphEdgeNamed, GraphNode, GraphVertex, IndexedGraph, KnowledgeGraph,
 };
+pub use simd::{attractive_forces_simd, repulsive_forces_simd};
 
 /// The Aevum site brand.
 pub const SITE_BRAND: &str = "Aevum";
