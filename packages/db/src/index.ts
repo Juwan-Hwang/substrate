@@ -92,10 +92,13 @@ export type NewNote = typeof notes.$inferInsert;
 export type Experiment = typeof experiments.$inferSelect;
 export type GraphSnapshot = typeof graphSnapshots.$inferSelect;
 
-// ── Turso / libSQL (edge database) ──────────────────────────────────
+// ── Turso / libSQL (edge READ-ONLY replica) ────────────────────────
+// Turso is a read-only projection of PostgreSQL. Writes go through
+// PostgreSQL only, then propagate to Turso via CDC / Queue.
+// See CONTRIBUTING.md for the full data-flow contract.
 
-export { createTursoDb, createTursoClient } from './turso';
-export type { TursoConfig } from './turso';
+export { createTursoReadReplica, createTursoReadClient } from './turso';
+export type { TursoConfig, ReadOnlyDrizzleDb } from './turso';
 
 // ── PostgreSQL Full-Text Search ─────────────────────────────────────
 
