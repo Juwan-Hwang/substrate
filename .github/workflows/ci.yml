@@ -114,6 +114,8 @@ jobs:
       - name: Build Storybook
         run: bun run build-storybook
         working-directory: ./packages/ui
+      - name: Install Playwright
+        run: bunx playwright install --with-deps chromium
       - name: Serve & Test Storybook
         run: |
           bunx http-server storybook-static --port 6006 --silent &
