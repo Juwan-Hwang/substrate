@@ -5,8 +5,8 @@
  */
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { signIn, signUp, useSession } from '../../lib/auth';
 
 export default function AuthPage() {
@@ -61,11 +61,7 @@ export default function AuthPage() {
             Welcome back, {session.user.name || 'friend'}!
           </h1>
           <p className="mb-6 text-text-secondary">You are already signed in.</p>
-          <button
-            type="button"
-            onClick={() => router.push('/')}
-            className="btn btn-primary w-full"
-          >
+          <button type="button" onClick={() => router.push('/')} className="btn btn-primary w-full">
             Go to home
           </button>
         </div>
