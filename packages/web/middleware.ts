@@ -1,60 +1,36 @@
 /**
- * Next.js middleware — auth session check for protected routes.
+ * Next.js middleware — lightweight session cookie check for protected routes.
  *
  * Intercepts requests to /crucible/* and /api/crucible/* to verify
- * the user is authenticated. Redirects to /auth if not.
+ * the user has a session cookie. Redirects to /auth if not.
  *
- * Uses Better Auth's session cookie signature verification — not just
- * cookie existence — to prevent forged-session bypasses.
+ * This runs on the Edge Runtime and MUST NOT make database calls.
+ * `getSessionCookie()` only checks cookie existence — it does NOT
+ * cryptographically validate the session. Authoritative session
+ * validation happens in Node.js runtime (API routes, Server Components,
+ * Server Actions) via `auth.api.getSession()`.
+ *
+ * See: https://better-auth.com/docs/integrations/next#auth-protection
  */
-import { createAuth } from '@substrate/contracts/auth';
+import { getSessionCookie } from 'better-auth/cookies';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const PROTECTED_PATHS = ['/crucible', '/api/crucible', '/api/admin'];
 const AUTH_PATH = '/auth';
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(
-      `${name} is required. Set it in your environment or .env file. ` +
-        'See .env.example for all required variables.',
-    );
-  }
-  return value;
-}
-
-const auth = createAuth({
-  databaseUrl: requireEnv('DATABASE_URL'),
-  secret: requireEnv('AUTH_SECRET'),
-  baseUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
-});
-
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Check if the path is protected.
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 
   if (!isProtected) {
     return NextResponse.next();
   }
 
-  // Verify the Better Auth session server-side.
-  try {
-    const session = await auth.api.getSession({ headers: req.headers });
+  // Lightweight cookie check — no DB access, Edge-safe.
+  const sessionCookie = getSessionCookie(req);
 
-    if (!session) {
-      // API routes get 401, pages get redirected.
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      const loginUrl = new URL(AUTH_PATH, req.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  } catch {
-    // Session verification failed — treat as unauthenticated.
+  if (!sessionCookie) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

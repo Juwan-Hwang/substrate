@@ -25,6 +25,7 @@
     "zod": "^3.24.0",
     "effect": "^3.12.0",
     "better-auth": "^1.2.0",
+    "pg": "^8.13.0",
     "@tanstack/react-query": "^5.65.0",
     "zustand": "^5.0.0",
     "xstate": "^5.19.0",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.10",
     "openapi3-ts": "^4.6.0"
   }
 }
