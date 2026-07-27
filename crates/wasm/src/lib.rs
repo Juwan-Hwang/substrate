@@ -18,17 +18,17 @@
 // ── Browser/JS bindings (wasm-bindgen + wgpu) ───────────────────────
 
 #[cfg(feature = "js")]
-pub mod graph;
-#[cfg(feature = "js")]
 pub mod gpu;
+#[cfg(feature = "js")]
+pub mod graph;
 
 #[cfg(feature = "js")]
 use wasm_bindgen::prelude::*;
 
 #[cfg(feature = "js")]
-pub use graph::WasmGraph;
-#[cfg(feature = "js")]
 pub use gpu::GpuLayout;
+#[cfg(feature = "js")]
+pub use graph::WasmGraph;
 
 /// Returns the site brand.
 #[cfg(feature = "js")]
@@ -48,7 +48,9 @@ pub fn subsystems() -> String {
 #[cfg(feature = "js")]
 #[wasm_bindgen]
 pub fn has_webgpu() -> bool {
-    let Some(window) = web_sys::window() else { return false };
+    let Some(window) = web_sys::window() else {
+        return false;
+    };
     let navigator = window.navigator();
     // navigator.gpu is a non-standard property — check via Reflect.
     let gpu = js_sys::Reflect::get(&navigator, &"gpu".into()).unwrap_or(JsValue::UNDEFINED);

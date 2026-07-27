@@ -27,7 +27,9 @@ impl WasmGraph {
     /// Create an empty graph.
     #[wasm_bindgen(constructor)]
     pub fn new() -> WasmGraph {
-        WasmGraph { inner: KnowledgeGraph::default() }
+        WasmGraph {
+            inner: KnowledgeGraph::default(),
+        }
     }
 
     /// Add a node with position.
@@ -45,7 +47,11 @@ impl WasmGraph {
 
     /// Add a directed edge between two node IDs.
     pub fn add_edge(&mut self, source: String, target: String) {
-        self.inner.edges.push(GraphEdgeNamed { source, target, weight: 1.0 });
+        self.inner.edges.push(GraphEdgeNamed {
+            source,
+            target,
+            weight: 1.0,
+        });
     }
 
     /// Run one step of force-directed layout with temperature `dt`.
@@ -97,8 +103,7 @@ impl WasmGraph {
 
     /// Get node positions as a JSON string (for debugging / fallback).
     pub fn positions_json(&self) -> String {
-        let positions: Vec<[f32; 3]> =
-            self.inner.nodes.iter().map(|n| [n.x, n.y, n.z]).collect();
+        let positions: Vec<[f32; 3]> = self.inner.nodes.iter().map(|n| [n.x, n.y, n.z]).collect();
         serde_json::to_string(&positions).unwrap_or_else(|_| "[]".into())
     }
 }

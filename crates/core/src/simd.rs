@@ -41,8 +41,18 @@ pub fn repulsive_forces_simd(
 
     for i in 0..chunks {
         let base = i * lanes;
-        let nx = f32x4::from([nodes_x[base], nodes_x[base + 1], nodes_x[base + 2], nodes_x[base + 3]]);
-        let ny = f32x4::from([nodes_y[base], nodes_y[base + 1], nodes_y[base + 2], nodes_y[base + 3]]);
+        let nx = f32x4::from([
+            nodes_x[base],
+            nodes_x[base + 1],
+            nodes_x[base + 2],
+            nodes_x[base + 3],
+        ]);
+        let ny = f32x4::from([
+            nodes_y[base],
+            nodes_y[base + 1],
+            nodes_y[base + 2],
+            nodes_y[base + 3],
+        ]);
 
         // diff = target - node
         let dx = target_x_v - nx;
@@ -112,8 +122,18 @@ pub fn attractive_forces_simd(
 
     for i in 0..chunks {
         let base = i * lanes;
-        let nx = f32x4::from([neighbor_x[base], neighbor_x[base + 1], neighbor_x[base + 2], neighbor_x[base + 3]]);
-        let ny = f32x4::from([neighbor_y[base], neighbor_y[base + 1], neighbor_y[base + 2], neighbor_y[base + 3]]);
+        let nx = f32x4::from([
+            neighbor_x[base],
+            neighbor_x[base + 1],
+            neighbor_x[base + 2],
+            neighbor_x[base + 3],
+        ]);
+        let ny = f32x4::from([
+            neighbor_y[base],
+            neighbor_y[base + 1],
+            neighbor_y[base + 2],
+            neighbor_y[base + 3],
+        ]);
 
         // diff = neighbor - target (attraction pulls toward neighbor)
         let dx = nx - target_x_v;
@@ -175,8 +195,14 @@ mod tests {
         }
 
         // SIMD and scalar should produce nearly identical results.
-        assert!((fx_simd - fx_scalar).abs() < 0.001, "fx mismatch: simd={fx_simd} scalar={fx_scalar}");
-        assert!((fy_simd - fy_scalar).abs() < 0.001, "fy mismatch: simd={fy_simd} scalar={fy_scalar}");
+        assert!(
+            (fx_simd - fx_scalar).abs() < 0.001,
+            "fx mismatch: simd={fx_simd} scalar={fx_scalar}"
+        );
+        assert!(
+            (fy_simd - fy_scalar).abs() < 0.001,
+            "fy mismatch: simd={fy_simd} scalar={fy_scalar}"
+        );
     }
 
     #[test]
@@ -193,6 +219,9 @@ mod tests {
         let nodes_y = vec![0.0, 1.0, 0.5, -1.0, 2.0];
 
         let (fx, fy) = repulsive_forces_simd(0.0, 0.0, &nodes_x, &nodes_y, 1.0);
-        assert!(fx.abs() > 0.0 || fy.abs() > 0.0, "should have nonzero force");
+        assert!(
+            fx.abs() > 0.0 || fy.abs() > 0.0,
+            "should have nonzero force"
+        );
     }
 }

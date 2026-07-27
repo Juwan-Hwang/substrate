@@ -27,19 +27,23 @@ pub fn parse(raw: &str) -> ContentEntry {
 
     let tags = frontmatter
         .lines()
-        .find_map(|l| {
-            l.strip_prefix("tags:")
-                .map(|v| parse_tag_list(v.trim()))
-        })
+        .find_map(|l| l.strip_prefix("tags:").map(|v| parse_tag_list(v.trim())))
         .unwrap_or_default();
 
-    let excerpt = frontmatter
-        .lines()
-        .find_map(|l| l.strip_prefix("excerpt:").map(|v| v.trim().trim_matches('"').to_string()));
+    let excerpt = frontmatter.lines().find_map(|l| {
+        l.strip_prefix("excerpt:")
+            .map(|v| v.trim().trim_matches('"').to_string())
+    });
 
     let slug = slugify(&title);
 
-    ContentEntry { slug, title, body, tags, excerpt }
+    ContentEntry {
+        slug,
+        title,
+        body,
+        tags,
+        excerpt,
+    }
 }
 
 fn split_frontmatter(raw: &str) -> (String, String) {
@@ -64,7 +68,9 @@ fn parse_tag_list(s: &str) -> Vec<String> {
     if s.is_empty() {
         return Vec::new();
     }
-    s.split(',').map(|t| t.trim().trim_matches('"').to_string()).collect()
+    s.split(',')
+        .map(|t| t.trim().trim_matches('"').to_string())
+        .collect()
 }
 
 fn slugify(s: &str) -> String {

@@ -234,7 +234,12 @@ impl GpuLayout {
         });
         let param_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("params"),
-            contents: bytemuck::bytes_of(&Params { node_count: 0, edge_count: 0, dt: 0.0, k: 1.0 }),
+            contents: bytemuck::bytes_of(&Params {
+                node_count: 0,
+                edge_count: 0,
+                dt: 0.0,
+                k: 1.0,
+            }),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
@@ -272,11 +277,13 @@ impl GpuLayout {
         let edge_bytes = indexed.edges_bytes();
 
         // Recreate buffers (GPU buffers are immutable in size).
-        self.src_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("src-vertices"),
-            contents: vertex_bytes,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-        });
+        self.src_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("src-vertices"),
+                contents: vertex_bytes,
+                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            });
         self.dst_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("dst-vertices"),
             size: vertex_bytes.len() as u64,
@@ -285,11 +292,13 @@ impl GpuLayout {
         });
 
         if !edge_bytes.is_empty() {
-            self.edge_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("edges"),
-                contents: edge_bytes,
-                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-            });
+            self.edge_buffer = self
+                .device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("edges"),
+                    contents: edge_bytes,
+                    usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+                });
         }
 
         true
@@ -320,16 +329,30 @@ impl GpuLayout {
             label: Some("layout-bg"),
             layout: &self.bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry { binding: 0, resource: self.param_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 1, resource: self.src_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 2, resource: self.edge_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 3, resource: self.dst_buffer.as_entire_binding() },
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: self.param_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: self.src_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: self.edge_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: self.dst_buffer.as_entire_binding(),
+                },
             ],
         });
 
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("layout-encoder"),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("layout-encoder"),
+            });
 
         {
             let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
@@ -343,10 +366,19 @@ impl GpuLayout {
         }
 
         // Copy dst → src for next iteration.
-        encoder.copy_buffer_to_buffer(&self.dst_buffer, 0, &self.src_buffer, 0, self.dst_buffer.size());
+        encoder.copy_buffer_to_buffer(
+            &self.dst_buffer,
+            0,
+            &self.src_buffer,
+            0,
+            self.dst_buffer.size(),
+        );
 
         self.queue.submit(std::iter::once(encoder.finish()));
-        let _ = self.device.poll(wgpu::PollType::Wait { submission_index: None, timeout: None });
+        let _ = self.device.poll(wgpu::PollType::Wait {
+            submission_index: None,
+            timeout: None,
+        });
 
         Ok(())
     }
@@ -368,15 +400,20 @@ impl GpuLayout {
             mapped_at_creation: false,
         });
 
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("read-encoder"),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("read-encoder"),
+            });
         encoder.copy_buffer_to_buffer(&self.dst_buffer, 0, &staging, 0, size);
         self.queue.submit(std::iter::once(encoder.finish()));
 
         let slice = staging.slice(..);
         slice.map_async(wgpu::MapMode::Read, |_| {});
-        let _ = self.device.poll(wgpu::PollType::Wait { submission_index: None, timeout: None });
+        let _ = self.device.poll(wgpu::PollType::Wait {
+            submission_index: None,
+            timeout: None,
+        });
 
         let data = slice.get_mapped_range();
         let vertices: &[GraphVertex] = bytemuck::cast_slice(&data);

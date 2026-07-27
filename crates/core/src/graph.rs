@@ -50,7 +50,12 @@ impl Default for GraphNode {
 
 impl From<&GraphNode> for GraphVertex {
     fn from(n: &GraphNode) -> Self {
-        Self { x: n.x, y: n.y, z: n.z, weight: n.weight }
+        Self {
+            x: n.x,
+            y: n.y,
+            z: n.z,
+            weight: n.weight,
+        }
     }
 }
 
@@ -98,10 +103,19 @@ impl KnowledgeGraph {
             .filter_map(|e| {
                 let s = ids.iter().position(|id| id == &e.source)?;
                 let t = ids.iter().position(|id| id == &e.target)?;
-                Some(GraphEdge { source: s as u32, target: t as u32, weight: e.weight, _pad: 0 })
+                Some(GraphEdge {
+                    source: s as u32,
+                    target: t as u32,
+                    weight: e.weight,
+                    _pad: 0,
+                })
             })
             .collect();
-        IndexedGraph { vertices, edges, ids }
+        IndexedGraph {
+            vertices,
+            edges,
+            ids,
+        }
     }
 
     /// One iteration of force-directed layout (Fruchterman–Reingold).
@@ -203,10 +217,30 @@ mod tests {
     fn layout_converges() {
         let mut g = KnowledgeGraph {
             nodes: vec![
-                GraphNode { id: "a".into(), label: "A".into(), x: 0.0, y: 0.0, z: 0.0, weight: 1.0, metadata: serde_json::Value::Null },
-                GraphNode { id: "b".into(), label: "B".into(), x: 0.5, y: 0.0, z: 0.0, weight: 1.0, metadata: serde_json::Value::Null },
+                GraphNode {
+                    id: "a".into(),
+                    label: "A".into(),
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                    weight: 1.0,
+                    metadata: serde_json::Value::Null,
+                },
+                GraphNode {
+                    id: "b".into(),
+                    label: "B".into(),
+                    x: 0.5,
+                    y: 0.0,
+                    z: 0.0,
+                    weight: 1.0,
+                    metadata: serde_json::Value::Null,
+                },
             ],
-            edges: vec![GraphEdgeNamed { source: "a".into(), target: "b".into(), weight: 1.0 }],
+            edges: vec![GraphEdgeNamed {
+                source: "a".into(),
+                target: "b".into(),
+                weight: 1.0,
+            }],
         };
         g.layout(200);
         // Nodes should not collapse to the same position.
@@ -218,10 +252,30 @@ mod tests {
     fn index_resolves_ids() {
         let g = KnowledgeGraph {
             nodes: vec![
-                GraphNode { id: "a".into(), label: "A".into(), x: 0.0, y: 0.0, z: 0.0, weight: 1.0, metadata: serde_json::Value::Null },
-                GraphNode { id: "b".into(), label: "B".into(), x: 1.0, y: 0.0, z: 0.0, weight: 1.0, metadata: serde_json::Value::Null },
+                GraphNode {
+                    id: "a".into(),
+                    label: "A".into(),
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                    weight: 1.0,
+                    metadata: serde_json::Value::Null,
+                },
+                GraphNode {
+                    id: "b".into(),
+                    label: "B".into(),
+                    x: 1.0,
+                    y: 0.0,
+                    z: 0.0,
+                    weight: 1.0,
+                    metadata: serde_json::Value::Null,
+                },
             ],
-            edges: vec![GraphEdgeNamed { source: "a".into(), target: "b".into(), weight: 1.0 }],
+            edges: vec![GraphEdgeNamed {
+                source: "a".into(),
+                target: "b".into(),
+                weight: 1.0,
+            }],
         };
         let ig = g.index();
         assert_eq!(ig.edges[0].source, 0);
