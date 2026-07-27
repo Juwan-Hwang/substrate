@@ -116,10 +116,11 @@ jobs:
         working-directory: ./packages/ui
       - name: Serve & Test Storybook
         run: |
-          npx http-server storybook-static --port 6006 --silent &
+          bunx http-server storybook-static --port 6006 --silent &
           SERVER_PID=$!
-          npx wait-on http://localhost:6006 --timeout 30000
-          npx test-storybook --url http://localhost:6006
+          sleep 3
+          bunx wait-on http://localhost:6006 --timeout 30000
+          bunx test-storybook --url http://localhost:6006
           kill $SERVER_PID
         working-directory: ./packages/ui
 
