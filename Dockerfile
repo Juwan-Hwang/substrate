@@ -2,7 +2,8 @@
 #  Aevum Web — Next.js 16 on Bun
 #  Multi-stage build:  deps → builder → runner
 # ────────────────────────────────────────────────────────────────────────
-# Bun 1.4.0 (Rust rewrite) — currently canary; switch to oven/bun:1.4 once released.
+# Bun 1.4.0 (Rust rewrite) — canary 通道。oven/bun:canary 镜像即 1.4.0 Rust 版。
+# 等 1.4.0 正式发布后改为 oven/bun:1.4.0。
 FROM oven/bun:canary AS base
 
 # ── Stage 1 · Dependencies ──────────────────────────────────────────────

@@ -1,10 +1,29 @@
 name: Deploy
 
+# ──────────────────────────────────────────────────────────────────────
+# Deploy Workflow — 默认关闭，按需开启
+# ──────────────────────────────────────────────────────────────────────
+# 这是一个基座项目，不包含真实的部署目标。
+# Deploy 默认只允许手动触发（workflow_dispatch），不会在 CI 后自动运行。
+#
+# 当你基于此基座搭建真实产品并准备部署时：
+#   1. 在 GitHub repo → Settings → Secrets and variables → Actions 中配置以下密钥：
+#        DATABASE_URL            — Postgres 连接串（如 Neon / Supabase）
+#        VERCEL_TOKEN            — Vercel Settings → Tokens
+#        VERCEL_ORG_ID           — Vercel 项目设置
+#        VERCEL_PROJECT_ID       — Vercel 项目设置
+#        CLOUDFLARE_API_TOKEN    — Cloudflare → My Profile → API Tokens
+#        CLOUDFLARE_ACCOUNT_ID   — Cloudflare 首页右侧
+#   2. 如需 CI 通过后自动部署，将下面的 workflow_run 取消注释：
+#        on:
+#          workflow_run:
+#            workflows: ["CI"]
+#            types: [completed]
+#            branches: [main]
+#          workflow_dispatch:
+#   3. 在 GitHub Actions 页面手动触发一次 Deploy 验证配置是否正确。
+# ──────────────────────────────────────────────────────────────────────
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
 
 jobs:
