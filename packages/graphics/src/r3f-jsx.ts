@@ -69,6 +69,3 @@ declare module 'react' {
     }
   }
 }
-
-// Ensure this is a module.
-export {};

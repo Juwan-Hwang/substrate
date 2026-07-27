@@ -21,6 +21,7 @@
     "test": "vitest run --passWithNoTests",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test-storybook": "test-storybook",
     "clean": "rm -rf dist .turbo storybook-static"
   },
   "dependencies": {
@@ -35,6 +36,7 @@
     "@storybook/addon-essentials": "^8.6.0",
     "@storybook/addon-interactions": "^8.6.0",
     "@storybook/react": "^8.6.0",
+    "@storybook/test-runner": "^0.22.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0"
   },

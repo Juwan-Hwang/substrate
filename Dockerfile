@@ -2,7 +2,8 @@
 #  Aevum Web — Next.js 16 on Bun
 #  Multi-stage build:  deps → builder → runner
 # ────────────────────────────────────────────────────────────────────────
-FROM oven/bun:1 AS base
+# Bun 1.4.0 (Rust rewrite) — currently canary; switch to oven/bun:1.4 once released.
+FROM oven/bun:canary AS base
 
 # ── Stage 1 · Dependencies ──────────────────────────────────────────────
 #  Copy only manifests first so dependency installation is cached unless
@@ -58,7 +59,7 @@ LABEL org.opencontainers.image.title="Substrate Web" \
       org.opencontainers.image.version="${APP_VERSION}" \
       org.opencontainers.image.revision="${REVISION}" \
       org.opencontainers.image.created="${CREATED}" \
-      org.opencontainers.image.base.name="docker.io/oven/bun:1"
+      org.opencontainers.image.base.name="docker.io/oven/bun:canary"
 
 WORKDIR /app
 

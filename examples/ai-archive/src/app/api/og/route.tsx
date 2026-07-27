@@ -95,7 +95,7 @@ export async function GET(req: Request): Promise<Response> {
       </div>,
       { width: 1200, height: 630 },
     );
-  } catch (_err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to generate OG image' }, { status: 500 });
   }
 }

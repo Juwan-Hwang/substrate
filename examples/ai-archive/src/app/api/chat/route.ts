@@ -44,7 +44,7 @@ export async function POST(req: Request): Promise<Response> {
       const openai = createOpenAI({ apiKey: key });
       const result = streamText({ model: openai(MODEL), system, prompt: question });
       return result.toTextStreamResponse();
-    } catch (_err) {
+    } catch {
       return NextResponse.json({ error: 'Failed to generate chat response' }, { status: 500 });
     }
   }

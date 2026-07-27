@@ -60,6 +60,14 @@
     "deploy": {
       "dependsOn": ["^build"],
       "cache": false
+    },
+    "build-storybook": {
+      "dependsOn": ["^build"],
+      "outputs": ["storybook-static/**"]
+    },
+    "test-storybook": {
+      "dependsOn": ["build-storybook"],
+      "outputs": []
     }
   }
 }
