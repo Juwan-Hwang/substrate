@@ -14,8 +14,9 @@
  * Clients are memoised per-process; in serverless they live for one warm
  * invocation, which is the intended behaviour.
  */
-import postgres from 'postgres';
+
 import { createDb, ftsWeightedSearchSQL } from '@substrate/db';
+import postgres from 'postgres';
 import { databaseUrl } from './env';
 import type { SearchResult } from './types';
 
@@ -44,10 +45,7 @@ export function drizzleDb(): DrizzleDb {
 }
 
 /** Run a raw parameterised SQL string (`$1, $2, …` placeholders). */
-export async function rawQuery<T = unknown>(
-  sql: string,
-  params: unknown[],
-): Promise<T[]> {
+export async function rawQuery<T = unknown>(sql: string, params: unknown[]): Promise<T[]> {
   const rows = await client().unsafe(sql, params as never[]);
   return rows as unknown as T[];
 }
@@ -65,10 +63,7 @@ type FtsRow = {
  * Weighted PostgreSQL full-text search over published articles
  * (title `A` > excerpt `B` > body `C`). Falls back to the caller on error.
  */
-export async function postgresFtsSearch(
-  term: string,
-  limit = 10,
-): Promise<SearchResult[]> {
+export async function postgresFtsSearch(term: string, limit = 10): Promise<SearchResult[]> {
   const { sql, params } = ftsWeightedSearchSQL({ query: term, limit });
   const rows = await rawQuery<FtsRow>(sql, params);
 

@@ -4,7 +4,7 @@
  * MDX v3 + Velite for content collection, Fumadocs for docs rendering,
  * Zod schemas for validation, Orama for instant static search.
  */
-import { defineCollection, defineConfig, s } from 'velite';
+import { defineCollection, defineConfig, s, type z } from 'velite';
 
 /** Zod schema for article frontmatter. */
 export const articleSchema = s.object({
@@ -15,7 +15,7 @@ export const articleSchema = s.object({
   tags: s.array(s.string()).default([]),
   draft: s.boolean().default(false),
   body: s.mdx(),
-});
+}) as z.ZodType;
 
 /** Zod schema for project metadata. */
 export const projectSchema = s.object({
@@ -27,7 +27,7 @@ export const projectSchema = s.object({
   status: s.enum(['active', 'archived', 'experimental']).default('active'),
   tags: s.array(s.string()).default([]),
   body: s.mdx(),
-});
+}) as z.ZodType;
 
 /** Zod schema for notes. */
 export const noteSchema = s.object({
@@ -36,10 +36,10 @@ export const noteSchema = s.object({
   date: s.isodate(),
   body: s.mdx(),
   tags: s.array(s.string()).default([]),
-});
+}) as z.ZodType;
 
 /** Velite configuration — content collections. */
-export default defineConfig({
+const veliteConfig = defineConfig({
   collections: {
     articles: defineCollection({
       name: 'Article',
@@ -62,15 +62,17 @@ export default defineConfig({
   },
 });
 
-export type Article = s.infer<typeof articleSchema>;
-export type Project = s.infer<typeof projectSchema>;
-export type Note = s.infer<typeof noteSchema>;
+export default veliteConfig as unknown as Record<string, unknown>;
+
+export type Article = z.infer<typeof articleSchema>;
+export type Project = z.infer<typeof projectSchema>;
+export type Note = z.infer<typeof noteSchema>;
 
 // ── Fumadocs ────────────────────────────────────────────────────────
 
 export {
+  docsOgImage,
   docsSource,
   fumadocsComponents,
   generateToc,
-  docsOgImage,
 } from './fumadocs';

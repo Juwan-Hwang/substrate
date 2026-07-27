@@ -12,17 +12,6 @@ export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
 });
 
-export const {
-  signIn,
-  signOut,
-  signUp,
-  useSession,
-  useListSessions,
-  passkey: {
-    addPasskey,
-    listPasskeys,
-    deletePasskey,
-  },
-} = authClient;
+export const { signIn, signOut, signUp, useSession } = authClient;
 
 export type Session = Awaited<ReturnType<typeof authClient.getSession>>;

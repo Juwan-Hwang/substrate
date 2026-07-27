@@ -9,6 +9,7 @@
  * enabling third-party API consumers and automated client generation.
  */
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi';
+import type { OpenAPIObject } from 'openapi3-ts/oas30';
 import { z } from 'zod';
 import { articleSchema, experimentSchema } from './index';
 
@@ -250,7 +251,7 @@ registry.registerPath({
 
 const generator = new OpenApiGeneratorV3(registry.definitions);
 
-export const openApiDocument = generator.generateDocument({
+export const openApiDocument: OpenAPIObject = generator.generateDocument({
   openapi: '3.1.0',
   info: {
     title: 'Aevum API',

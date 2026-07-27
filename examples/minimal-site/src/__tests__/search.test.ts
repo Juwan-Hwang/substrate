@@ -4,8 +4,9 @@
  * Verifies that documents are indexed, that term queries match the right
  * records, and that queries with no matches return an empty hit set.
  */
-import { describe, expect, it } from 'vitest';
+
 import { createSearchIndex, type SearchableDoc } from '@substrate/content/search';
+import { describe, expect, it } from 'vitest';
 
 const docs: SearchableDoc[] = [
   {

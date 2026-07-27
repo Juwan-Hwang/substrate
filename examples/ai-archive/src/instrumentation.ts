@@ -8,6 +8,9 @@
  * Orama client-side search and demo RAG answers, so we only warn.
  */
 import { aiArchiveFeatures, initFeatures, validateEnv } from '@substrate/config/features';
+import { createArchiveLogger } from '@/lib/logger';
+
+const logger = createArchiveLogger('instrumentation');
 
 export async function register(): Promise<void> {
   initFeatures(aiArchiveFeatures);
@@ -19,9 +22,11 @@ export async function register(): Promise<void> {
   );
 
   if (relevant.length > 0) {
-    console.warn(
-      `[ai-archive] Optional credentials not set: ${relevant.join(', ')}. ` +
-        'Running in degraded mode (Orama search / demo RAG).',
+    logger.warn(
+      'Optional credentials not set — running in degraded mode (Orama search / demo RAG)',
+      {
+        missing: relevant,
+      },
     );
   }
 }

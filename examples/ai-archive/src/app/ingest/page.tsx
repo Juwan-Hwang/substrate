@@ -8,8 +8,8 @@
  */
 'use client';
 
-import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import type { IngestResponse, IngestStatus } from '@/lib/types';
 
 type Form = {
@@ -48,8 +48,7 @@ export default function IngestPage() {
   );
   const slug = slugTouched ? form.slug : derivedSlug;
 
-  const update = (key: keyof Form, value: string) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  const update = (key: keyof Form, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -67,7 +66,10 @@ export default function IngestPage() {
           slug: slug.trim(),
           body: form.body.trim(),
           excerpt: form.excerpt.trim(),
-          tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+          tags: form.tags
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean),
         }),
       });
       const data = (await res.json()) as IngestResponse;
@@ -90,8 +92,8 @@ export default function IngestPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight">Ingest Content</h1>
         <p className="text-sm text-[var(--color-text-secondary)]">
-          Submit an article. With a database it is persisted and embedded; otherwise the
-          pipeline runs in demo mode.
+          Submit an article. With a database it is persisted and embedded; otherwise the pipeline
+          runs in demo mode.
         </p>
       </header>
 
@@ -150,11 +152,7 @@ export default function IngestPage() {
           <button type="submit" className="btn btn-primary" disabled={busy}>
             {busy ? 'Ingesting…' : 'Ingest article'}
           </button>
-          {status && (
-            <span className={`badge ${statusStyles[status]}`}>
-              {status}
-            </span>
-          )}
+          {status && <span className={`badge ${statusStyles[status]}`}>{status}</span>}
         </div>
 
         {message && (
@@ -170,16 +168,9 @@ export default function IngestPage() {
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
+    // biome-ignore lint/a11y/noLabelWithoutControl: form control is provided via children
     <label className="block space-y-1.5">
       <span className="flex items-center gap-2 text-sm font-medium">
         {label}

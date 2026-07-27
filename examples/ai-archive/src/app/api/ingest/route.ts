@@ -10,13 +10,17 @@
  *  - returns a demo success when no `DATABASE_URL` is configured, so the
  *    ingestion flow is always explorable.
  */
-import { NextResponse } from 'next/server';
-import { embed } from 'ai';
+
 import { createOpenAI } from '@ai-sdk/openai';
 import { articles } from '@substrate/db';
+import { embed } from 'ai';
+import { NextResponse } from 'next/server';
 import { drizzleDb, rawQuery } from '@/lib/db';
 import { hasAI, hasDatabase, openaiApiKey } from '@/lib/env';
+import { createArchiveLogger } from '@/lib/logger';
 import type { IngestPayload, IngestResponse } from '@/lib/types';
+
+const logger = createArchiveLogger('ingest');
 
 export const runtime = 'nodejs';
 
@@ -93,7 +97,7 @@ export async function POST(req: Request): Promise<Response> {
       message: 'Article ingested. Reindex queued.',
     });
   } catch (err) {
-    console.error('[ingest] failed:', err);
+    logger.error('ingest failed', { error: err });
     return NextResponse.json<IngestResponse>(
       { status: 'error', message: 'Ingestion failed. Check server logs.' },
       { status: 500 },

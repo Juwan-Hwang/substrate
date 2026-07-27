@@ -3,7 +3,7 @@
  *
  * Verifies that the /api/og endpoint returns a valid image response.
  */
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test('OG image endpoint returns image', async ({ request }) => {
   const response = await request.get('/api/og');

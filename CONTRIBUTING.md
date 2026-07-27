@@ -160,36 +160,36 @@ data, use `@substrate/db` (PostgreSQL) — not Turso.
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Start dev server
-pnpm dev
+bun dev
 
 # Build everything
-pnpm build
+bun build
 
 # Run tests
-pnpm test
+bun test
 
 # Lint
-pnpm lint
+bun lint
 
 # Build WASM
-pnpm wasm:build
+bun wasm:build
 ```
 
 ### Rust / WASM
 
 ```bash
 # Build Rust crates
-pnpm rust:build
+bun rust:build
 
 # Build WASM for browser
-pnpm wasm:build
+bun wasm:build
 
 # Build WASM Component Model (WASI Preview 2)
-pnpm wasm:component
-pnpm wasm:component-embed
+bun wasm:component
+bun wasm:component-embed
 ```
 
 ### Nix

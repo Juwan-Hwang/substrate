@@ -9,7 +9,7 @@
  *
  * Models are cached in the browser after first download.
  */
-import { pipeline, env } from '@huggingface/transformers';
+import { env, pipeline } from '@huggingface/transformers';
 
 // Configure to use remote models (downloaded and cached locally).
 env.allowLocalModels = false;
@@ -35,7 +35,7 @@ export async function createTransformers(): Promise<Transformers> {
     return embedder;
   }
 
-  async function getReranker() {
+  async function _getReranker() {
     if (!reranker) {
       reranker = await pipeline('zero-shot-classification', 'Xenova/distilbart-mnli-12-9');
     }
@@ -52,9 +52,9 @@ export async function createTransformers(): Promise<Transformers> {
   return {
     embed: async (text) => {
       const extractor = await getEmbedder();
-      const output = (await extractor(text, { pooling: 'mean', normalize: true })) as {
-        data: number[];
-      };
+      const output = (await (
+        extractor as (text: string, options: Record<string, unknown>) => Promise<unknown>
+      )(text, { pooling: 'mean', normalize: true })) as { data: number[] };
       return Array.from(output.data);
     },
 
@@ -62,9 +62,9 @@ export async function createTransformers(): Promise<Transformers> {
       const extractor = await getEmbedder();
       const results: number[][] = [];
       for (const text of texts) {
-        const output = (await extractor(text, { pooling: 'mean', normalize: true })) as {
-          data: number[];
-        };
+        const output = (await (
+          extractor as (text: string, options: Record<string, unknown>) => Promise<unknown>
+        )(text, { pooling: 'mean', normalize: true })) as { data: number[] };
         results.push(Array.from(output.data));
       }
       return results;
@@ -73,18 +73,25 @@ export async function createTransformers(): Promise<Transformers> {
     rerank: async (query, documents) => {
       // Use zero-shot classification as a proxy reranker:
       // score each document against the query as a "hypothesis".
-      const classifier = await getClassifier();
+      const clf = await getClassifier();
       const scores: number[] = [];
       for (const doc of documents) {
-        const result = (await classifier(doc, [query])) as { scores: number[] };
+        const result = (await (clf as (text: string, labels: string[]) => Promise<unknown>)(doc, [
+          query,
+        ])) as {
+          scores: number[];
+        };
         scores.push(result.scores[0] ?? 0);
       }
       return scores;
     },
 
     classify: async (text, labels) => {
-      const classifier = await getClassifier();
-      const result = (await classifier(text, labels)) as {
+      const clf = await getClassifier();
+      const result = (await (clf as (text: string, labels: string[]) => Promise<unknown>)(
+        text,
+        labels,
+      )) as {
         labels: string[];
         scores: number[];
       };

@@ -6,14 +6,14 @@
  */
 
 export { setup3DEffect } from './3d-effect';
-export { createStatusRing } from './status-ring';
-export { registerPaintWorklets } from './paint-worklets';
-export { Box, Stack, GlassCard, Button, Switch, Badge } from './components';
 export type {
-  PrimitiveProps,
+  BadgeProps,
   ButtonProps,
   ButtonVariant,
   GlassCardProps,
+  PrimitiveProps,
   SwitchProps,
-  BadgeProps,
 } from './components';
+export { Badge, Box, Button, GlassCard, Stack, Switch } from './components';
+export { registerPaintWorklets } from './paint-worklets';
+export { createStatusRing } from './status-ring';

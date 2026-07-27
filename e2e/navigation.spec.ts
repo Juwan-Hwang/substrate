@@ -4,7 +4,7 @@
  * These tests verify that the reference implementation (@substrate/web)
  * renders correctly and that all three subsystems are accessible.
  */
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Homepage', () => {
   test('renders brand and subsystem links', async ({ page }) => {

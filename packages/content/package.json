@@ -10,9 +10,10 @@
     "./search": "./src/search.ts"
   },
   "scripts": {
-    "build": "velite && tsc --noEmit",
+    "build": "tsc --noEmit",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
     "clean": "rm -rf dist .turbo .velite"
   },
   "dependencies": {
@@ -25,5 +26,8 @@
     "fumadocs-mdx": "^11.0.0",
     "@orama/orama": "^3.1.0",
     "@vercel/og": "^0.6.5"
+  },
+  "devDependencies": {
+    "@types/mdx": "^2.0.0"
   }
 }

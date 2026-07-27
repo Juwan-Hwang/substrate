@@ -8,9 +8,9 @@
  */
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { createSearchIndex, type SearchableDoc } from '@substrate/content/search';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 type SearchIndex = Awaited<ReturnType<typeof createSearchIndex>>;
 
@@ -78,11 +78,15 @@ export function SearchBox({ docs }: SearchBoxProps) {
       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.75rem' }}>
         {results.map((doc) => (
           <li key={doc.slug}>
-            <Link
-              href={`/articles/${doc.slug}`}
-              style={{ display: 'block', padding: '0.25rem 0' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'baseline' }}>
+            <Link href={`/articles/${doc.slug}`} style={{ display: 'block', padding: '0.25rem 0' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  alignItems: 'baseline',
+                }}
+              >
                 <strong style={{ color: 'var(--text-primary)' }}>{doc.title}</strong>
                 {doc.tags.length > 0 && (
                   <span className="tertiary" style={{ fontSize: '0.8125rem', flexShrink: 0 }}>
@@ -90,7 +94,9 @@ export function SearchBox({ docs }: SearchBoxProps) {
                   </span>
                 )}
               </div>
-              <span className="muted" style={{ fontSize: '0.9rem' }}>{doc.excerpt}</span>
+              <span className="muted" style={{ fontSize: '0.9rem' }}>
+                {doc.excerpt}
+              </span>
             </Link>
           </li>
         ))}

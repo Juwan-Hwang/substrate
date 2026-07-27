@@ -5,11 +5,12 @@
  * global theme. Initialises the feature manifest from the minimal-site
  * preset so every downstream component reads a consistent capability set.
  */
+
+import { features, initFeatures, minimalSiteFeatures } from '@substrate/config/features';
+import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font/sans';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
-import { initFeatures, minimalSiteFeatures, features } from '@substrate/config/features';
 import '@substrate/ui/styles.css';
 import './globals.css';
 

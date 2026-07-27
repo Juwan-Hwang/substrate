@@ -6,10 +6,11 @@
  * available, R3F's <Canvas> automatically falls back to WebGL2
  * (Three.js WebGLRenderer).
  */
+import { Canvas } from '@react-three/fiber';
 import type { ReactNode } from 'react';
 
 export type RendererInitOptions = {
-  canvas?: HTMLCanvasElement;
+  canvas?: HTMLCanvasElement | OffscreenCanvas;
   antialias?: boolean;
   alpha?: boolean;
 };
@@ -43,32 +44,25 @@ export async function createWebGPURenderer(options?: RendererInitOptions) {
 /**
  * React component that lazily mounts a WebGPU-powered R3F Canvas.
  *
- * Usage:
- *   <WebGPUCanvas camera={{ position: [0, 0, 5] }}>
- *     <mesh>...</mesh>
- *   </WebGPUCanvas>
- *
  * If WebGPU is unavailable, it renders the fallback (children inside
  * a standard R3F <Canvas> with WebGL2).
  */
 export function WebGPUCanvas({
   children,
-  fallback,
   ...canvasProps
 }: {
   children: ReactNode;
-  fallback?: ReactNode;
 } & Record<string, unknown>) {
-  // Lazy-load R3F Canvas + WebGPURenderer on the client.
-  // This avoids bundling three/webgpu in the server bundle.
-  const Canvas = require('@react-three/fiber').Canvas;
   return (
-    <Canvas {...canvasProps} gl={async (glProps) => {
-      const renderer = await createWebGPURenderer({
-        canvas: glProps.canvas,
-      });
-      return renderer ?? undefined;
-    }}>
+    <Canvas
+      {...canvasProps}
+      gl={async (glProps) => {
+        const renderer = await createWebGPURenderer({
+          canvas: glProps.canvas,
+        });
+        return renderer ?? undefined;
+      }}
+    >
       {children}
     </Canvas>
   );

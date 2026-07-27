@@ -6,8 +6,8 @@
  */
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
 import { createSearchIndex, type SearchableDoc } from '@substrate/content/search';
+import { useEffect, useRef, useState } from 'react';
 
 export function SearchBox({ docs }: { docs: SearchableDoc[] }) {
   const [query, setQuery] = useState('');
@@ -52,9 +52,7 @@ export function SearchBox({ docs }: { docs: SearchableDoc[] }) {
         className="w-full rounded-lg border border-border-primary bg-bg-secondary px-4 py-3 text-text-primary placeholder:text-text-tertiary focus:border-accent-primary focus:outline-none"
       />
 
-      {loading && (
-        <p className="mt-2 text-sm text-text-tertiary">Searching…</p>
-      )}
+      {loading && <p className="mt-2 text-sm text-text-tertiary">Searching…</p>}
 
       {results.length > 0 && (
         <ul className="mt-4 space-y-2">
@@ -74,7 +72,9 @@ export function SearchBox({ docs }: { docs: SearchableDoc[] }) {
                 {doc.tags.length > 0 && (
                   <div className="mt-2 flex gap-1">
                     {doc.tags.map((tag) => (
-                      <span key={tag} className="text-xs text-text-tertiary">#{tag}</span>
+                      <span key={tag} className="text-xs text-text-tertiary">
+                        #{tag}
+                      </span>
                     ))}
                   </div>
                 )}

@@ -55,7 +55,7 @@ export function detectRendererTier(): RendererTier {
  */
 export async function loadWasm() {
   // The WASM pkg is built by `wasm-pack build --target web` into crates/wasm/pkg.
-  // pnpm-workspace.yaml includes `crates/wasm/pkg` as a workspace package.
+  // The workspace includes `crates/wasm/pkg` as a workspace package.
   const wasm = await import('@substrate/wasm');
   return wasm;
 }
@@ -72,12 +72,12 @@ export async function createLayout(graph: KnowledgeGraph) {
   if (wasm.has_webgpu()) {
     try {
       const gpu = await wasm.GpuLayout.create();
-      gpu.load_graph(JSON.stringify(graph));
+      gpu.loadGraph(JSON.stringify(graph));
       return {
         type: 'gpu' as const,
         step: async (dt: number) => gpu.step(dt),
-        positions: async () => gpu.read_positions(),
-        nodeCount: () => gpu.node_count(),
+        positions: async () => gpu.readPositions(),
+        nodeCount: () => gpu.nodeCount(),
       };
     } catch {
       // GPU init failed — fall through to CPU.
@@ -109,10 +109,15 @@ export function createGraphLayout(graph: KnowledgeGraph): KnowledgeGraph {
 
 // ── Web Worker + OffscreenCanvas ────────────────────────────────────
 
-export { createLayoutWorker, supportsOffscreenCanvas } from './layout-worker';
 export type { LayoutWorkerManager, WorkerResponse } from './layout-worker';
+export { createLayoutWorker, supportsOffscreenCanvas } from './layout-worker';
 
 // ── Three.js WebGPU Renderer ────────────────────────────────────────
 
-export { createWebGPURenderer, WebGPUCanvas } from './renderer';
 export type { RendererInitOptions } from './renderer';
+export { createWebGPURenderer, WebGPUCanvas } from './renderer';
+
+// ── 3D Graph Scene (R3F) ────────────────────────────────────────────
+
+export type { GraphScene3DProps } from './graph-scene-3d';
+export { GraphScene3D } from './graph-scene-3d';

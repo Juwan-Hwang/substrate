@@ -45,7 +45,9 @@ export async function startOTEL(config: OTelConfig) {
   const { BatchLogRecordProcessor } = await import('@opentelemetry/sdk-logs');
   const { diag, DiagConsoleLogger, DiagLogLevel } = await import('@opentelemetry/api');
   const { resourceFromAttributes } = await import('@opentelemetry/resources');
-  const { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } = await import('@opentelemetry/semantic-conventions');
+  const { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } = await import(
+    '@opentelemetry/semantic-conventions'
+  );
   const autoInstrumentations = await import('@opentelemetry/auto-instrumentations-node');
 
   const headers = config.headers ?? {};
@@ -78,10 +80,12 @@ export async function startOTEL(config: OTelConfig) {
       exporter: metricExporter,
       exportIntervalMillis: 10_000,
     }),
-    logRecordProcessor: new BatchLogRecordProcessor(logExporter),
-    instrumentations: [autoInstrumentations.getNodeAutoInstrumentations({
-      '@opentelemetry/instrumentation-fs': { enabled: false },
-    })],
+    logRecordProcessor: new BatchLogRecordProcessor({ exporter: logExporter }),
+    instrumentations: [
+      autoInstrumentations.getNodeAutoInstrumentations({
+        '@opentelemetry/instrumentation-fs': { enabled: false },
+      }),
+    ],
   });
 
   sdk.start();
@@ -89,7 +93,8 @@ export async function startOTEL(config: OTelConfig) {
 
   // Graceful shutdown.
   process.on('SIGTERM', () => {
-    sdk.shutdown()
+    sdk
+      .shutdown()
       .then(() => console.info('[OTel] SDK shut down'))
       .catch((err) => console.error('[OTel] SDK shutdown error', err));
   });
@@ -122,8 +127,10 @@ export interface Logger {
 
 export function createLogger(subsystem: SubsystemName): Logger {
   const log = (entry: LogEntry) => {
-    if (entry.level === 'error') console.error(`[${subsystem}]`, entry.message, entry.context ?? '');
-    else if (entry.level === 'warn') console.warn(`[${subsystem}]`, entry.message, entry.context ?? '');
+    if (entry.level === 'error')
+      console.error(`[${subsystem}]`, entry.message, entry.context ?? '');
+    else if (entry.level === 'warn')
+      console.warn(`[${subsystem}]`, entry.message, entry.context ?? '');
     else console.info(`[${subsystem}]`, entry.message, entry.context ?? '');
   };
   return {
@@ -149,7 +156,7 @@ export function initSentry(config: SentryConfig) {
     Sentry.init({
       dsn: config.dsn,
       environment: config.environment,
-      release: config.release,
+      ...(config.release !== undefined ? { release: config.release } : {}),
       tracesSampleRate: 0.1,
     });
   });

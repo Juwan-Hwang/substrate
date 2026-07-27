@@ -7,9 +7,21 @@
  *  - Lattice graph snapshots
  *  - Auth & user data (via Better Auth)
  */
+
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  vector,
+} from 'drizzle-orm/pg-core';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { pgTable, uuid, text, timestamp, integer, jsonb, vector, pgEnum } from 'drizzle-orm/pg-core';
 
 // ── Connection ───────────────────────────────────────────────────────
 
@@ -66,20 +78,32 @@ export const notes = pgTable('notes', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const experiments = pgTable('experiments', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  subsystem: subsystemEnum('subsystem').notNull(),
-  parameters: jsonb('parameters').notNull(),
-  result: jsonb('result'),
-  durationMs: integer('duration_ms'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+export const experiments = pgTable(
+  'experiments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    subsystem: subsystemEnum('subsystem').notNull(),
+    userId: text('user_id'),
+    parameters: jsonb('parameters').notNull(),
+    result: jsonb('result'),
+    durationMs: integer('duration_ms'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('experiments_user_id_idx').on(table.userId)],
+);
 
 export const graphSnapshots = pgTable('graph_snapshots', {
   id: uuid('id').primaryKey().defaultRandom(),
   subsystem: subsystemEnum('subsystem').default('lattice'),
   snapshot: jsonb('snapshot').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const newsletterSubscribers = pgTable('newsletter_subscribers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  confirmed: boolean('confirmed').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -91,36 +115,39 @@ export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
 export type Experiment = typeof experiments.$inferSelect;
 export type GraphSnapshot = typeof graphSnapshots.$inferSelect;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 
 // ── Turso / libSQL (edge READ-ONLY replica) ────────────────────────
 // Turso is a read-only projection of PostgreSQL. Writes go through
 // PostgreSQL only, then propagate to Turso via CDC / Queue.
 // See CONTRIBUTING.md for the full data-flow contract.
 
-export { createTursoReadReplica, createTursoReadClient } from './turso';
-export type { TursoConfig, ReadOnlyDrizzleDb } from './turso';
+export type { ReadOnlyDrizzleDb, TursoConfig } from './turso';
+export { createTursoReadClient, createTursoReadReplica } from './turso';
 
 // ── PostgreSQL Full-Text Search ─────────────────────────────────────
 
-export { ftsSearchSQL, ftsWeightedSearchSQL, FTS_INDEX_SQL } from './fts';
-export type { FTSResult, FTSQuery } from './fts';
+export type { FTSQuery, FTSResult } from './fts';
+export { FTS_INDEX_SQL, ftsSearchSQL, ftsWeightedSearchSQL } from './fts';
 
 // ── Drizzle-Zod schemas (auto-generated from table definitions) ─────
 
 export {
   insertArticleSchema,
-  insertProjectSchema,
-  insertNoteSchema,
   insertExperimentSchema,
   insertGraphSnapshotSchema,
-  selectArticleSchema,
-  selectProjectSchema,
-  selectNoteSchema,
-  selectExperimentSchema,
-  selectGraphSnapshotSchema,
-  updateArticleSchema,
-  updateProjectSchema,
-  updateNoteSchema,
+  insertNewsletterSubscriberSchema,
+  insertNoteSchema,
+  insertProjectSchema,
   listArticlesQuerySchema,
   listExperimentsQuerySchema,
+  selectArticleSchema,
+  selectExperimentSchema,
+  selectGraphSnapshotSchema,
+  selectNewsletterSubscriberSchema,
+  selectNoteSchema,
+  selectProjectSchema,
+  updateArticleSchema,
+  updateNoteSchema,
+  updateProjectSchema,
 } from './schemas';

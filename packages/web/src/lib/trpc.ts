@@ -6,10 +6,11 @@
  *
  * The server router is defined in @substrate/contracts and served at /api/trpc.
  */
-import { createTRPCReact } from '@trpc/react-query';
-import { httpBatchLink, loggerLink } from '@trpc/client';
+
 import type { AppRouter } from '@substrate/contracts';
 import { QueryClient } from '@tanstack/react-query';
+import { httpBatchLink, loggerLink } from '@trpc/client';
+import { createTRPCReact } from '@trpc/react-query';
 
 /**
  * tRPC React hook — use throughout the app:

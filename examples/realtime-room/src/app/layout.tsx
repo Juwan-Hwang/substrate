@@ -1,7 +1,8 @@
 /** Root layout — dark theme, Geist fonts. */
-import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans';
+
 import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font/sans';
+import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -11,7 +12,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
+      suppressHydrationWarning
+    >
       <body>{children}</body>
     </html>
   );

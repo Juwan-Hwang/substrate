@@ -5,7 +5,7 @@
  * This is the raw WGSL source string; substrate-wasm will compile and
  * dispatch it on the GPU compute pipeline.
  */
-export const GRAPH_LAYOUT_WGSL = /* wgsl */`
+export const GRAPH_LAYOUT_WGSL = /* wgsl */ `
 struct GraphNode {
   position: vec3<f32>,
   velocity: vec3<f32>,

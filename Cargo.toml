@@ -32,7 +32,7 @@ serde-wasm-bindgen = "0.6"
 wit-bindgen = "0.40"
 
 # WASI Preview 0.3 target (wasm32-wasip3) — native async I/O for server-side
-# WASM. Requires nightly Rust. Build with: pnpm wasm:wasip3
+# WASM. Requires nightly Rust. Build with: bun wasm:wasip3
 
 # Serialization
 serde = { version = "1.0.219", features = ["derive"] }

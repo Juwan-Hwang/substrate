@@ -2,9 +2,10 @@
  * @substrate/ui — React components ported from Zephyr.
  * Uses shadcn/ui patterns (cva + Radix Slot) for variant management.
  */
-import type { ReactNode, CSSProperties } from 'react';
+
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
+import type { CSSProperties, ReactNode } from 'react';
 
 export type PrimitiveProps = {
   children?: ReactNode;

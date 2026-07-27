@@ -57,13 +57,8 @@ export function toCitations(results: readonly SearchResult[]): Citation[] {
  * Build the RAG system prompt that grounds the model in retrieved
  * evidence and instructs it to cite sources with `[n]` markers.
  */
-export function buildRagPrompt(
-  question: string,
-  context: readonly SearchResult[],
-): string {
-  const sources = context
-    .map((r, i) => `[${i + 1}] ${r.title}\n${r.excerpt}`)
-    .join('\n\n');
+export function buildRagPrompt(_question: string, context: readonly SearchResult[]): string {
+  const sources = context.map((r, i) => `[${i + 1}] ${r.title}\n${r.excerpt}`).join('\n\n');
 
   return [
     'You are AI Archive, a retrieval-augmented assistant.',

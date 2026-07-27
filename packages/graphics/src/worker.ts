@@ -18,7 +18,7 @@
 
 /// <reference lib="webworker" />
 
-import type { KnowledgeGraph } from './index';
+import { createLayout, type KnowledgeGraph } from './index';
 
 type WorkerMessage =
   | { type: 'init'; graph: KnowledgeGraph }
@@ -37,7 +37,10 @@ self.addEventListener('message', async (e: MessageEvent<WorkerMessage>) => {
     switch (msg.type) {
       case 'init': {
         layoutEngine = await createLayout(msg.graph);
-        (self as unknown as Worker).postMessage({ type: 'ready', nodeCount: await layoutEngine.nodeCount() });
+        (self as unknown as Worker).postMessage({
+          type: 'ready',
+          nodeCount: await layoutEngine.nodeCount(),
+        });
         break;
       }
 

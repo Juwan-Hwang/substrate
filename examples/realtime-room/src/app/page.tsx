@@ -15,16 +15,27 @@ export default function HomePage() {
         <Link href="/room" className="room-card" style={{ display: 'block' }}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Enter Room</h2>
           <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Join a real-time collaboration space with live cursors, presence, and chat.
-            Backed by a Durable Object with WebSocket Hibernation.
+            Join a real-time collaboration space with live cursors, presence, and chat. Backed by a
+            Durable Object with WebSocket Hibernation.
           </p>
         </Link>
 
         <div className="room-card">
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem' }}>How it works</h2>
-          <ul style={{ paddingLeft: '1.25rem', fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.8 }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem' }}>
+            How it works
+          </h2>
+          <ul
+            style={{
+              paddingLeft: '1.25rem',
+              fontSize: '0.875rem',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.8,
+            }}
+          >
             <li>Each room is a Cloudflare Durable Object with single-threaded consistency.</li>
-            <li>Clients connect via WebSocket; the DO tracks presence and broadcasts cursor positions.</li>
+            <li>
+              Clients connect via WebSocket; the DO tracks presence and broadcasts cursor positions.
+            </li>
             <li>Chat messages are persisted in DO storage (last 100 retained).</li>
             <li>WebSocket Hibernation reduces costs when the room is idle.</li>
             <li>Without a backend, the room runs in simulation mode for local development.</li>
@@ -32,9 +43,18 @@ export default function HomePage() {
         </div>
 
         <div className="room-card">
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem' }}>Architecture</h2>
-          <pre style={{ fontSize: '0.75rem', fontFamily: 'var(--font-geist-mono), monospace', color: 'var(--text-secondary)', overflowX: 'auto' }}>
-{`Client (Browser)
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem' }}>
+            Architecture
+          </h2>
+          <pre
+            style={{
+              fontSize: '0.75rem',
+              fontFamily: 'var(--font-geist-mono), monospace',
+              color: 'var(--text-secondary)',
+              overflowX: 'auto',
+            }}
+          >
+            {`Client (Browser)
   │ WebSocket
   ▼
 Cloudflare Worker (Hono)

@@ -32,16 +32,28 @@ export default function HomePage() {
         </p>
       </header>
 
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+      <div
+        style={{
+          display: 'grid',
+          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+        }}
+      >
         {EXPERIMENTS.map((exp) => (
           <Link key={exp.href} href={exp.href} className="lab-card" style={{ display: 'block' }}>
             <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{exp.title}</h2>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+            <p
+              style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}
+            >
               {exp.desc}
             </p>
             <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
               {exp.tags.map((t) => (
-                <span key={t} className="lab-badge" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+                <span
+                  key={t}
+                  className="lab-badge"
+                  style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}
+                >
                   {t}
                 </span>
               ))}

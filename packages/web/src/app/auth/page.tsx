@@ -10,6 +10,7 @@ import { signIn, signUp } from '../../lib/auth';
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,7 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        await signUp.email({ email, password });
+        await signUp.email({ email, password, name });
       } else {
         await signIn.email({ email, password });
       }
@@ -54,6 +55,23 @@ export default function AuthPage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'signup' && (
+            <div>
+              <label htmlFor="name" className="mb-1 block text-sm font-medium text-text-primary">
+                Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full rounded-lg border border-border-default bg-bg-muted px-4 py-2 text-text-primary focus:border-accent focus:outline-none"
+                placeholder="Your name"
+              />
+            </div>
+          )}
+
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-text-primary">
               Email

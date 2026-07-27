@@ -25,17 +25,21 @@ type ChatMessage = {
   timestamp: number;
 };
 
-export class RoomDO extends DurableObject {
-  // Heartbeat: remove users that haven't sent a cursor in 30s.
-  private static readonly PRESENCE_TIMEOUT_MS = 30_000;
+/** Cloudflare extends WebSocket with attachment methods not in the DOM type. */
+type CFWebSocket = WebSocket & {
+  serializeAttachment(data: string): void;
+  deserializeAttachment(): unknown;
+};
 
-  async fetch(request: Request): Promise<Response> {
+export class RoomDO extends DurableObject {
+  override async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
     // WebSocket upgrade.
     if (request.headers.get('Upgrade') === 'websocket') {
       const pair = new WebSocketPair();
-      const [client, server] = pair;
+      const client = pair[0];
+      const server = pair[1];
       this.ctx.acceptWebSocket(server);
       return new Response(null, { status: 101, webSocket: client });
     }
@@ -43,14 +47,18 @@ export class RoomDO extends DurableObject {
     // REST: get current room state.
     if (url.pathname === '/state') {
       const state = await this.ctx.storage.get('roomState');
-      const messages = await this.ctx.storage.get('messages') ?? [];
-      return Response.json({ state: state ?? {}, messages, userCount: this.ctx.getWebSockets().length });
+      const messages = (await this.ctx.storage.get('messages')) ?? [];
+      return Response.json({
+        state: state ?? {},
+        messages,
+        userCount: this.ctx.getWebSockets().length,
+      });
     }
 
     return new Response('Not found', { status: 404 });
   }
 
-  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
+  override async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
     if (typeof message !== 'string') return;
 
     let data: { type: string; [key: string]: unknown };
@@ -60,18 +68,19 @@ export class RoomDO extends DurableObject {
       return;
     }
 
-    // Attach the WebSocket to the user for later lookup.
-    const tags = this.ctx.getWebSockets(ws);
-    let userId = tags.length > 0 ? (tags[0].deserialize() as string) : '';
+    // Retrieve the userId previously attached to this WebSocket.
+    const cfWs = ws as CFWebSocket;
+    let userId = (cfWs.deserializeAttachment() as string) ?? '';
 
     switch (data.type) {
       case 'join': {
-        userId = data.user.id as string;
-        ws.serialize(userId);
+        const user = data.user as { id: string } | undefined;
+        userId = user?.id ?? '';
+        cfWs.serializeAttachment(userId);
         await this.broadcastPresence();
         // Send sync message to the new client.
-        const state = await this.ctx.storage.get('roomState') ?? {};
-        const messages = await this.ctx.storage.get('messages') ?? [];
+        const state = (await this.ctx.storage.get('roomState')) ?? {};
+        const messages = (await this.ctx.storage.get('messages')) ?? [];
         const users = this.getPresenceUsers();
         ws.send(JSON.stringify({ type: 'sync', state, users, messages }));
         break;
@@ -91,7 +100,8 @@ export class RoomDO extends DurableObject {
           timestamp: Date.now(),
         };
         // Persist messages (keep last 100).
-        const messages = (await this.ctx.storage.get('messages') as ChatMessage[] | undefined) ?? [];
+        const messages =
+          ((await this.ctx.storage.get('messages')) as ChatMessage[] | undefined) ?? [];
         messages.push(msg);
         if (messages.length > 100) messages.shift();
         await this.ctx.storage.put('messages', messages);
@@ -101,7 +111,8 @@ export class RoomDO extends DurableObject {
 
       case 'state': {
         // Update shared room state.
-        const state = (await this.ctx.storage.get('roomState') as Record<string, unknown> | undefined) ?? {};
+        const state =
+          ((await this.ctx.storage.get('roomState')) as Record<string, unknown> | undefined) ?? {};
         state[data.key as string] = data.value;
         await this.ctx.storage.put('roomState', state);
         this.broadcast({ type: 'state', key: data.key, value: data.value });
@@ -110,11 +121,11 @@ export class RoomDO extends DurableObject {
     }
   }
 
-  async webSocketClose(ws: WebSocket): Promise<void> {
+  override async webSocketClose(_ws: WebSocket): Promise<void> {
     await this.broadcastPresence();
   }
 
-  async webSocketError(ws: WebSocket): Promise<void> {
+  override async webSocketError(ws: WebSocket): Promise<void> {
     ws.close();
   }
 
@@ -126,13 +137,9 @@ export class RoomDO extends DurableObject {
     const seen = new Set<string>();
 
     for (const ws of this.ctx.getWebSockets()) {
-      const tags = this.ctx.getWebSockets(ws);
-      if (tags.length === 0) continue;
-      const id = tags[0].deserialize() as string;
-      if (seen.has(id)) continue;
+      const id = (ws as CFWebSocket).deserializeAttachment() as string | null;
+      if (!id || seen.has(id)) continue;
       seen.add(id);
-      // We don't have name/color in the tag — in production, store
-      // a richer object. For now, return minimal presence.
       users.push({ id, name: 'Guest', color: '#7C8BA0', cursor: null, lastSeen: now });
     }
 
@@ -148,7 +155,11 @@ export class RoomDO extends DurableObject {
     const data = JSON.stringify(message);
     for (const ws of this.ctx.getWebSockets()) {
       if (ws === exclude) continue;
-      try { ws.send(data); } catch { /* socket may be closed */ }
+      try {
+        ws.send(data);
+      } catch {
+        /* socket may be closed */
+      }
     }
   }
 }

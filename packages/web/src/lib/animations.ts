@@ -31,15 +31,12 @@ let lenisInstance: Lenis | null = null;
  * }, []);
  * ```
  */
-export function initSmoothScroll(options?: {
-  duration?: number;
-  easing?: (t: number) => number;
-}) {
+export function initSmoothScroll(options?: { duration?: number; easing?: (t: number) => number }) {
   if (typeof window === 'undefined') return () => {};
 
   const lenis = new Lenis({
     duration: options?.duration ?? 1.2,
-    easing: options?.easing ?? ((t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t))),
+    easing: options?.easing ?? ((t: number) => Math.min(1, 1.001 - 2 ** (-10 * t))),
     smoothWheel: true,
   });
 
@@ -66,7 +63,10 @@ export function getLenis() {
 }
 
 /** Scroll to a target element or position smoothly. */
-export function scrollTo(target: string | number | HTMLElement, options?: { offset?: number; duration?: number }) {
+export function scrollTo(
+  target: string | number | HTMLElement,
+  options?: { offset?: number; duration?: number },
+) {
   lenisInstance?.scrollTo(target, {
     offset: options?.offset ?? 0,
     duration: options?.duration ?? 1.2,

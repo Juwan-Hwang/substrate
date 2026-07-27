@@ -9,6 +9,7 @@
     "build": "tsc --noEmit",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {

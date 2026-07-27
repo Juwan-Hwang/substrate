@@ -4,10 +4,11 @@
  * The CSS variables for the fonts are emitted by `geist/font` and
  * consumed by the `@theme` block in `globals.css`.
  */
+
+import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font/sans';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
 import { Nav } from './nav';
 import './globals.css';
 

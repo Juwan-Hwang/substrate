@@ -4,7 +4,11 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "main": "./build/css/variables.css",
-  "files": ["build/**", "src/**", "config.mjs"],
+  "files": [
+    "build/**",
+    "src/**",
+    "config.mjs"
+  ],
   "scripts": {
     "build": "style-dictionary build --config config.mjs",
     "clean": "rm -rf build .turbo"

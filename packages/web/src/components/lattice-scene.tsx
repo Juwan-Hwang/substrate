@@ -8,14 +8,20 @@
  */
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  detectRendererTier,
   createLayout,
-  loadWasm,
+  detectRendererTier,
   type KnowledgeGraph,
   type RendererTier,
 } from '@substrate/graphics';
+import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+// Dynamically import the 3D scene (ssr: false — Three.js is client-only).
+const GraphScene3D = dynamic(() => import('@substrate/graphics').then((m) => m.GraphScene3D), {
+  ssr: false,
+  loading: () => null,
+});
 
 // ── Demo graph data ─────────────────────────────────────────────────
 
@@ -56,7 +62,6 @@ const DEMO_GRAPH: KnowledgeGraph = {
 // ── Component ───────────────────────────────────────────────────────
 
 export function LatticeScene() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [tier, setTier] = useState<RendererTier>('static');
   const [fps, setFps] = useState(0);
   const [layoutType, setLayoutType] = useState<'gpu' | 'cpu' | 'init'>('init');
@@ -141,6 +146,14 @@ export function LatticeScene() {
     );
   }
 
+  // Convert 2D positions to 3D for the R3F scene.
+  const positions3D = new Map<string, [number, number, number]>();
+  for (const [id, [x, y]] of nodePositions) {
+    positions3D.set(id, [x, y, 0]);
+  }
+
+  const use3D = tier === 'webgpu' || tier === 'webgl2';
+
   return (
     <div className="mt-12">
       {/* Renderer info bar */}
@@ -155,22 +168,14 @@ export function LatticeScene() {
         <span className="text-text-secondary">{DEMO_GRAPH.nodes.length} nodes</span>
       </div>
 
-      {/* Canvas — R3F would mount here when graphics: true.
-          For now, render a 2D canvas with live positions. */}
-      <canvas
-        ref={canvasRef}
-        className="h-[600px] w-full aevum-glass-card"
-        width={1200}
-        height={600}
-      />
-
-      {/* SVG overlay with live node positions */}
-      <LiveGraph
-        graph={DEMO_GRAPH}
-        positions={nodePositions}
-        width={1200}
-        height={600}
-      />
+      {/* 3D R3F canvas (WebGPU/WebGL2) or 2D SVG fallback (canvas/static) */}
+      <div className="h-[600px] w-full aevum-glass-card overflow-hidden">
+        {use3D && nodePositions.size > 0 ? (
+          <GraphScene3D graph={DEMO_GRAPH} positions={positions3D} />
+        ) : (
+          <LiveGraph graph={DEMO_GRAPH} positions={nodePositions} width={1200} height={600} />
+        )}
+      </div>
     </div>
   );
 }
@@ -202,8 +207,9 @@ function LiveGraph({
       viewBox={`0 0 ${width} ${height}`}
       style={{ pointerEvents: 'none' }}
     >
+      <title>Live knowledge graph</title>
       {/* Edges */}
-      {graph.edges.map((edge, i) => {
+      {graph.edges.map((edge) => {
         const src = positions.get(edge.source);
         const tgt = positions.get(edge.target);
         if (!src || !tgt) return null;
@@ -211,7 +217,7 @@ function LiveGraph({
         const [tx, ty] = project(tgt[0], tgt[1]);
         return (
           <line
-            key={`edge-${i}`}
+            key={`${edge.source}-${edge.target}`}
             x1={sx}
             y1={sy}
             x2={tx}
@@ -259,6 +265,7 @@ function LiveGraph({
 function StaticGraph({ graph }: { graph: KnowledgeGraph }) {
   return (
     <svg viewBox="0 0 800 400" className="mt-4 h-[400px] w-full">
+      <title>Static graph fallback</title>
       {graph.nodes.map((node, i) => {
         const angle = (i / graph.nodes.length) * Math.PI * 2;
         const x = 400 + Math.cos(angle) * 150;
@@ -272,7 +279,7 @@ function StaticGraph({ graph }: { graph: KnowledgeGraph }) {
           </g>
         );
       })}
-      {graph.edges.map((edge, i) => {
+      {graph.edges.map((edge) => {
         const srcIdx = graph.nodes.findIndex((n) => n.id === edge.source);
         const tgtIdx = graph.nodes.findIndex((n) => n.id === edge.target);
         if (srcIdx < 0 || tgtIdx < 0) return null;
@@ -280,7 +287,7 @@ function StaticGraph({ graph }: { graph: KnowledgeGraph }) {
         const tAngle = (tgtIdx / graph.nodes.length) * Math.PI * 2;
         return (
           <line
-            key={`s-edge-${i}`}
+            key={`${edge.source}-${edge.target}`}
             x1={400 + Math.cos(sAngle) * 150}
             y1={200 + Math.sin(sAngle) * 100}
             x2={400 + Math.cos(tAngle) * 150}

@@ -1,16 +1,17 @@
 /**
  * @substrate/config — Shared configuration: feature manifest, tsconfig, biome.
  */
+
+export type { FeatureManifest } from './features';
 export {
-  featureManifestSchema,
-  minimalSiteFeatures,
-  graphicsLabFeatures,
   aiArchiveFeatures,
-  realtimeRoomFeatures,
-  fullPlatformFeatures,
-  initFeatures,
+  featureManifestSchema,
   features,
+  fullPlatformFeatures,
+  graphicsLabFeatures,
+  initFeatures,
   isEnabled,
+  minimalSiteFeatures,
+  realtimeRoomFeatures,
   validateEnv,
 } from './features';
-export type { FeatureManifest } from './features';

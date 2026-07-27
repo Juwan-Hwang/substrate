@@ -1,9 +1,9 @@
 /**
  * Tests for graphics-lab: renderer tier detection and demo graph validity.
  */
-import { describe, it, expect } from 'vitest';
+
 import { detectRendererTier } from '@substrate/graphics';
-import type { KnowledgeGraph } from '@substrate/graphics';
+import { describe, expect, it } from 'vitest';
 import { demoGraph } from '../lib/demo-graph';
 
 describe('detectRendererTier', () => {
@@ -24,7 +24,9 @@ describe('demoGraph data integrity', () => {
   it('has valid positions (3-element arrays)', () => {
     for (const node of demoGraph.nodes) {
       expect(node.position).toHaveLength(3);
-      node.position.forEach((v) => expect(typeof v).toBe('number'));
+      node.position.forEach((v) => {
+        expect(typeof v).toBe('number');
+      });
     }
   });
 

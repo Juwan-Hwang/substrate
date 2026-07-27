@@ -24,7 +24,9 @@ export default function ArchivePage() {
     <main className="container" style={{ paddingBlock: '4rem 2rem' }}>
       <header style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2rem', margin: 0 }}>Archive</h1>
-        <p className="muted" style={{ margin: '0.5rem 0 0' }}>Search every article, instantly.</p>
+        <p className="muted" style={{ margin: '0.5rem 0 0' }}>
+          Search every article, instantly.
+        </p>
       </header>
 
       <SearchBox docs={docs} />

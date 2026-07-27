@@ -7,4 +7,4 @@ profile = "default"
 # WASI Preview 0.3 (wasm32-wasip3) requires nightly — install on demand:
 #   rustup toolchain install nightly
 #   rustup target add wasm32-wasip3 --toolchain nightly
-# Then build with: pnpm wasm:wasip3
+# Then build with: bun wasm:wasip3

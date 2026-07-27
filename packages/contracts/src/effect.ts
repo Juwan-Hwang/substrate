@@ -8,7 +8,7 @@
  *
  * Effects are run via `Effect.runPromise` in Server Actions / edge handlers.
  */
-import { Effect, Context, Layer, pipe } from 'effect';
+import { Context, Effect, Layer, pipe } from 'effect';
 
 // ── Service Tags ────────────────────────────────────────────────────
 
@@ -18,7 +18,9 @@ export interface DatabaseService {
   insert<T>(table: string, data: Record<string, unknown>): Promise<T>;
 }
 
-export const DatabaseService = Context.GenericTag<DatabaseService>('@substrate/contracts/DatabaseService');
+export const DatabaseService = Context.GenericTag<DatabaseService>(
+  '@substrate/contracts/DatabaseService',
+);
 
 export interface LoggerService {
   readonly _tag: 'LoggerService';
@@ -28,7 +30,9 @@ export interface LoggerService {
   metric(name: string, value: number, tags?: Record<string, string>): void;
 }
 
-export const LoggerService = Context.GenericTag<LoggerService>('@substrate/contracts/LoggerService');
+export const LoggerService = Context.GenericTag<LoggerService>(
+  '@substrate/contracts/LoggerService',
+);
 
 export interface AIService {
   readonly _tag: 'AIService';
@@ -42,17 +46,32 @@ export const AIService = Context.GenericTag<AIService>('@substrate/contracts/AIS
 
 export class DatabaseError {
   readonly _tag = 'DatabaseError';
-  constructor(readonly cause: unknown, readonly query?: string) {}
+  readonly cause: unknown;
+  readonly query?: string | undefined;
+  constructor(cause: unknown, query?: string) {
+    this.cause = cause;
+    this.query = query;
+  }
 }
 
 export class ValidationError {
   readonly _tag = 'ValidationError';
-  constructor(readonly field: string, readonly message: string) {}
+  readonly field: string;
+  readonly message: string;
+  constructor(field: string, message: string) {
+    this.field = field;
+    this.message = message;
+  }
 }
 
 export class NotFoundError {
   readonly _tag = 'NotFoundError';
-  constructor(readonly resource: string, readonly id: string) {}
+  readonly resource: string;
+  readonly id: string;
+  constructor(resource: string, id: string) {
+    this.resource = resource;
+    this.id = id;
+  }
 }
 
 // ── Effect programs ─────────────────────────────────────────────────
@@ -70,7 +89,8 @@ export const fetchArticleBySlug = (slug: string) =>
       const logger = yield* LoggerService;
       logger.info('Fetching article', { slug });
       const rows = yield* Effect.tryPromise({
-        try: () => db.query('SELECT * FROM articles WHERE slug = $1 AND status = $2', [slug, 'published']),
+        try: () =>
+          db.query('SELECT * FROM articles WHERE slug = $1 AND status = $2', [slug, 'published']),
         catch: (e) => new DatabaseError(e, 'SELECT articles'),
       });
       if (!rows.length) {
@@ -175,5 +195,7 @@ export async function runEffect<A, E>(
     layers.logger ?? ConsoleLoggerLayer,
     layers.ai ?? ConsoleLoggerLayer,
   );
-  return Effect.runPromise(program.pipe(Effect.provide(allLayers))) as Promise<A>;
+  const provided = program.pipe(Effect.provide(allLayers));
+  // biome-ignore lint/suspicious/noExplicitAny: mergeAll can't infer union when fallbacks differ
+  return Effect.runPromise(provided as any) as Promise<A>;
 }

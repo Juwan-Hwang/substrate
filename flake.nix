@@ -19,7 +19,6 @@
         };
 
         nodejs = pkgs.nodejs_22;
-        pnpm = pkgs.nodePackages.pnpm;
         bun = pkgs.bun;
 
       in
@@ -28,7 +27,6 @@
           buildInputs = [
             rustToolchain
             nodejs
-            pnpm
             bun
             pkgs.wasm-pack
             pkgs.cargo-watch
@@ -42,19 +40,31 @@
           shellHook = ''
             echo "🜂 Substrate devshell — Aevum"
             echo "  Node:  $(node --version)"
-            echo "  pnpm:  $(pnpm --version)"
             echo "  Bun:   $(bun --version)"
             echo "  Rust:  $(rustc --version)"
             echo "  WASM:  wasm-pack $(wasm-pack --version)"
           '';
         };
 
+        # Docker image for CI/CD — Bun runtime with the built application.
+        # Usage: nix build .#dockerImage
         packages.dockerImage = pkgs.dockerTools.buildImage {
           name = "substrate";
           tag = "latest";
+          copyToRoot = pkgs.buildEnv {
+            name = "image-root";
+            paths = [ bun nodejs ];
+            pathsToLink = [ "/bin" ];
+          };
           config = {
-            Cmd = [ "${nodejs}/bin/node" "--version" ];
+            Cmd = [ "${bun}/bin/bun" "run" "start" ];
+            WorkingDir = "/app";
+            ExposedPorts = { "3000/tcp" = {}; };
+            Env = [
+              "NODE_ENV=production"
+              "PORT=3000"
+            ];
           };
         };
-      };
+      });
 }

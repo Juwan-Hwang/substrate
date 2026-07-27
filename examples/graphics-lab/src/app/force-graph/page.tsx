@@ -8,13 +8,13 @@
  */
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  detectRendererTier,
   createLayout,
+  detectRendererTier,
   type KnowledgeGraph,
   type RendererTier,
 } from '@substrate/graphics';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { demoGraph } from '../../lib/demo-graph';
 
 export default function ForceGraphScene() {
@@ -84,7 +84,9 @@ export default function ForceGraphScene() {
 
   useEffect(() => {
     initLayout();
-    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+    return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+    };
   }, [initLayout]);
 
   // ── Project positions to screen ──────────────────────────────────
@@ -117,7 +119,15 @@ export default function ForceGraphScene() {
   return (
     <div style={{ marginTop: '1.5rem' }}>
       {/* Info bar */}
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '1rem',
+          alignItems: 'center',
+          marginBottom: '0.75rem',
+          fontSize: '0.875rem',
+        }}
+      >
         <span className="lab-badge" style={{ background: tierColor[tier], color: '#000' }}>
           {tier.toUpperCase()}
         </span>
@@ -129,7 +139,15 @@ export default function ForceGraphScene() {
       </div>
 
       {/* Controls */}
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '1rem',
+          alignItems: 'center',
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+        }}
+      >
         <button
           type="button"
           className={`lab-btn ${running ? 'active' : ''}`}
@@ -137,7 +155,15 @@ export default function ForceGraphScene() {
         >
           {running ? 'Pause' : 'Play'}
         </button>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.8rem',
+            color: 'var(--text-secondary)',
+          }}
+        >
           Speed
           <input
             type="range"
@@ -151,8 +177,20 @@ export default function ForceGraphScene() {
           />
           {dt.toFixed(2)}
         </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-          <input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.8rem',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showLabels}
+            onChange={(e) => setShowLabels(e.target.checked)}
+          />
           Labels
         </label>
       </div>
@@ -160,18 +198,32 @@ export default function ForceGraphScene() {
       {/* SVG canvas */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        style={{ width: '100%', height: H, background: 'var(--bg-secondary)', borderRadius: 12, border: '1px solid var(--border-primary)' }}
+        style={{
+          width: '100%',
+          height: H,
+          background: 'var(--bg-secondary)',
+          borderRadius: 12,
+          border: '1px solid var(--border-primary)',
+        }}
       >
+        <title>Force-directed graph</title>
         {/* Edges */}
-        {demoGraph.edges.map((edge, i) => {
+        {demoGraph.edges.map((edge) => {
           const src = positions.get(edge.source);
           const tgt = positions.get(edge.target);
           if (!src || !tgt) return null;
           const [sx, sy] = project(src[0], src[1]);
           const [tx, ty] = project(tgt[0], tgt[1]);
           return (
-            <line key={`e${i}`} x1={sx} y1={sy} x2={tx} y2={ty}
-              stroke="var(--accent-dim)" strokeWidth={1} />
+            <line
+              key={`${edge.source}-${edge.target}`}
+              x1={sx}
+              y1={sy}
+              x2={tx}
+              y2={ty}
+              stroke="var(--accent-dim)"
+              strokeWidth={1}
+            />
           );
         })}
         {/* Nodes */}
@@ -182,13 +234,24 @@ export default function ForceGraphScene() {
           const r = (node.weight ?? 1) * 6;
           return (
             <g key={node.id}>
-              <circle cx={x} cy={y} r={r}
-                fill="var(--accent)" fillOpacity={0.7}
-                stroke="rgba(255,255,255,0.15)" strokeWidth={1} />
+              <circle
+                cx={x}
+                cy={y}
+                r={r}
+                fill="var(--accent)"
+                fillOpacity={0.7}
+                stroke="rgba(255,255,255,0.15)"
+                strokeWidth={1}
+              />
               {showLabels && (
-                <text x={x} y={y - r - 4} textAnchor="middle"
-                  fill="var(--text-secondary)" fontSize={10}
-                  fontFamily="var(--font-geist-mono), monospace">
+                <text
+                  x={x}
+                  y={y - r - 4}
+                  textAnchor="middle"
+                  fill="var(--text-secondary)"
+                  fontSize={10}
+                  fontFamily="var(--font-geist-mono), monospace"
+                >
                   {node.label}
                 </text>
               )}
@@ -202,7 +265,10 @@ export default function ForceGraphScene() {
 
 /** Static SVG fallback — circular layout, no WASM. */
 function StaticGraph({
-  graph, width, height, project,
+  graph,
+  width,
+  height,
+  project,
 }: {
   graph: KnowledgeGraph;
   width: number;
@@ -218,16 +284,28 @@ function StaticGraph({
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height, marginTop: '1rem' }}>
-      {graph.edges.map((edge, i) => {
+      <title>Static graph fallback</title>
+      {graph.edges.map((edge) => {
         const s = staticPos.get(edge.source);
         const t = staticPos.get(edge.target);
         if (!s || !t) return null;
         const [sx, sy] = project(s[0], s[1]);
         const [tx, ty] = project(t[0], t[1]);
-        return <line key={`se${i}`} x1={sx} y1={sy} x2={tx} y2={ty} stroke="var(--accent-dim)" strokeWidth={1} />;
+        return (
+          <line
+            key={`${edge.source}-${edge.target}`}
+            x1={sx}
+            y1={sy}
+            x2={tx}
+            y2={ty}
+            stroke="var(--accent-dim)"
+            strokeWidth={1}
+          />
+        );
       })}
       {graph.nodes.map((node) => {
-        const pos = staticPos.get(node.id)!;
+        const pos = staticPos.get(node.id);
+        if (!pos) return null;
         const [x, y] = project(pos[0], pos[1]);
         return (
           <g key={node.id}>

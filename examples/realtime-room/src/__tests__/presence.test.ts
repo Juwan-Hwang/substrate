@@ -1,8 +1,8 @@
 /**
  * Tests for presence protocol utilities.
  */
-import { describe, it, expect } from 'vitest';
-import { generateUserId, pickColor, generateGuestName } from '../lib/presence';
+import { describe, expect, it } from 'vitest';
+import { generateGuestName, generateUserId, pickColor } from '../lib/presence';
 
 describe('generateUserId', () => {
   it('produces a unique string each call', () => {

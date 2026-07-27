@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Button, GlassCard, Badge, Switch, Box, Stack } from '../components';
+import { Badge, Box, Button, GlassCard, Stack, Switch } from '../components';
 
 const meta: Meta = {
   title: 'Components',
@@ -31,7 +31,11 @@ export const ButtonSuccess: StoryObj = {
 };
 
 export const ButtonBusy: StoryObj = {
-  render: () => <Button variant="primary" busy>Busy Button</Button>,
+  render: () => (
+    <Button variant="primary" busy>
+      Busy Button
+    </Button>
+  ),
 };
 
 // ── GlassCard ───────────────────────────────────────────────────────

@@ -5,11 +5,11 @@
  */
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useActionState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { subscribeNewsletter, type NewsletterState } from '../app/actions/newsletter';
+import { type NewsletterState, subscribeNewsletter } from '../app/actions/newsletter';
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -52,9 +52,7 @@ export function NewsletterForm() {
       {state.ok && state.message && (
         <span className="self-center text-sm text-success">{state.message}</span>
       )}
-      {state.error && (
-        <span className="self-center text-sm text-danger">{state.error}</span>
-      )}
+      {state.error && <span className="self-center text-sm text-danger">{state.error}</span>}
       {errors.email && !state.error && (
         <span className="self-center text-sm text-danger">{errors.email.message}</span>
       )}

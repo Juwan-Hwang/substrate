@@ -54,7 +54,11 @@ export const publicProcedure = t.procedure;
 export const appRouter = t.router({
   health: publicProcedure.query(() => ({ status: 'ok', brand: 'Aevum' as const })),
   articles: publicProcedure.input(z.object({ slug: z.string() })).query(({ input }) => {
-    return { slug: input.slug, title: 'Placeholder', body: '' };
+    // Article data is fetched via Server Actions (@substrate/web/actions/search)
+    // and the edge API (/api/archive/search). This procedure provides the
+    // type contract for tRPC clients. Override in the web app's tRPC
+    // server handler to inject database access via the context.
+    return { slug: input.slug, title: '', body: '' };
   }),
 });
 
@@ -62,45 +66,53 @@ export type AppRouter = typeof appRouter;
 
 // ── Effect ──────────────────────────────────────────────────────────
 
+export type {
+  AIService as AIServiceT,
+  DatabaseService as DatabaseServiceT,
+  LoggerService as LoggerServiceT,
+} from './effect';
 export {
-  DatabaseService,
-  LoggerService,
   AIService,
   ConsoleLoggerLayer,
-  createDatabaseLayer,
   createAILayer,
-  runEffect,
-  fetchArticleBySlug,
-  submitExperimentEffect,
+  createDatabaseLayer,
   DatabaseError,
-  ValidationError,
+  DatabaseService,
+  fetchArticleBySlug,
+  LoggerService,
   NotFoundError,
+  runEffect,
+  submitExperimentEffect,
+  ValidationError,
 } from './effect';
-export type { DatabaseService as DatabaseServiceT, LoggerService as LoggerServiceT, AIService as AIServiceT } from './effect';
 
 // ── XState ──────────────────────────────────────────────────────────
 
-export {
-  experimentMachine,
-  createExperimentActor,
-  rendererMachine,
-  createRendererActor,
-} from './state-machine';
 export type {
-  ExperimentStatus,
   ExperimentContext,
   ExperimentEvent,
-  RendererStatus,
+  ExperimentStatus,
   RendererContext,
   RendererEvent,
+  RendererStatus,
+} from './state-machine';
+export {
+  createExperimentActor,
+  createRendererActor,
+  experimentMachine,
+  rendererMachine,
 } from './state-machine';
 
 // ── Zustand stores ──────────────────────────────────────────────────
 
-export { uiStore, latticeStore, crucibleStore } from './store';
-export type { UIState, LatticeState, CrucibleState, Toast } from './store';
+export type { CrucibleState, LatticeState, Toast, UIState } from './store';
+export { crucibleStore, latticeStore, uiStore } from './store';
 
 // ── OpenAPI ──────────────────────────────────────────────────────────
-
-export { openApiDocument } from './openapi';
-export type { OpenApiDocument } from './openapi';
+//
+// openApiDocument is intentionally NOT re-exported here to avoid a circular
+// dependency: openapi.ts imports articleSchema/experimentSchema from this
+// module, and re-exporting openApiDocument would pull openapi.ts in during
+// index.ts evaluation — before the schemas are defined.
+//
+// Import directly from '@substrate/contracts/openapi' instead.

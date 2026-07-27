@@ -13,6 +13,33 @@ Aevum
 └─ Archive     # articles / projects / notes
 ```
 
+## Quick Start
+
+Requires [Bun](https://bun.sh) `>= 1.3.14` and [Node.js](https://nodejs.org) `>= 22.0.0`. A [Rust toolchain](https://rustup.rs) is optional — only needed for WASM builds.
+
+```bash
+# Install dependencies
+bun install
+
+# Create your local env file and fill in the required vars
+cp .env.example .env.local
+
+# Start the dev server (runs all packages via turbo)
+bun dev
+
+# Build everything
+bun build
+
+# Run tests
+bun test
+
+# Lint
+bun lint
+
+# Build WASM bindings (requires the Rust toolchain)
+bun wasm:build
+```
+
 ## Structure
 
 ```
@@ -35,7 +62,7 @@ substrate/
 │  ├─ core/                   # substrate-core    — Rust core library
 │  └─ wasm/                   # substrate-wasm    — Rust → WASM bindings
 ├─ package.json
-├─ pnpm-workspace.yaml
+├─ bun.lock
 ├─ turbo.json
 ├─ Cargo.toml
 └─ rust-toolchain.toml

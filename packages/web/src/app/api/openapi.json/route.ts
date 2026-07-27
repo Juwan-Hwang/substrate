@@ -3,7 +3,7 @@
  *
  * Accessible at /api/openapi.json for Swagger UI, Scalar, or client generation.
  */
-import { openApiDocument } from '@substrate/contracts';
+import { openApiDocument } from '@substrate/contracts/openapi';
 
 export const dynamic = 'force-static';
 

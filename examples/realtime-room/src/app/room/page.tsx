@@ -10,13 +10,13 @@
  */
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  generateUserId,
-  generateGuestName,
-  pickColor,
-  type PresenceUser,
   type ChatMessage,
+  generateGuestName,
+  generateUserId,
+  type PresenceUser,
+  pickColor,
 } from '../../lib/presence';
 
 export default function RoomPage() {
@@ -56,14 +56,16 @@ export default function RoomPage() {
 
     ws.onopen = () => {
       setConnected(true);
-      ws.send(JSON.stringify({
-        type: 'join',
-        user: {
-          id: userIdRef.current,
-          name: myName,
-          color: pickColor(userIdRef.current),
-        },
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'join',
+          user: {
+            id: userIdRef.current,
+            name: myName,
+            color: pickColor(userIdRef.current),
+          },
+        }),
+      );
     };
 
     ws.onmessage = (e) => {
@@ -94,17 +96,36 @@ export default function RoomPage() {
 
     ws.onclose = () => setConnected(false);
     ws.onerror = () => setConnected(false);
-  }, [myName]);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: simulatePresence closes over stable setState refs
+  }, [myName, simulatePresence]);
 
   // Simulation mode — fake presence for local dev.
   function simulatePresence() {
     const fakeUsers: PresenceUser[] = [
-      { id: 'bot-1', name: 'Cosmic Fox', color: '#5B8DB8', cursor: { x: 200, y: 150 }, lastSeen: Date.now() },
-      { id: 'bot-2', name: 'Quantum Owl', color: '#6B8E6B', cursor: { x: 400, y: 300 }, lastSeen: Date.now() },
-      { id: 'bot-3', name: 'Stellar Wolf', color: '#9B7B9B', cursor: { x: 600, y: 200 }, lastSeen: Date.now() },
+      {
+        id: 'bot-1',
+        name: 'Cosmic Fox',
+        color: '#5B8DB8',
+        cursor: { x: 200, y: 150 },
+        lastSeen: Date.now(),
+      },
+      {
+        id: 'bot-2',
+        name: 'Quantum Owl',
+        color: '#6B8E6B',
+        cursor: { x: 400, y: 300 },
+        lastSeen: Date.now(),
+      },
+      {
+        id: 'bot-3',
+        name: 'Stellar Wolf',
+        color: '#9B7B9B',
+        cursor: { x: 600, y: 200 },
+        lastSeen: Date.now(),
+      },
     ];
     setUsers(fakeUsers);
-    setCursors(new Map(fakeUsers.map((u) => [u.id, u.cursor!])));
+    setCursors(new Map(fakeUsers.map((u) => [u.id, u.cursor ?? { x: 0, y: 0 }])));
 
     // Simulate cursor movement.
     const interval = setInterval(() => {
@@ -164,7 +185,14 @@ export default function RoomPage() {
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '3rem 1.5rem' }}>
-      <header style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header
+        style={{
+          marginBottom: '1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 700 }}>Realtime Room</h1>
           <p style={{ marginTop: '0.25rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
@@ -182,7 +210,14 @@ export default function RoomPage() {
             {connected ? 'Connected' : 'Offline'}
           </span>
           {!joined && connected && (
-            <button type="button" className="room-btn" onClick={() => { setJoined(true); connect(); }}>
+            <button
+              type="button"
+              className="room-btn"
+              onClick={() => {
+                setJoined(true);
+                connect();
+              }}
+            >
               Join Room
             </button>
           )}
@@ -192,8 +227,11 @@ export default function RoomPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1rem' }}>
         {/* Collaboration canvas */}
         <div>
+          {/* biome-ignore lint/a11y/useSemanticElements: canvas area tracks pointer movement, not a button action */}
           <div
             ref={canvasRef}
+            role="button"
+            tabIndex={0}
             onMouseMove={joined ? handleMouseMove : undefined}
             style={{
               position: 'relative',
@@ -207,63 +245,84 @@ export default function RoomPage() {
             }}
           >
             {/* Remote cursors */}
-            {joined && [...cursors.entries()].map(([uid, pos]) => {
-              if (uid === userIdRef.current) return null;
-              const user = users.find((u) => u.id === uid);
-              const color = user?.color ?? '#7C8BA0';
-              const name = user?.name ?? 'Unknown';
-              return (
-                <div
-                  key={uid}
-                  style={{
-                    position: 'absolute',
-                    left: `${(pos.x / 800) * 100}%`,
-                    top: `${(pos.y / 500) * 100}%`,
-                    transform: 'translate(-2px, -2px)',
-                    transition: 'left 0.1s, top 0.1s',
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20">
-                    <path d="M2 2 L18 10 L10 12 L8 18 Z" fill={color} stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
-                  </svg>
-                  <span
+            {joined &&
+              [...cursors.entries()].map(([uid, pos]) => {
+                if (uid === userIdRef.current) return null;
+                const user = users.find((u) => u.id === uid);
+                const color = user?.color ?? '#7C8BA0';
+                const name = user?.name ?? 'Unknown';
+                return (
+                  <div
+                    key={uid}
                     style={{
-                      display: 'inline-block',
-                      marginLeft: 12,
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      background: color,
-                      color: '#000',
-                      fontSize: 10,
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
+                      position: 'absolute',
+                      left: `${(pos.x / 800) * 100}%`,
+                      top: `${(pos.y / 500) * 100}%`,
+                      transform: 'translate(-2px, -2px)',
+                      transition: 'left 0.1s, top 0.1s',
                     }}
                   >
-                    {name}
-                  </span>
-                </div>
-              );
-            })}
+                    <svg width="20" height="20" viewBox="0 0 20 20">
+                      <title>Remote cursor</title>
+                      <path
+                        d="M2 2 L18 10 L10 12 L8 18 Z"
+                        fill={color}
+                        stroke="rgba(255,255,255,0.3)"
+                        strokeWidth="0.5"
+                      />
+                    </svg>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        marginLeft: 12,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        background: color,
+                        color: '#000',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {name}
+                    </span>
+                  </div>
+                );
+              })}
 
             {/* My cursor */}
             {joined && cursors.has(userIdRef.current) && (
               <div
                 style={{
                   position: 'absolute',
-                  left: `${(cursors.get(userIdRef.current)!.x / 800) * 100}%`,
-                  top: `${(cursors.get(userIdRef.current)!.y / 500) * 100}%`,
+                  left: `${((cursors.get(userIdRef.current)?.x ?? 0) / 800) * 100}%`,
+                  top: `${((cursors.get(userIdRef.current)?.y ?? 0) / 500) * 100}%`,
                   transform: 'translate(-2px, -2px)',
                 }}
               >
                 <svg width="20" height="20" viewBox="0 0 20 20">
-                  <path d="M2 2 L18 10 L10 12 L8 18 Z" fill={myColor} stroke="rgba(255,255,255,0.5)" strokeWidth="0.5" />
+                  <title>My cursor</title>
+                  <path
+                    d="M2 2 L18 10 L10 12 L8 18 Z"
+                    fill={myColor}
+                    stroke="rgba(255,255,255,0.5)"
+                    strokeWidth="0.5"
+                  />
                 </svg>
               </div>
             )}
 
             {/* Empty state */}
             {!joined && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
                   Click "Join Room" to enter the collaboration space.
                 </p>
@@ -273,16 +332,34 @@ export default function RoomPage() {
 
           {/* Chat */}
           <div className="room-card" style={{ marginTop: '1rem' }}>
-            <h3 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>Chat</h3>
+            <h3
+              style={{
+                fontSize: '0.9rem',
+                marginBottom: '0.75rem',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Chat
+            </h3>
             <div style={{ maxHeight: 200, overflowY: 'auto', marginBottom: '0.75rem' }}>
               {messages.length === 0 ? (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>No messages yet.</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
+                  No messages yet.
+                </p>
               ) : (
-                messages.map((msg, i) => (
-                  <div key={i} style={{ marginBottom: '0.5rem', fontSize: '0.8rem' }}>
-                    <span style={{ color: pickColor(msg.userId), fontWeight: 600 }}>{msg.userName}:</span>{' '}
+                messages.map((msg) => (
+                  <div key={msg.timestamp} style={{ marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+                    <span style={{ color: pickColor(msg.userId), fontWeight: 600 }}>
+                      {msg.userName}:
+                    </span>{' '}
                     <span style={{ color: 'var(--text-primary)' }}>{msg.text}</span>
-                    <span style={{ marginLeft: '0.5rem', color: 'var(--text-tertiary)', fontSize: '0.7rem' }}>
+                    <span
+                      style={{
+                        marginLeft: '0.5rem',
+                        color: 'var(--text-tertiary)',
+                        fontSize: '0.7rem',
+                      }}
+                    >
                       {new Date(msg.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
@@ -294,12 +371,19 @@ export default function RoomPage() {
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') sendChat(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') sendChat();
+                }}
                 placeholder={joined ? 'Type a message…' : 'Join the room to chat'}
                 disabled={!joined}
                 className="room-input"
               />
-              <button type="button" className="room-btn" onClick={sendChat} disabled={!joined || !chatInput.trim()}>
+              <button
+                type="button"
+                className="room-btn"
+                onClick={sendChat}
+                disabled={!joined || !chatInput.trim()}
+              >
                 Send
               </button>
             </div>
@@ -308,30 +392,66 @@ export default function RoomPage() {
 
         {/* Presence sidebar */}
         <div className="room-card">
-          <h3 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}>
+          <h3
+            style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: 'var(--text-secondary)' }}
+          >
             Presence ({joined ? users.length + 1 : users.length})
           </h3>
           <ul style={{ listStyle: 'none' }}>
             {/* Me */}
             {joined && (
-              <li style={{ display: 'flex', alignItems: 'center', padding: '0.5rem 0', fontSize: '0.875rem' }}>
+              <li
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.5rem 0',
+                  fontSize: '0.875rem',
+                }}
+              >
                 <span className="presence-dot" style={{ background: myColor }} />
                 <span>{myName}</span>
-                <span className="room-badge" style={{ marginLeft: 'auto', background: 'var(--accent-dim)', color: 'var(--accent)' }}>You</span>
+                <span
+                  className="room-badge"
+                  style={{
+                    marginLeft: 'auto',
+                    background: 'var(--accent-dim)',
+                    color: 'var(--accent)',
+                  }}
+                >
+                  You
+                </span>
               </li>
             )}
             {/* Others */}
             {users.map((u) => (
-              <li key={u.id} style={{ display: 'flex', alignItems: 'center', padding: '0.5rem 0', fontSize: '0.875rem' }}>
+              <li
+                key={u.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.5rem 0',
+                  fontSize: '0.875rem',
+                }}
+              >
                 <span className="presence-dot" style={{ background: u.color }} />
                 <span>{u.name}</span>
               </li>
             ))}
           </ul>
-          <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-primary)' }}>
+          <div
+            style={{
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--border-primary)',
+            }}
+          >
             <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-              Set <code style={{ fontFamily: 'var(--font-geist-mono)', color: 'var(--accent)' }}>NEXT_PUBLIC_WS_URL</code> to connect to a Cloudflare Durable Object.
-              Without it, the room runs in simulation mode.
+              Set{' '}
+              <code style={{ fontFamily: 'var(--font-geist-mono)', color: 'var(--accent)' }}>
+                NEXT_PUBLIC_WS_URL
+              </code>{' '}
+              to connect to a Cloudflare Durable Object. Without it, the room runs in simulation
+              mode.
             </p>
           </div>
         </div>

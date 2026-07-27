@@ -11,7 +11,7 @@
  * edge via Next.js' built-in CDN caching.
  */
 import { ImageResponse } from '@vercel/og';
-import { NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 const SITE_NAME = 'Minimal Site';
 const ACCENT = '#7C8BA0';
@@ -21,8 +21,8 @@ export async function GET(req: NextRequest) {
   const title = searchParams.get('title') ?? SITE_NAME;
   const subtitle = searchParams.get('subtitle') ?? 'A static content site on substrate';
 
-  return new ImageResponse(
-    (
+  try {
+    return new ImageResponse(
       <div
         style={{
           width: '100%',
@@ -75,15 +75,21 @@ export async function GET(req: NextRequest) {
         {/* Bottom: accent bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           <div
-            style={{ flex: 1, height: '2px', background: `linear-gradient(90deg, ${ACCENT}, transparent)` }}
+            style={{
+              flex: 1,
+              height: '2px',
+              background: `linear-gradient(90deg, ${ACCENT}, transparent)`,
+            }}
           />
           <span style={{ fontSize: '20px', color: '#666' }}>substrate</span>
         </div>
-      </div>
-    ),
-    {
-      width: 1200,
-      height: 630,
-    },
-  );
+      </div>,
+      {
+        width: 1200,
+        height: 630,
+      },
+    );
+  } catch (_err) {
+    return NextResponse.json({ error: 'Failed to generate OG image' }, { status: 500 });
+  }
 }

@@ -6,6 +6,7 @@
  * `?title=…&subtitle=…`.
  */
 import { ImageResponse } from '@vercel/og';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
@@ -15,8 +16,8 @@ export async function GET(req: Request): Promise<Response> {
   const subtitle = searchParams.get('subtitle') ?? 'Hybrid search + RAG';
   const accent = '#6366f1';
 
-  return new ImageResponse(
-    (
+  try {
+    return new ImageResponse(
       <div
         style={{
           width: '100%',
@@ -91,8 +92,10 @@ export async function GET(req: Request): Promise<Response> {
             }}
           />
         </div>
-      </div>
-    ),
-    { width: 1200, height: 630 },
-  );
+      </div>,
+      { width: 1200, height: 630 },
+    );
+  } catch (_err) {
+    return NextResponse.json({ error: 'Failed to generate OG image' }, { status: 500 });
+  }
 }

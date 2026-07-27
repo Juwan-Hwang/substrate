@@ -12,7 +12,7 @@
  */
 'use client';
 
-import { useQueryState, useQueryStates, parseAsInteger, parseAsString } from 'nuqs';
+import { parseAsInteger, parseAsString, useQueryState, useQueryStates } from 'nuqs';
 
 /** Search query string — ?q=... */
 export function useSearchQuery() {

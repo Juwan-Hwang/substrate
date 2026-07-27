@@ -11,10 +11,13 @@
  * needs to know which provider answered.
  */
 import { NextResponse } from 'next/server';
-import { hasDatabase } from '@/lib/env';
-import { oramaSearch } from '@/lib/orama';
 import { postgresFtsSearch } from '@/lib/db';
+import { hasDatabase } from '@/lib/env';
+import { createArchiveLogger } from '@/lib/logger';
+import { oramaSearch } from '@/lib/orama';
 import type { SearchResponse } from '@/lib/types';
+
+const logger = createArchiveLogger('search');
 
 export const runtime = 'nodejs';
 
@@ -35,7 +38,7 @@ export async function GET(req: Request): Promise<Response> {
       const results = await postgresFtsSearch(query, limit);
       return NextResponse.json<SearchResponse>({ query, provider: 'postgres', results });
     } catch (err) {
-      console.error('[search] postgres FTS failed, falling back to orama:', err);
+      logger.error('postgres FTS failed, falling back to orama', { error: err });
     }
   }
 

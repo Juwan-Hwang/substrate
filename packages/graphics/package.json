@@ -6,9 +6,10 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "echo 'graphics ships as TS source — typecheck handles validation'",
     "lint": "biome check src",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node --max-old-space-size=4096 ../../node_modules/typescript/bin/tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
     "clean": "rm -rf dist .turbo wasm"
   },
   "dependencies": {
@@ -19,7 +20,10 @@
     "@react-three/drei": "^10.0.0",
     "@react-three/postprocessing": "^3.0.4"
   },
+  "peerDependencies": {
+    "react": "19.3.0-canary-28cd4bb0-20260723"
+  },
   "devDependencies": {
-    "@types/three": "^0.185.0"
+    "@types/react": "^19.2.0"
   }
 }

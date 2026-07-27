@@ -21,7 +21,7 @@ export type ProviderAdapter = {
 };
 
 /** Cloudflare Workers AI binding (fetch-based, no SDK needed). */
-function createWorkersAIProvider(accountId: string, apiToken: string) {
+export function createWorkersAIProvider(accountId: string, apiToken: string) {
   return {
     model: (modelId: string) => ({
       async doGenerate(options: { prompt: string; system?: string }) {

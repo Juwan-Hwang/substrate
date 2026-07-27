@@ -7,8 +7,8 @@
  */
 'use client';
 
-import { useCallback, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useCallback, useState } from 'react';
 import type { SearchResponse, SearchResult } from '@/lib/types';
 
 type Status = 'idle' | 'loading' | 'error';
@@ -20,24 +20,27 @@ export default function SearchPage() {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const runSearch = useCallback(async (e: FormEvent) => {
-    e.preventDefault();
-    const term = query.trim();
-    if (!term) return;
-    setStatus('loading');
-    setError(null);
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(term)}&limit=10`);
-      if (!res.ok) throw new Error(`Search failed (${res.status})`);
-      const data = (await res.json()) as SearchResponse;
-      setResults(data.results);
-      setProvider(data.provider);
-      setStatus('idle');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setStatus('error');
-    }
-  }, [query]);
+  const runSearch = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      const term = query.trim();
+      if (!term) return;
+      setStatus('loading');
+      setError(null);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(term)}&limit=10`);
+        if (!res.ok) throw new Error(`Search failed (${res.status})`);
+        const data = (await res.json()) as SearchResponse;
+        setResults(data.results);
+        setProvider(data.provider);
+        setStatus('idle');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        setStatus('error');
+      }
+    },
+    [query],
+  );
 
   const maxScore = results.reduce((m, r) => Math.max(m, r.score), 0) || 1;
 
@@ -58,7 +61,6 @@ export default function SearchPage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search the archive…"
           className="input"
-          autoFocus
           aria-label="Search query"
         />
         <button type="submit" className="btn btn-primary" disabled={status === 'loading'}>
@@ -91,7 +93,9 @@ export default function SearchPage() {
                   <h3 className="font-semibold leading-snug">{r.title}</h3>
                   <p className="text-sm text-[var(--color-text-secondary)]">{r.excerpt}</p>
                 </div>
-                <span className={`badge shrink-0 ${r.source === 'postgres' ? 'badge-accent' : 'badge-cyan'}`}>
+                <span
+                  className={`badge shrink-0 ${r.source === 'postgres' ? 'badge-accent' : 'badge-cyan'}`}
+                >
                   {r.source}
                 </span>
               </div>
@@ -102,7 +106,10 @@ export default function SearchPage() {
                 <span className="mono text-xs text-[var(--color-text-muted)]">
                   {r.score.toFixed(4)}
                 </span>
-                <span className="mono text-xs text-[var(--color-text-muted)]" title={r.citation.ref}>
+                <span
+                  className="mono text-xs text-[var(--color-text-muted)]"
+                  title={r.citation.ref}
+                >
                   ref:{r.citation.ref.slice(0, 12)}
                 </span>
               </div>

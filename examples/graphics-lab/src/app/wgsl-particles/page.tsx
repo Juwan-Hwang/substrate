@@ -7,8 +7,8 @@
  */
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { detectRendererTier } from '@substrate/graphics';
+import { useEffect, useRef, useState } from 'react';
 
 const PARTICLE_COUNT = 500;
 const CANVAS_W = 800;
@@ -23,20 +23,17 @@ export default function WgslParticlesPage() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d');
     if (!ctx) return;
+    const ctx2d: CanvasRenderingContext2D = ctx;
 
     const tier = detectRendererTier();
-    let particles: Float32Array;
-    let velocities: Float32Array;
+    const particles = new Float32Array(PARTICLE_COUNT * 2);
+    const velocities = new Float32Array(PARTICLE_COUNT * 2);
     let animationId = 0;
     let lastTime = performance.now();
     let frameCount = 0;
     let fpsTime = lastTime;
-
-    // Initialise particle positions and velocities.
-    particles = new Float32Array(PARTICLE_COUNT * 2);
-    velocities = new Float32Array(PARTICLE_COUNT * 2);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       particles[i * 2] = Math.random() * CANVAS_W;
       particles[i * 2 + 1] = Math.random() * CANVAS_H;
@@ -128,7 +125,7 @@ export default function WgslParticlesPage() {
 
         const tick = () => {
           const now = performance.now();
-          const dt = Math.min((now - lastTime) / 1000, 0.1);
+          const _dt = Math.min((now - lastTime) / 1000, 0.1);
           lastTime = now;
 
           // GPU compute.
@@ -146,7 +143,7 @@ export default function WgslParticlesPage() {
           // Read back and render.
           readBuffer.mapAsync(GPUMapMode.READ).then(() => {
             const data = new Float32Array(readBuffer.getMappedRange());
-            renderParticles(ctx, data, PARTICLE_COUNT);
+            renderParticles(ctx2d, data, PARTICLE_COUNT);
             readBuffer.unmap();
 
             frameCount++;
@@ -172,7 +169,7 @@ export default function WgslParticlesPage() {
 
       const tick = () => {
         const now = performance.now();
-        const dt = Math.min((now - lastTime) / 1000, 0.1);
+        const _dt = Math.min((now - lastTime) / 1000, 0.1);
         lastTime = now;
 
         // JS simulation — same physics as WGSL shader.
@@ -191,13 +188,15 @@ export default function WgslParticlesPage() {
           particles[i * 2] += velocities[i * 2];
           particles[i * 2 + 1] += velocities[i * 2 + 1];
 
-          if (particles[i * 2] < 0 || particles[i * 2] > CANVAS_W) velocities[i * 2] = -velocities[i * 2];
-          if (particles[i * 2 + 1] < 0 || particles[i * 2 + 1] > CANVAS_H) velocities[i * 2 + 1] = -velocities[i * 2 + 1];
+          if (particles[i * 2] < 0 || particles[i * 2] > CANVAS_W)
+            velocities[i * 2] = -velocities[i * 2];
+          if (particles[i * 2 + 1] < 0 || particles[i * 2 + 1] > CANVAS_H)
+            velocities[i * 2 + 1] = -velocities[i * 2 + 1];
           particles[i * 2] = Math.max(0, Math.min(CANVAS_W, particles[i * 2]));
           particles[i * 2 + 1] = Math.max(0, Math.min(CANVAS_H, particles[i * 2 + 1]));
         }
 
-        renderParticles(ctx, particles, PARTICLE_COUNT);
+        renderParticles(ctx2d, particles, PARTICLE_COUNT);
 
         frameCount++;
         if (now - fpsTime >= 1000) {
@@ -215,16 +214,31 @@ export default function WgslParticlesPage() {
       if (!ok) runJSFallback();
     });
 
-    return () => { if (animationId) cancelAnimationFrame(animationId); };
+    return () => {
+      if (animationId) cancelAnimationFrame(animationId);
+    };
   }, []);
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem', fontSize: '0.875rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '1rem',
+          alignItems: 'center',
+          marginBottom: '1rem',
+          fontSize: '0.875rem',
+        }}
+      >
         <span
           className="lab-badge"
           style={{
-            background: mode === 'webgpu' ? 'var(--success)' : mode === 'js' ? 'var(--warning)' : 'var(--text-tertiary)',
+            background:
+              mode === 'webgpu'
+                ? 'var(--success)'
+                : mode === 'js'
+                  ? 'var(--warning)'
+                  : 'var(--text-tertiary)',
             color: '#000',
           }}
         >
@@ -239,13 +253,18 @@ export default function WgslParticlesPage() {
         ref={canvasRef}
         width={CANVAS_W}
         height={CANVAS_H}
-        style={{ width: '100%', borderRadius: 12, border: '1px solid var(--border-primary)', background: '#060608' }}
+        style={{
+          width: '100%',
+          borderRadius: 12,
+          border: '1px solid var(--border-primary)',
+          background: '#060608',
+        }}
       />
 
       <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
-        Particles are attracted to the centre with damping. The WGSL compute shader
-        runs the same physics on the GPU; if WebGPU is unavailable, a JavaScript
-        fallback runs the identical simulation on CPU.
+        Particles are attracted to the centre with damping. The WGSL compute shader runs the same
+        physics on the GPU; if WebGPU is unavailable, a JavaScript fallback runs the identical
+        simulation on CPU.
       </p>
     </div>
   );

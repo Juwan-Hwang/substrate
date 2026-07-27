@@ -17,6 +17,7 @@
     "build": "tsc --noEmit",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
@@ -28,5 +29,9 @@
     "zustand": "^5.0.0",
     "xstate": "^5.19.0",
     "@asteasolutions/zod-to-openapi": "^7.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "openapi3-ts": "^4.6.0"
   }
 }

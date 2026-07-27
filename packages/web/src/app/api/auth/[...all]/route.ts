@@ -6,16 +6,26 @@
  *  - POST /api/auth/sign-in/email
  *  - POST /api/auth/sign-out
  *  - GET  /api/auth/get-session
- *  - POST /api/auth/passkey/add
- *  - GET  /api/auth/passkey/list
  *  - POST /api/auth/oauth/github  (GitHub OAuth)
  */
-import { toNextJsHandler } from 'better-auth/next-js';
+
 import { createAuth } from '@substrate/contracts/auth';
+import { toNextJsHandler } from 'better-auth/next-js';
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `${name} is required. Set it in your environment or .env file. ` +
+        'See .env.example for all required variables.',
+    );
+  }
+  return value;
+}
 
 const auth = createAuth({
-  databaseUrl: process.env.DATABASE_URL ?? 'postgresql://localhost:5432/aevum',
-  secret: process.env.AUTH_SECRET ?? 'dev-secret-change-in-production',
+  databaseUrl: requireEnv('DATABASE_URL'),
+  secret: requireEnv('AUTH_SECRET'),
   baseUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
 });
 

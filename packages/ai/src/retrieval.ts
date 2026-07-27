@@ -42,14 +42,13 @@ export type HybridSearchConfig = {
 };
 
 /** Reciprocal Rank Fusion — merges multiple ranked lists into one. */
-function rrf(
-  rankedLists: { id: string; score: number }[][],
-  k = 60,
-): Map<string, number> {
+function rrf(rankedLists: { id: string; score: number }[][], k = 60): Map<string, number> {
   const scores = new Map<string, number>();
   for (const list of rankedLists) {
     for (let rank = 0; rank < list.length; rank++) {
-      const { id } = list[rank];
+      const entry = list[rank];
+      if (!entry) continue;
+      const { id } = entry;
       const contribution = 1 / (k + rank + 1);
       scores.set(id, (scores.get(id) ?? 0) + contribution);
     }

@@ -8,18 +8,19 @@
  *
  * Used by the Crucible subsystem to manage experiment execution.
  */
-import { setup, assign, createActor } from 'xstate';
-import type { Experiment } from './index';
+import { assign, createActor, setup } from 'xstate';
 
 // ── Experiment lifecycle ────────────────────────────────────────────
 
-export type ExperimentStatus =
-  | 'idle'
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+export type ExperimentStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+export type Experiment = {
+  id: string;
+  name: string;
+  status: ExperimentStatus;
+  parameters: Record<string, unknown>;
+  result?: unknown;
+};
 
 export type ExperimentContext = {
   experiment: Experiment | null;
@@ -173,7 +174,7 @@ export const rendererMachine = setup({
     fallback: assign(({ context }) => {
       const order: RendererStatus[] = ['webgpu', 'webgl2', 'canvas', 'static'];
       const idx = order.indexOf(context.tier);
-      const next = order[Math.min(idx + 1, order.length - 1)];
+      const next = order[Math.min(idx + 1, order.length - 1)] ?? 'static';
       return { tier: next };
     }),
     setFps: assign(({ event }) => {

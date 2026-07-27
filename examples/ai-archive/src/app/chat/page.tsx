@@ -11,13 +11,13 @@
  */
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
-import type { FormEvent, ReactNode } from 'react';
 import Link from 'next/link';
+import type { FormEvent, ReactNode } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toCitations } from '@/lib/rag';
 import type { ChatMessage, Citation, SearchResult } from '@/lib/types';
 
-const uid = () => (globalThis.crypto?.randomUUID?.() ?? `m-${Date.now()}-${Math.random()}`);
+const uid = () => globalThis.crypto?.randomUUID?.() ?? `m-${Date.now()}-${Math.random()}`;
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -25,75 +25,78 @@ export default function ChatPage() {
   const [busy, setBusy] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const send = useCallback(async (e: FormEvent) => {
-    e.preventDefault();
-    const question = input.trim();
-    if (!question || busy) return;
+  const send = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      const question = input.trim();
+      if (!question || busy) return;
 
-    setBusy(true);
-    setInput('');
+      setBusy(true);
+      setInput('');
 
-    const userMsg: ChatMessage = { id: uid(), role: 'user', content: question };
-    const assistantId = uid();
-    const placeholder: ChatMessage = { id: assistantId, role: 'assistant', content: '' };
-    setMessages((prev) => [...prev, userMsg, placeholder]);
+      const userMsg: ChatMessage = { id: uid(), role: 'user', content: question };
+      const assistantId = uid();
+      const placeholder: ChatMessage = { id: assistantId, role: 'assistant', content: '' };
+      setMessages((prev) => [...prev, userMsg, placeholder]);
 
-    try {
-      // 1. Retrieve grounded context.
-      let context: SearchResult[] = [];
       try {
-        const sres = await fetch(`/api/search?q=${encodeURIComponent(question)}&limit=4`);
-        if (sres.ok) context = ((await sres.json()) as { results: SearchResult[] }).results;
-      } catch {
-        /* retrieval is best-effort; chat can still answer without it */
-      }
+        // 1. Retrieve grounded context.
+        let context: SearchResult[] = [];
+        try {
+          const sres = await fetch(`/api/search?q=${encodeURIComponent(question)}&limit=4`);
+          if (sres.ok) context = ((await sres.json()) as { results: SearchResult[] }).results;
+        } catch {
+          /* retrieval is best-effort; chat can still answer without it */
+        }
 
-      const citations = toCitations(context);
+        const citations = toCitations(context);
 
-      // 2. Stream the RAG answer.
-      const controller = new AbortController();
-      abortRef.current = controller;
-      const cres = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...messages, userMsg],
-          context,
-        }),
-        signal: controller.signal,
-      });
+        // 2. Stream the RAG answer.
+        const controller = new AbortController();
+        abortRef.current = controller;
+        const cres = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [...messages, userMsg],
+            context,
+          }),
+          signal: controller.signal,
+        });
 
-      if (!cres.body) throw new Error('No response stream');
+        if (!cres.body) throw new Error('No response stream');
 
-      const reader = cres.body.getReader();
-      const decoder = new TextDecoder();
-      let acc = '';
+        const reader = cres.body.getReader();
+        const decoder = new TextDecoder();
+        let acc = '';
 
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        acc += decoder.decode(value, { stream: true });
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          acc += decoder.decode(value, { stream: true });
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? { ...m, content: acc, ...(citations.length ? { citations } : {}) }
+                : m,
+            ),
+          );
+        }
+      } catch (err) {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
-              ? { ...m, content: acc, ...(citations.length ? { citations } : {}) }
+              ? { ...m, content: `Error: ${err instanceof Error ? err.message : 'stream failed'}` }
               : m,
           ),
         );
+      } finally {
+        setBusy(false);
+        abortRef.current = null;
       }
-    } catch (err) {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantId
-            ? { ...m, content: `Error: ${err instanceof Error ? err.message : 'stream failed'}` }
-            : m,
-        ),
-      );
-    } finally {
-      setBusy(false);
-      abortRef.current = null;
-    }
-  }, [busy, input, messages]);
+    },
+    [busy, input, messages],
+  );
 
   return (
     <div className="flex h-[calc(100dvh-7.5rem)] flex-col gap-4">
@@ -110,7 +113,11 @@ export default function ChatPage() {
           m.role === 'user' ? (
             <UserBubble key={m.id} content={m.content} />
           ) : (
-            <AssistantBubble key={m.id} content={m.content} {...(m.citations ? { citations: m.citations } : {})} />
+            <AssistantBubble
+              key={m.id}
+              content={m.content}
+              {...(m.citations ? { citations: m.citations } : {})}
+            />
           ),
         )}
       </div>
@@ -148,7 +155,11 @@ function EmptyHint() {
         ))}
       </div>
       <p className="text-xs text-[var(--color-text-muted)]">
-        Without an API key the assistant runs in <Link className="underline" href="/ingest">demo mode</Link> with pre-built citations.
+        Without an API key the assistant runs in{' '}
+        <Link className="underline" href="/ingest">
+          demo mode
+        </Link>{' '}
+        with pre-built citations.
       </p>
     </div>
   );
@@ -189,16 +200,16 @@ function AssistantBubble({ content, citations }: { content: string; citations?: 
 /** Render `[n]` markers as clickable chips that jump to the source list. */
 function renderCitations(text: string): ReactNode {
   const parts = text.split(/(\[\d+\])/);
-  return parts.map((part, i) => {
+  return parts.map((part) => {
     const match = part.match(/^\[(\d+)\]$/);
     const n = match?.[1];
     if (n) {
       return (
-        <a key={i} href={`#cite-${n}`} className="cite mx-0.5 align-baseline no-underline">
+        <a key={n} href={`#cite-${n}`} className="cite mx-0.5 align-baseline no-underline">
           {n}
         </a>
       );
     }
-    return <span key={i}>{part}</span>;
+    return <span key={part}>{part}</span>;
   });
 }

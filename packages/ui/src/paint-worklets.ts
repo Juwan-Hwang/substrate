@@ -28,7 +28,6 @@ interface CSSPaintWorklet {
 /** Augment the global `CSS` value with the optional `paintWorklet` surface. */
 type CSSWithPaintWorklet = typeof CSS & { readonly paintWorklet?: CSSPaintWorklet };
 
-
 // ── Noise Worklet ───────────────────────────────────────────────────
 
 const noiseWorklet = `
@@ -116,7 +115,7 @@ export async function registerPaintWorklets(): Promise<void> {
   const url = URL.createObjectURL(blob);
 
   try {
-    await css.paintWorklet.addModule(url);
+    await css.paintWorklet?.addModule(url);
   } finally {
     URL.revokeObjectURL(url);
   }

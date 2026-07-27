@@ -17,8 +17,9 @@
  *   There is ONE trace context, not two. The OTel span is the parent;
  *   Langfuse receives the same trace ID for cross-linking.
  */
+
+import { context, trace as otelTrace, SpanStatusCode, type Tracer } from '@opentelemetry/api';
 import { Langfuse } from 'langfuse';
-import { trace as otelTrace, context, SpanStatusCode, type Tracer } from '@opentelemetry/api';
 
 export type LangfuseConfig = {
   publicKey: string;
@@ -72,8 +73,8 @@ export function createLangfuse(config: LangfuseConfig): LangfuseClient {
         model: ctx.model,
         input: ctx.input,
         output: ctx.output,
-        startTime: ctx.startTime ? new Date(ctx.startTime).toISOString() : undefined,
-        endTime: ctx.endTime ? new Date(ctx.endTime).toISOString() : undefined,
+        startTime: ctx.startTime ? new Date(ctx.startTime) : undefined,
+        endTime: ctx.endTime ? new Date(ctx.endTime) : undefined,
         usage: ctx.tokens
           ? {
               promptTokens: ctx.tokens.prompt,
@@ -97,7 +98,7 @@ export function createLangfuse(config: LangfuseConfig): LangfuseClient {
                 'gen_ai.usage.output_tokens': ctx.tokens.completion,
               }
             : {}),
-          ...(ctx.metadata ?? {}),
+          ...ctx.metadata,
         },
         startTime: ctx.startTime,
       });
@@ -166,8 +167,8 @@ export function traceGeneration(
         name,
         model,
         input,
-        output: error ? undefined : output,
-        metadata: error ? { error: error.message } : undefined,
+        ...(error ? {} : { output }),
+        ...(error ? { metadata: { error: error.message } } : {}),
         startTime,
         endTime,
       });

@@ -7,7 +7,11 @@
  * On the server (Server Actions / edge), uses cloud providers.
  * On the client, can fall back to WebLLM for on-device inference.
  */
-import { streamText as aiStreamText, generateText as aiGenerateText, generateObject as aiGenerateObject } from 'ai';
+import {
+  generateObject as aiGenerateObject,
+  generateText as aiGenerateText,
+  streamText as aiStreamText,
+} from 'ai';
 import type { z } from 'zod';
 import type { AI } from './config.js';
 import type { LangfuseClient } from './langfuse.js';
@@ -54,7 +58,7 @@ export function streamText(ai: AI, options: StreamTextOptions, langfuse?: Langfu
     system: options.system,
     prompt: options.prompt,
     temperature: options.temperature,
-    maxTokens: options.maxTokens,
+    maxOutputTokens: options.maxTokens,
   });
 
   if (langfuse) {
@@ -86,7 +90,7 @@ export async function generateText(
     system: options.system,
     prompt: options.prompt,
     temperature: options.temperature,
-    maxTokens: options.maxTokens,
+    maxOutputTokens: options.maxTokens,
   });
 
   if (langfuse) {
@@ -100,8 +104,8 @@ export async function generateText(
       startTime,
       endTime: Date.now(),
       tokens: {
-        prompt: result.usage?.promptTokens ?? 0,
-        completion: result.usage?.completionTokens ?? 0,
+        prompt: result.usage?.inputTokens ?? 0,
+        completion: result.usage?.outputTokens ?? 0,
       },
     });
   }
@@ -116,7 +120,7 @@ export async function generateObject<T extends z.ZodType>(
 ) {
   const model = resolveModel(ai, options.model);
   const startTime = Date.now();
-  const result = await aiGenerateObject({
+  const result: { object: unknown } = await aiGenerateObject({
     model: model as never,
     system: options.system,
     prompt: options.prompt,

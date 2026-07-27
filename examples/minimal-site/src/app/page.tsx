@@ -4,8 +4,9 @@
  * Pure server component: the article corpus is static, so the entire page is
  * prerendered at build time.
  */
-import Link from 'next/link';
+
 import { Badge, GlassCard } from '@substrate/ui';
+import Link from 'next/link';
 import { articles } from '@/lib/articles';
 
 export default function HomePage() {
@@ -19,7 +20,14 @@ export default function HomePage() {
       </header>
 
       <section>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            marginBottom: '1.5rem',
+          }}
+        >
           <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Articles</h2>
           <Link href="/archive" className="muted" style={{ fontSize: '0.875rem' }}>
             Archive &amp; search →
@@ -28,7 +36,11 @@ export default function HomePage() {
 
         <div style={{ display: 'grid', gap: '1rem' }}>
           {articles.map((article) => (
-            <Link key={article.slug} href={`/articles/${article.slug}`} style={{ display: 'block' }}>
+            <Link
+              key={article.slug}
+              href={`/articles/${article.slug}`}
+              style={{ display: 'block' }}
+            >
               <GlassCard style={{ padding: '1.5rem' }}>
                 <div
                   style={{
@@ -41,7 +53,11 @@ export default function HomePage() {
                   <h3 style={{ margin: 0, fontSize: '1.125rem' }}>{article.title}</h3>
                   <time
                     className="tertiary"
-                    style={{ fontSize: '0.8125rem', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}
+                    style={{
+                      fontSize: '0.8125rem',
+                      flexShrink: 0,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
                   >
                     {article.date}
                   </time>

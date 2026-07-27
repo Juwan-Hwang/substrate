@@ -12,8 +12,32 @@
  */
 export async function register() {
   // Initialise feature manifest first — other modules reference it.
-  const { initFeatures, fullPlatformFeatures, validateEnv } = await import('@substrate/config/features');
-  initFeatures(fullPlatformFeatures);
+  const {
+    initFeatures,
+    minimalSiteFeatures,
+    graphicsLabFeatures,
+    aiArchiveFeatures,
+    realtimeRoomFeatures,
+    fullPlatformFeatures,
+    validateEnv,
+  } = await import('@substrate/config/features');
+
+  // Select feature preset from FEATURE_PROFILE.
+  // Defaults: 'full' in non-production, 'minimal' in production.
+  const profile = process.env.FEATURE_PROFILE;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  const presets: Record<string, typeof minimalSiteFeatures> = {
+    minimal: minimalSiteFeatures,
+    graphics: graphicsLabFeatures,
+    'ai-archive': aiArchiveFeatures,
+    realtime: realtimeRoomFeatures,
+    full: fullPlatformFeatures,
+  };
+
+  const manifest =
+    presets[profile ?? ''] ?? (isProduction ? minimalSiteFeatures : fullPlatformFeatures);
+  initFeatures(manifest);
 
   // Warn about missing env vars for enabled features.
   const missing = validateEnv();

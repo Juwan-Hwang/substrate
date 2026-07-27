@@ -5,10 +5,11 @@
  * at build time. Per-article metadata points its social card at the dynamic
  * OG route, giving every post a bespoke image with no manual asset work.
  */
+
+import { Badge, GlassCard } from '@substrate/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Badge, GlassCard } from '@substrate/ui';
 import { articles, getArticle } from '@/lib/articles';
 
 type Params = { slug: string };
@@ -19,11 +20,7 @@ export function generateStaticParams(): Params[] {
 }
 
 /** Per-article metadata, including a bespoke OG image. */
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<Params>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
   const article = getArticle(slug);
   if (!article) {
@@ -84,9 +81,9 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
 
         <GlassCard style={{ padding: '2rem' }}>
           <div style={{ display: 'grid', gap: '1.25rem' }}>
-            {article.body.split('\n\n').map((paragraph, index) => (
+            {article.body.split('\n\n').map((paragraph) => (
               <p
-                key={index}
+                key={paragraph}
                 style={{ margin: 0, color: 'var(--text-primary)', lineHeight: 1.7 }}
               >
                 {paragraph}

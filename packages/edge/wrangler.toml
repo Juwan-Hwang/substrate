@@ -47,5 +47,20 @@ binding = "AI"
 # TURSO_DATABASE_URL=libsql://aevum.turso.io
 # TURSO_AUTH_TOKEN=...
 
-# [env.production]
-# route = "api.aevum.dev/*"
+# ── Production environment ────────────────────────────────────────────
+# Deploy with: wrangler deploy --env production
+[env.production]
+
+[env.production.vars]
+SITE_BRAND = "Aevum"
+ALLOWED_ORIGINS = "https://aevum.dev"
+
+# Route the edge API through api.aevum.dev
+[[env.production.routes]]
+pattern = "api.aevum.dev/*"
+zone_name = "aevum.dev"
+
+# Production secrets — set with `wrangler secret put --env production`:
+#   UPSTASH_REDIS_URL
+#   UPSTASH_REDIS_TOKEN
+#   TURNSTILE_SECRET

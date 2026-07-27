@@ -117,7 +117,10 @@ export type CrucibleState = {
   currentExperimentId: string | null;
   setExperiments: (experiments: CrucibleState['experiments']) => void;
   addExperiment: (exp: CrucibleState['experiments'][number]) => void;
-  updateExperimentStatus: (id: string, status: CrucibleState['experiments'][number]['status']) => void;
+  updateExperimentStatus: (
+    id: string,
+    status: CrucibleState['experiments'][number]['status'],
+  ) => void;
   setFilter: (filter: CrucibleState['filter']) => void;
   setCurrentExperiment: (id: string | null) => void;
 };

@@ -202,13 +202,11 @@ export function isEnabled(feature: keyof FeatureManifest): boolean {
  * Validate that all required environment variables are present
  * for the enabled features. Returns a list of missing variables.
  */
-export function validateEnv(
-  manifest: FeatureManifest = activeManifest,
-): string[] {
+export function validateEnv(manifest: FeatureManifest = activeManifest): string[] {
   const missing: string[] = [];
 
   if (manifest.auth) {
-    if (!process.env.BETTER_AUTH_SECRET) missing.push('BETTER_AUTH_SECRET');
+    if (!process.env.AUTH_SECRET) missing.push('AUTH_SECRET');
     if (!process.env.DATABASE_URL) missing.push('DATABASE_URL');
   }
   if (manifest.ai) {
@@ -218,11 +216,57 @@ export function validateEnv(
   }
   if (manifest.observability) {
     if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) missing.push('OTEL_EXPORTER_OTLP_ENDPOINT');
+    if (!process.env.SENTRY_DSN) missing.push('SENTRY_DSN');
   }
   if (manifest.edgeReadModel) {
     if (!process.env.TURSO_DATABASE_URL) missing.push('TURSO_DATABASE_URL');
     if (!process.env.TURSO_AUTH_TOKEN) missing.push('TURSO_AUTH_TOKEN');
   }
+  if (manifest.edge) {
+    if (!process.env.CF_API_TOKEN) missing.push('CF_API_TOKEN');
+    if (!process.env.CF_ACCOUNT_ID) missing.push('CF_ACCOUNT_ID');
+  }
+  if (manifest.rateLimit) {
+    if (!process.env.UPSTASH_REDIS_URL) missing.push('UPSTASH_REDIS_URL');
+    if (!process.env.UPSTASH_REDIS_TOKEN) missing.push('UPSTASH_REDIS_TOKEN');
+  }
+  if (manifest.turnstile) {
+    if (!process.env.TURNSTILE_SECRET_KEY) missing.push('TURNSTILE_SECRET_KEY');
+    if (!process.env.TURNSTILE_SITE_KEY && !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+      missing.push('TURNSTILE_SITE_KEY or NEXT_PUBLIC_TURNSTILE_SITE_KEY');
+    }
+  }
+  if (manifest.storage) {
+    if (!process.env.R2_BUCKET_ID && !process.env.CF_R2_BUCKET_ID) {
+      missing.push('R2_BUCKET_ID or CF_R2_BUCKET_ID');
+    }
+  }
+  if (manifest.queue) {
+    if (!process.env.CF_QUEUE_NAME && !process.env.QUEUE_NAME) {
+      missing.push('CF_QUEUE_NAME or QUEUE_NAME');
+    }
+  }
+  if (manifest.realtime) {
+    if (!process.env.CF_DO_NAMESPACE && !process.env.DURABLE_OBJECT_NAMESPACE) {
+      missing.push('CF_DO_NAMESPACE or DURABLE_OBJECT_NAMESPACE');
+    }
+  }
 
   return missing;
+}
+
+/**
+ * Strict variant of {@link validateEnv} that throws if any required
+ * environment variables are missing. Use this in production startup
+ * paths where missing configuration should be a hard failure rather
+ * than a warning.
+ */
+export function strictValidateEnv(manifest: FeatureManifest = activeManifest): void {
+  const missing = validateEnv(manifest);
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables for enabled features: ${missing.join(', ')}. ` +
+        'See .env.example for all required variables.',
+    );
+  }
 }

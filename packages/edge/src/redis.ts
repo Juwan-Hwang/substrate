@@ -68,12 +68,7 @@ export async function cacheGet<T>(redis: Redis, key: string): Promise<T | null> 
   return val;
 }
 
-export async function cacheSet<T>(
-  redis: Redis,
-  key: string,
-  value: T,
-  ttl: number,
-): Promise<void> {
+export async function cacheSet<T>(redis: Redis, key: string, value: T, ttl: number): Promise<void> {
   await redis.set(key, value, { ex: ttl });
 }
 

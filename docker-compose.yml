@@ -1,0 +1,84 @@
+# Docker Compose — local development & self-hosted deployment stack.
+#
+#   docker compose up -d                  # Start Postgres + Redis
+#   docker compose up -d --build web      # Build & start the web app
+#   docker compose down -v                # Tear down and remove volumes
+
+services:
+  # ── PostgreSQL 16 with pgvector ──────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: substrate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aevum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aevum}
+      POSTGRES_DB: ${POSTGRES_DB:-aevum}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aevum} -d ${POSTGRES_DB:-aevum}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - substrate-net
+
+  # ── Redis 7 ──────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: substrate-redis
+    restart: unless-stopped
+    command: >-
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - substrate-net
+
+  # ── Web app (Next.js 16 on Bun) ──────────────────────────────────────
+  # Placeholder — set secrets (AUTH_SECRET, etc.) via .env before running.
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: substrate-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-aevum}:${POSTGRES_PASSWORD:-aevum}@postgres:5432/${POSTGRES_DB:-aevum}
+      REDIS_URL: redis://redis:6379
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - substrate-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  substrate-net:
+    driver: bridge

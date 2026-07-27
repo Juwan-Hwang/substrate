@@ -18,7 +18,9 @@ export function Nav() {
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
           <span
             className="grid h-7 w-7 place-items-center rounded-lg text-sm font-bold text-white"
-            style={{ background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-2))' }}
+            style={{
+              background: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-2))',
+            }}
             aria-hidden
           >
             A

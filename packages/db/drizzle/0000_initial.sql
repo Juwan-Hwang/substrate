@@ -1,6 +1,6 @@
 -- Drizzle migration: initial schema
 -- Generated from packages/db/src/index.ts
--- Run with: pnpm --filter @substrate/db migrate
+-- Run with: bun --filter @substrate/db migrate
 
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

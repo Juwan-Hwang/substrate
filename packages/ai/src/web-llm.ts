@@ -7,20 +7,23 @@
  *
  * @mlc-ai/web-llm provides an OpenAI-compatible API surface.
  */
-import type { CreateMLCEngineOptions } from '@mlc-ai/web-llm';
+import type { MLCEngineConfig } from '@mlc-ai/web-llm';
 
 export type WebLLMEngine = {
-  chat: (messages: { role: string; content: string }[], options?: {
-    stream?: boolean;
-    temperature?: number;
-    maxTokens?: number;
-  }) => Promise<unknown>;
+  chat: (
+    messages: { role: string; content: string }[],
+    options?: {
+      stream?: boolean;
+      temperature?: number;
+      maxTokens?: number;
+    },
+  ) => Promise<unknown>;
   unload: () => Promise<void>;
 };
 
 export type WebLLMConfig = {
   model: string;
-  options?: CreateMLCEngineOptions;
+  options?: MLCEngineConfig;
 };
 
 export async function createWebLLM(config: WebLLMConfig): Promise<WebLLMEngine> {
@@ -40,8 +43,8 @@ export async function createWebLLM(config: WebLLMConfig): Promise<WebLLMEngine> 
       return engine.chat.completions.create({
         messages: messages as never,
         stream: options?.stream ?? false,
-        temperature: options?.temperature,
-        max_tokens: options?.maxTokens,
+        temperature: options?.temperature ?? null,
+        max_tokens: options?.maxTokens ?? null,
       });
     },
     unload: async () => {

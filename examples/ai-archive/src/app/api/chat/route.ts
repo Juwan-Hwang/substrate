@@ -10,8 +10,10 @@
  * - otherwise → stream a demo answer built from the provided context,
  *   so the UX is identical in degraded mode.
  */
-import { streamText } from 'ai';
+
 import { createOpenAI } from '@ai-sdk/openai';
+import { streamText } from 'ai';
+import { NextResponse } from 'next/server';
 import { hasAI, openaiApiKey } from '@/lib/env';
 import { buildRagPrompt } from '@/lib/rag';
 import type { ChatMessage, SearchResult } from '@/lib/types';
@@ -38,9 +40,13 @@ export async function POST(req: Request): Promise<Response> {
   // Live streaming generation.
   const key = openaiApiKey();
   if (hasAI() && key) {
-    const openai = createOpenAI({ apiKey: key });
-    const result = streamText({ model: openai(MODEL), system, prompt: question });
-    return result.toTextStreamResponse();
+    try {
+      const openai = createOpenAI({ apiKey: key });
+      const result = streamText({ model: openai(MODEL), system, prompt: question });
+      return result.toTextStreamResponse();
+    } catch (_err) {
+      return NextResponse.json({ error: 'Failed to generate chat response' }, { status: 500 });
+    }
   }
 
   // Demo mode: stream a synthesised, citation-stamped answer.

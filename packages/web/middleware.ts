@@ -3,13 +3,34 @@
  *
  * Intercepts requests to /crucible/* and /api/crucible/* to verify
  * the user is authenticated. Redirects to /auth if not.
+ *
+ * Uses Better Auth's session cookie signature verification — not just
+ * cookie existence — to prevent forged-session bypasses.
  */
-import { NextResponse, type NextRequest } from 'next/server';
+import { createAuth } from '@substrate/contracts/auth';
+import { type NextRequest, NextResponse } from 'next/server';
 
 const PROTECTED_PATHS = ['/crucible', '/api/crucible', '/api/admin'];
 const AUTH_PATH = '/auth';
 
-export function middleware(req: NextRequest) {
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `${name} is required. Set it in your environment or .env file. ` +
+        'See .env.example for all required variables.',
+    );
+  }
+  return value;
+}
+
+const auth = createAuth({
+  databaseUrl: requireEnv('DATABASE_URL'),
+  secret: requireEnv('AUTH_SECRET'),
+  baseUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+});
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Check if the path is protected.
@@ -19,14 +40,21 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for Better Auth session cookie.
-  // Better Auth uses `better-auth.session_token` by default.
-  const sessionToken =
-    req.cookies.get('better-auth.session_token')?.value ??
-    req.cookies.get('__Secure-better-auth.session_token')?.value;
+  // Verify the Better Auth session server-side.
+  try {
+    const session = await auth.api.getSession({ headers: req.headers });
 
-  if (!sessionToken) {
-    // API routes get 401, pages get redirected.
+    if (!session) {
+      // API routes get 401, pages get redirected.
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const loginUrl = new URL(AUTH_PATH, req.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  } catch {
+    // Session verification failed — treat as unauthenticated.
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

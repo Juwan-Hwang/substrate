@@ -31,7 +31,15 @@ export function createStatusRing(buttonEl: HTMLElement, opts: StatusRingOptions 
   const parent = buttonEl?.parentNode;
   if (!parent) {
     const noop = () => {};
-    return { show: noop, hide: noop, setProgress: noop, setIndeterminate: noop, setSuccess: noop, setError: noop, destroy: noop };
+    return {
+      show: noop,
+      hide: noop,
+      setProgress: noop,
+      setIndeterminate: noop,
+      setSuccess: noop,
+      setError: noop,
+      destroy: noop,
+    };
   }
   const revertDelay = opts.revertDelay ?? 3000;
   const gradId = `aevum-sr-grad-${++_gradSeq}`;
@@ -118,7 +126,10 @@ export function createStatusRing(buttonEl: HTMLElement, opts: StatusRingOptions 
   };
 
   const setOffset = (fraction: number) => {
-    fill.setAttribute('stroke-dashoffset', (CIRC * (1 - Math.max(0, Math.min(1, fraction)))).toFixed(2));
+    fill.setAttribute(
+      'stroke-dashoffset',
+      (CIRC * (1 - Math.max(0, Math.min(1, fraction)))).toFixed(2),
+    );
   };
 
   const showIcon = (kind: 'check' | 'cross', color: string) => {

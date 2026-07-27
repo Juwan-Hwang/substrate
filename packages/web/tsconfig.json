@@ -1,11 +1,16 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
     "plugins": [{ "name": "next" }],
     "jsx": "preserve",
     "moduleResolution": "Bundler",
     "noEmit": true,
     "incremental": true,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
     "paths": {
       "@/*": ["./src/*"],
       "@substrate/ui": ["../../packages/ui/src"],
@@ -13,9 +18,14 @@
       "@substrate/content": ["../../packages/content/src"],
       "@substrate/graphics": ["../../packages/graphics/src"],
       "@substrate/contracts": ["../../packages/contracts/src"],
-      "@substrate/observability": ["../../packages/observability/src"]
+      "@substrate/observability": ["../../packages/observability/src"],
+      "three": ["../../packages/graphics/src/stubs/three.d.ts"],
+      "three/tsl": ["../../packages/graphics/src/stubs/three-tsl.d.ts"],
+      "three/webgpu": ["../../packages/graphics/src/stubs/three-webgpu.d.ts"],
+      "@react-three/fiber": ["../../packages/graphics/src/stubs/r3f.d.ts"],
+      "@react-three/drei": ["../../packages/graphics/src/stubs/drei.d.ts"]
     }
   },
-  "include": ["src", "next-env.d.ts", "*.ts"],
+  "include": ["src", "next-env.d.ts", "*.ts", "../../packages/graphics/src/r3f-jsx.ts"],
   "exclude": ["node_modules", ".next"]
 }

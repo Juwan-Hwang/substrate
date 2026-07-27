@@ -21,7 +21,12 @@ export type RoomMessage =
   | { type: 'cursor'; userId: string; x: number; y: number }
   | { type: 'chat'; userId: string; userName: string; text: string; timestamp: number }
   | { type: 'state'; key: string; value: unknown }
-  | { type: 'sync'; state: Record<string, unknown>; users: PresenceUser[]; messages: ChatMessage[] };
+  | {
+      type: 'sync';
+      state: Record<string, unknown>;
+      users: PresenceUser[];
+      messages: ChatMessage[];
+    };
 
 export type ChatMessage = {
   userId: string;
@@ -40,7 +45,7 @@ export function pickColor(userId: string): string {
   const colors = ['#7C8BA0', '#5B8DB8', '#8B7355', '#6B8E6B', '#9B7B9B', '#B8866B'];
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
-    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash = (hash << 5) - hash + userId.charCodeAt(i);
     hash |= 0;
   }
   return colors[Math.abs(hash) % colors.length];
@@ -48,7 +53,16 @@ export function pickColor(userId: string): string {
 
 /** Generate a random guest name. */
 export function generateGuestName(): string {
-  const adjectives = ['Swift', 'Cosmic', 'Quantum', 'Stellar', 'Nebula', 'Phantom', 'Crystal', 'Solar'];
+  const adjectives = [
+    'Swift',
+    'Cosmic',
+    'Quantum',
+    'Stellar',
+    'Nebula',
+    'Phantom',
+    'Crystal',
+    'Solar',
+  ];
   const nouns = ['Fox', 'Hawk', 'Wolf', 'Owl', 'Cat', 'Deer', 'Bear', 'Raven'];
   const a = adjectives[Math.floor(Math.random() * adjectives.length)];
   const n = nouns[Math.floor(Math.random() * nouns.length)];

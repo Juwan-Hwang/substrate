@@ -9,6 +9,7 @@
     "build": "tsc --noEmit",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "migrate": "drizzle-kit migrate",
     "generate": "drizzle-kit generate",
     "studio": "drizzle-kit studio",

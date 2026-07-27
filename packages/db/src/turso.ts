@@ -12,8 +12,9 @@
  * This module MUST NEVER execute INSERT / UPDATE / DELETE / DDL.
  * Both the Drizzle wrapper and the raw client enforce this at runtime.
  */
+
+import { type Client, createClient } from '@libsql/client';
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
-import { createClient, type Client } from '@libsql/client';
 import * as schema from './index';
 
 // ── Read-only Drizzle wrapper ──────────────────────────────────────

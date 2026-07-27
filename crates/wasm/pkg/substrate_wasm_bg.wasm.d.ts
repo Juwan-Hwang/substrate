@@ -13,7 +13,16 @@ export const parse_content: (a: number, b: number) => number;
 export const site_brand: (a: number) => void;
 export const subsystems: (a: number) => void;
 export const wasmgraph_add_edge: (a: number, b: number, c: number, d: number, e: number) => void;
-export const wasmgraph_add_node: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => void;
+export const wasmgraph_add_node: (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+) => void;
 export const wasmgraph_edge_count: (a: number) => number;
 export const wasmgraph_from_json: (a: number, b: number, c: number) => number;
 export const wasmgraph_layout: (a: number, b: number) => void;

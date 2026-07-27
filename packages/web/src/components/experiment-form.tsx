@@ -6,11 +6,11 @@
  */
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useActionState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { submitExperiment, type ExperimentActionState } from '../app/actions/experiments';
+import { type ExperimentActionState, submitExperiment } from '../app/actions/experiments';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required').max(120),
@@ -47,9 +47,7 @@ export function ExperimentForm() {
           className="w-full rounded-lg border border-border-default bg-bg-muted px-4 py-2 text-text-primary placeholder-text-muted focus:border-accent focus:outline-none"
           placeholder="e.g. GPU layout benchmark"
         />
-        {errors.name && (
-          <p className="mt-1 text-sm text-danger">{errors.name.message}</p>
-        )}
+        {errors.name && <p className="mt-1 text-sm text-danger">{errors.name.message}</p>}
       </div>
 
       <div>
@@ -92,13 +90,9 @@ export function ExperimentForm() {
       </button>
 
       {state.ok && state.id && (
-        <p className="text-sm text-success">
-          Experiment queued (ID: {state.id}).
-        </p>
+        <p className="text-sm text-success">Experiment queued (ID: {state.id}).</p>
       )}
-      {state.error && (
-        <p className="text-sm text-danger">{state.error}</p>
-      )}
+      {state.error && <p className="text-sm text-danger">{state.error}</p>}
     </form>
   );
 }

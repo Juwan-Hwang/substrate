@@ -4,7 +4,15 @@
  * Verifies Turnstile tokens server-side via the Siteverify API.
  * Used to protect experiment submissions, newsletter signups, and
  * content reindex triggers.
+ *
+ * Security policy: fail-closed. If no secret is configured, verification
+ * always fails in production. In development (NODE_ENV !== 'production'),
+ * verification is skipped with a warning.
  */
+
+import { createEdgeLogger } from './logger';
+
+const logger = createEdgeLogger('turnstile');
 
 export type TurnstileConfig = {
   secretKey: string;
@@ -13,11 +21,11 @@ export type TurnstileConfig = {
 
 export type TurnstileResult = {
   success: boolean;
-  errorCodes?: string[];
-  challengeTs?: string;
-  hostname?: string;
-  action?: string;
-  cdata?: string;
+  errorCodes?: string[] | undefined;
+  challengeTs?: string | undefined;
+  hostname?: string | undefined;
+  action?: string | undefined;
+  cdata?: string | undefined;
 };
 
 /**
@@ -28,6 +36,10 @@ export type TurnstileResult = {
  * const result = await verifyTurnstile(token, req.ip);
  * if (!result.success) return c.json({ error: 'Bot verification failed' }, 403);
  * ```
+ *
+ * Fail-closed: if no secret is configured and NODE_ENV is 'production',
+ * returns `{ success: false }`. In development, returns `{ success: true }`
+ * with a console warning.
  */
 export async function verifyTurnstile(
   token: string,
@@ -35,7 +47,11 @@ export async function verifyTurnstile(
   config?: TurnstileConfig,
 ): Promise<TurnstileResult> {
   if (!config?.secretKey) {
-    // No secret configured — skip verification (development mode).
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('No secret key configured in production — rejecting request');
+      return { success: false, errorCodes: ['missing-secret'] };
+    }
+    logger.warn('No secret key configured — skipping verification (development only)');
     return { success: true };
   }
 
@@ -53,7 +69,7 @@ export async function verifyTurnstile(
     body,
   });
 
-  const data = await res.json() as {
+  const data = (await res.json()) as {
     success: boolean;
     'error-codes'?: string[];
     challenge_ts?: string;
@@ -78,7 +94,10 @@ export async function verifyTurnstile(
  * Expects a `cf-turnstile-response` header or `turnstileToken` body field.
  */
 export function turnstileMiddleware(config: TurnstileConfig) {
-  return async (c: { req: { header(name: string): string | undefined }; json(): Promise<unknown> }, next: () => Promise<void>) => {
+  return async (
+    c: { req: { header(name: string): string | undefined }; json(): Promise<unknown> },
+    next: () => Promise<void>,
+  ) => {
     const token = c.req.header('cf-turnstile-response');
     if (!token) {
       return new Response(JSON.stringify({ error: 'Missing Turnstile token' }), {
@@ -89,10 +108,13 @@ export function turnstileMiddleware(config: TurnstileConfig) {
 
     const result = await verifyTurnstile(token, undefined, config);
     if (!result.success) {
-      return new Response(JSON.stringify({ error: 'Bot verification failed', codes: result.errorCodes }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ error: 'Bot verification failed', codes: result.errorCodes }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
     }
 
     await next();

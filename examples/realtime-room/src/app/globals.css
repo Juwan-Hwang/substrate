@@ -6,7 +6,7 @@
   --text-secondary: #999;
   --text-tertiary: #666;
   --border-primary: #2a2a30;
-  --accent: #7C8BA0;
+  --accent: #7c8ba0;
   --accent-dim: rgba(124, 139, 160, 0.3);
   --success: #98c379;
   --warning: #e5c07b;
@@ -15,14 +15,21 @@
   --font-geist-mono: var(--font-geist-mono);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-a { color: inherit; text-decoration: none; }
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
 .room-card {
   background: var(--bg-secondary);
@@ -51,7 +58,10 @@ a { color: inherit; text-decoration: none; }
   font-family: inherit;
   font-size: 0.875rem;
 }
-.room-input:focus { outline: none; border-color: var(--accent); }
+.room-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 
 .room-btn {
   padding: 0.5rem 1rem;
@@ -63,8 +73,13 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
   transition: all 0.15s;
 }
-.room-btn:hover { border-color: var(--accent); }
-.room-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.room-btn:hover {
+  border-color: var(--accent);
+}
+.room-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .presence-dot {
   display: inline-block;

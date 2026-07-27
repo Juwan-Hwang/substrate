@@ -2,7 +2,7 @@
  * Next.js configuration for the AI Archive example.
  *
  * - `reactCompiler`: compile-time memoisation for React 19.
- * - `ppr: 'incremental'`: Partial Prerendering — static shell with streaming holes.
+ * - `cacheComponents`: Partial Prerendering — static shell with streaming holes.
  * - `transpilePackages`: the workspace packages ship as TypeScript source,
  *   so Next must transpile them before bundling.
  */
@@ -10,15 +10,61 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  cacheComponents: true,
   experimental: {
-    ppr: 'incremental',
+    useTypeScriptCli: true,
   },
-  transpilePackages: [
-    '@substrate/db',
-    '@substrate/ai',
-    '@substrate/config',
-    '@substrate/content',
-  ],
+  transpilePackages: ['@substrate/db', '@substrate/ai', '@substrate/config', '@substrate/content'],
+  // ── Security headers ────────────────────────────────────────────────
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+          },
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'strict-dynamic'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              "connect-src 'self' https:",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+              'upgrade-insecure-requests',
+            ].join('; '),
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

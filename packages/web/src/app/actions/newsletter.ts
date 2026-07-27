@@ -1,11 +1,17 @@
 /**
  * Server Actions — Newsletter subscription.
  *
- * Validates email with Zod, stores via edge API, returns progressive state.
+ * Validates email with Zod, stores in PostgreSQL via @substrate/db,
+ * returns progressive state.
  */
 'use server';
 
+import * as Sentry from '@sentry/nextjs';
+import { createDb, newsletterSubscribers } from '@substrate/db';
+import { createLogger } from '@substrate/observability';
 import { z } from 'zod';
+
+const logger = createLogger('Archive');
 
 const newsletterSchema = z.object({
   email: z.string().email(),
@@ -16,6 +22,14 @@ export type NewsletterState = {
   message?: string;
   error?: string;
 };
+
+function getDb() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error('DATABASE_URL is not configured');
+  }
+  return createDb({ url });
+}
 
 export async function subscribeNewsletter(
   _prev: NewsletterState,
@@ -29,10 +43,32 @@ export async function subscribeNewsletter(
     return { ok: false, error: 'Please enter a valid email address.' };
   }
 
-  // In production: POST to @substrate/edge /api/archive/subscribe
-  // which stores in Upstash Redis and sends a confirmation email via Queues.
-  return {
-    ok: true,
-    message: 'Subscribed! Check your inbox for confirmation.',
-  };
+  try {
+    const db = getDb();
+
+    // Insert — the unique constraint on email prevents duplicates.
+    // If the email already exists, treat it as a successful re-subscription.
+    await db
+      .insert(newsletterSubscribers)
+      .values({ email: parsed.data.email })
+      .onConflictDoNothing({ target: newsletterSubscribers.email });
+
+    return {
+      ok: true,
+      message: 'Subscribed! Check your inbox for confirmation.',
+    };
+  } catch (err) {
+    logger.log({
+      level: 'error',
+      subsystem: 'Archive',
+      message: 'subscribeNewsletter failed',
+      timestamp: Date.now(),
+      context: { error: err },
+    });
+    Sentry.captureException(err);
+    return {
+      ok: false,
+      error: 'Failed to subscribe. Please try again later.',
+    };
+  }
 }

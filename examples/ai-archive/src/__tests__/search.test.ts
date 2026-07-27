@@ -7,8 +7,9 @@
  *  2. The Reciprocal Rank Fusion algorithm (pure function).
  *  3. Structural validity of the static demo corpus.
  */
-import { describe, expect, it } from 'vitest';
+
 import { createSearchIndex } from '@substrate/content/search';
+import { describe, expect, it } from 'vitest';
 import { demoArticles } from '../lib/demo-articles';
 import { reciprocalRankFusion, sortFused } from '../lib/rag';
 
@@ -57,7 +58,10 @@ describe('Reciprocal Rank Fusion', () => {
   });
 
   it('matches the closed-form 1/(k+rank) contribution', () => {
-    const list = [{ id: 'x', score: 1 }, { id: 'y', score: 1 }];
+    const list = [
+      { id: 'x', score: 1 },
+      { id: 'y', score: 1 },
+    ];
     const fused = reciprocalRankFusion([list], 60);
 
     // rank 0 → 1/61, rank 1 → 1/62

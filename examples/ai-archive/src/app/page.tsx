@@ -59,9 +59,9 @@ export default function HomePage() {
           &amp; grounded RAG answers.
         </h1>
         <p className="max-w-2xl text-lg text-[var(--color-text-secondary)]">
-          A self-contained reference app built on the substrate workspace packages —
-          hybrid search, retrieval-augmented chat with clickable citations, and an
-          ingestion pipeline. Every layer degrades gracefully.
+          A self-contained reference app built on the substrate workspace packages — hybrid search,
+          retrieval-augmented chat with clickable citations, and an ingestion pipeline. Every layer
+          degrades gracefully.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/search" className="btn btn-primary">
@@ -97,7 +97,12 @@ export default function HomePage() {
       <section className="card">
         <h2 className="mb-4 text-lg font-semibold">Live capability matrix</h2>
         <div className="grid gap-3 sm:grid-cols-3">
-          <Capability label="PostgreSQL + pgvector" on={db} onLabel="connected" offLabel="not configured" />
+          <Capability
+            label="PostgreSQL + pgvector"
+            on={db}
+            onLabel="connected"
+            offLabel="not configured"
+          />
           <Capability label="AI provider (OpenAI)" on={ai} onLabel="key set" offLabel="demo mode" />
           <Capability
             label="Search backend"
@@ -108,8 +113,8 @@ export default function HomePage() {
         </div>
         <p className="mt-4 text-xs text-[var(--color-text-muted)]">
           Configure <code className="mono">DATABASE_URL</code> and{' '}
-          <code className="mono">OPENAI_API_KEY</code> to unlock live retrieval and
-          streaming generation. See <code className="mono">.env.example</code>.
+          <code className="mono">OPENAI_API_KEY</code> to unlock live retrieval and streaming
+          generation. See <code className="mono">.env.example</code>.
         </p>
       </section>
     </div>
