@@ -6,6 +6,8 @@
 use bytemuck::{Pod, Zeroable};
 use serde::{Deserialize, Serialize};
 
+use crate::simd::repulsive_forces_simd;
+
 /// GPU-ready vertex: position (xyz) + weight, 16 bytes, std140-compatible.
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable, Serialize, Deserialize)]
@@ -129,20 +131,15 @@ impl KnowledgeGraph {
         // Accumulate forces, then apply with displacement capping.
         let mut forces = vec![[0.0_f32; 2]; n];
 
-        // Repulsive forces (all-pairs).
+        // Extract position arrays for SIMD acceleration.
+        let nodes_x: Vec<f32> = self.nodes.iter().map(|n| n.x).collect();
+        let nodes_y: Vec<f32> = self.nodes.iter().map(|n| n.y).collect();
+
+        // Repulsive forces (all-pairs) — SIMD-accelerated via f32x4.
         for i in 0..n {
-            for j in (i + 1)..n {
-                let dx = self.nodes[i].x - self.nodes[j].x;
-                let dy = self.nodes[i].y - self.nodes[j].y;
-                let dist = (dx * dx + dy * dy).sqrt().max(0.01);
-                let force = (k * k) / dist;
-                let fx = dx / dist * force;
-                let fy = dy / dist * force;
-                forces[i][0] += fx;
-                forces[i][1] += fy;
-                forces[j][0] -= fx;
-                forces[j][1] -= fy;
-            }
+            let (fx, fy) = repulsive_forces_simd(nodes_x[i], nodes_y[i], &nodes_x, &nodes_y, k);
+            forces[i][0] += fx;
+            forces[i][1] += fy;
         }
 
         // Attractive forces along edges.

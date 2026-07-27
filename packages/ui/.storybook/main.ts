@@ -1,14 +1,10 @@
-import type { StorybookConfig } from '@storybook/react-webpack5';
+import type { StorybookConfig } from '@storybook/react-vite';
 
 const config: StorybookConfig = {
   stories: ['../src/stories/**/*.stories.@(ts|tsx|mdx)'],
-  addons: [
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
-    '@storybook/addon-webpack5-compiler-swc',
-  ],
+  addons: ['@storybook/addon-essentials', '@storybook/addon-interactions'],
   framework: {
-    name: '@storybook/react-webpack5',
+    name: '@storybook/react-vite',
     options: {},
   },
   docs: {

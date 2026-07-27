@@ -1,6 +1,6 @@
 /**
  * WebGPU Compute Shader — Force-directed graph layout.
- * Hand-written WGSL, loaded via substrate-wasm.
+ * Hand-written WGSL, Reference WGSL — the production shader is inlined in crates/wasm/src/gpu.rs.
  *
  * This is the raw WGSL source string; substrate-wasm will compile and
  * dispatch it on the GPU compute pipeline.
@@ -65,7 +65,10 @@ fn attraction(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn integrate(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= params.node_count) { return; }
-  nodes[i].position += nodes[i].velocity * params.dt;
+  let displacement = nodes[i].velocity * params.dt;
+  let disp_len = max(length(displacement), 0.0001);
+  let capped_len = min(disp_len, params.dt);
+  nodes[i].position += normalize(displacement) * capped_len;
   nodes[i].velocity *= 0.9; // damping
 }
 `;

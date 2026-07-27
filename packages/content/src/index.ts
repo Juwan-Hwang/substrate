@@ -64,9 +64,16 @@ const veliteConfig = defineConfig({
 
 export default veliteConfig as unknown as Record<string, unknown>;
 
-export type Article = z.infer<typeof articleSchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type Note = z.infer<typeof noteSchema>;
+
+// ── Static corpus ──────────────────────────────────────────────────
+// The demo article corpus lives in ./corpus and is the single source of
+// truth consumed by @substrate/web's `lib/articles.ts`. `Article` is the
+// corpus type (SearchableDoc); the Velite collection type can still be
+// derived as `z.infer<typeof articleSchema>` when MDX lands.
+export type { Article } from './corpus';
+export { demoDocs, getArticle } from './corpus';
 
 // ── Fumadocs ────────────────────────────────────────────────────────
 

@@ -8,9 +8,10 @@
 
 import { createSearchIndex, type SearchableDoc } from '@substrate/content/search';
 import { useEffect, useRef, useState } from 'react';
+import { useSearchQuery } from '../lib/url-state';
 
 export function SearchBox({ docs }: { docs: SearchableDoc[] }) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useSearchQuery();
   const [results, setResults] = useState<SearchableDoc[]>([]);
   const [loading, setLoading] = useState(false);
   const indexRef = useRef<Awaited<ReturnType<typeof createSearchIndex>> | null>(null);

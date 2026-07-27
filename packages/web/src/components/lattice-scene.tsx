@@ -203,7 +203,7 @@ function LiveGraph({
 
   return (
     <svg
-      className="mt-[-600px] h-[600px] w-full"
+      className="h-full w-full"
       viewBox={`0 0 ${width} ${height}`}
       style={{ pointerEvents: 'none' }}
     >

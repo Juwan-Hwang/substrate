@@ -6,7 +6,8 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn, signUp } from '../../lib/auth';
+import { useRouter } from 'next/navigation';
+import { signIn, signUp, useSession } from '../../lib/auth';
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -15,6 +16,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { data: session, isPending } = useSession();
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,8 +30,9 @@ export default function AuthPage() {
       } else {
         await signIn.email({ email, password });
       }
-      // Redirect to home or the redirect URL.
-      window.location.href = '/';
+      // useSession will automatically refetch; router.push avoids full page reload.
+      router.push('/');
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
@@ -40,11 +44,33 @@ export default function AuthPage() {
     setLoading(true);
     try {
       await signIn.social({ provider: 'github' });
+      // Better Auth usually redirects here; refresh in case it doesn't.
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'GitHub sign-in failed');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!isPending && session) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-24">
+        <div className="aevum-glass-card p-8 text-center">
+          <h1 className="mb-4 text-2xl font-bold text-text-primary">
+            Welcome back, {session.user.name || 'friend'}!
+          </h1>
+          <p className="mb-6 text-text-secondary">You are already signed in.</p>
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            className="btn btn-primary w-full"
+          >
+            Go to home
+          </button>
+        </div>
+      </main>
+    );
   }
 
   return (

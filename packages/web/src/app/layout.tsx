@@ -2,6 +2,7 @@ import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { HealthBadge } from '../components/health-badge';
 import { NewsletterForm } from '../components/newsletter-form';
 import { PaintRegistrar } from '../components/paint-registrar';
 import { Providers } from '../components/providers';
@@ -45,6 +46,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Suspense>
                 <NewsletterForm />
               </Suspense>
+            </div>
+            <div className="mt-6 flex justify-center">
+              <HealthBadge />
             </div>
           </footer>
         </Providers>

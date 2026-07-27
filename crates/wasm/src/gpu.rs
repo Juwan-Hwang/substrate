@@ -79,7 +79,10 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
     }
 
-    dst[i].pos = my_pos + force * params.dt;
+    let displacement = force * params.dt;
+    let disp_len = max(length(displacement), 0.0001);
+    let capped_len = min(disp_len, params.dt);
+    dst[i].pos = my_pos + normalize(displacement) * capped_len;
     dst[i].weight = src[i].weight;
 }
 "#;

@@ -7,6 +7,7 @@
 'use server';
 
 import * as Sentry from '@sentry/nextjs';
+import { experimentSchema } from '@substrate/contracts';
 import { createAuth } from '@substrate/contracts/auth';
 import { createDb, experiments } from '@substrate/db';
 import { createLogger } from '@substrate/observability';
@@ -29,6 +30,9 @@ export type ExperimentActionState = {
   id?: string;
   error?: string;
 };
+
+/** Validated shape of a persisted experiment row returned to the client. */
+export type ExperimentRow = z.infer<typeof experimentSchema>;
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -117,7 +121,7 @@ export async function submitExperiment(
   }
 }
 
-export async function getExperiments(subsystem?: string) {
+export async function getExperiments(subsystem?: string): Promise<ExperimentRow[]> {
   // Defense-in-depth auth check: verify session before returning any data.
   let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
   try {
@@ -142,7 +146,31 @@ export async function getExperiments(subsystem?: string) {
           sql`SELECT * FROM experiments WHERE user_id = ${session.user.id} ORDER BY created_at DESC LIMIT 50`,
         );
 
-    return rows;
+    // Raw rows arrive with snake_case columns (created_at, user_id,
+    // duration_ms, …). Map them onto the camelCase shape expected by
+    // experimentSchema, then validate with Zod so a malformed row can
+    // never reach the client.
+    const mapped = (rows as Record<string, unknown>[]).map((row: Record<string, unknown>) => ({
+      id: String(row.id),
+      name: String(row.name),
+      subsystem: String(row.subsystem) as 'lattice' | 'crucible' | 'archive',
+      parameters: (row.parameters as Record<string, string>) ?? {},
+      result: (row.result as Record<string, unknown> | null) ?? undefined,
+      durationMs: row.duration_ms != null ? Number(row.duration_ms) : undefined,
+    }));
+
+    const validated = z.array(experimentSchema).safeParse(mapped);
+    if (!validated.success) {
+      logger.log({
+        level: 'error',
+        subsystem: 'Crucible',
+        message: 'getExperiments validation failed',
+        timestamp: Date.now(),
+        context: { error: validated.error },
+      });
+      return [];
+    }
+    return validated.data;
   } catch (err) {
     logger.log({
       level: 'error',

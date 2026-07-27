@@ -58,7 +58,9 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'strict-dynamic'",
+              "script-src 'self' 'strict-dynamic' 'wasm-unsafe-eval'",
+              // Tailwind v4 + Next.js runtime inject inline styles; 'unsafe-inline' is
+              // required until nonce-based CSP is wired through middleware.
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",

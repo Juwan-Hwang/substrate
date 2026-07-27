@@ -69,19 +69,24 @@ export { createSearchIndex } from './search';
 /**
  * Docs source — Fumadocs MDX source configuration.
  *
- * In production, this is created via `source()` from `fumadocs-mdx`:
+ * The docs content directory lives at `apps/aevum/docs/` (see
+ * `index.mdx` and `getting-started.mdx`). Until the build wires up
+ * `source()` from `fumadocs-mdx`, this static descriptor is the single
+ * source of truth for the docs base URL and on-disk source path:
  *
  * ```ts
+ * // Future migration to a fully typed Fumadocs source:
  * import { source } from 'fumadocs-mdx';
  * export const docsSource = source({
  *   baseUrl: '/docs',
  *   sourcePath: 'content/docs',
  * });
  * ```
- *
- * Returns `null` until a docs content directory is added.
  */
-export const docsSource: { baseUrl: string; sourcePath: string } | null = null;
+export const docsSource = {
+  baseUrl: '/docs',
+  sourcePath: '../../apps/aevum/docs',
+};
 
 /**
  * Static OG image path for docs pages.
