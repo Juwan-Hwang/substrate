@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "jsx": "react-jsx",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "incremental": true,
+    "paths": {
+      "@substrate/ui": ["../ui/src"],
+      "@substrate/ui/*": ["../ui/src/*"],
+      "@substrate/contracts": ["../contracts/src"],
+      "@substrate/config": ["../config/src"],
+      "@substrate/observability": ["../observability/src"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", ".turbo"]
+}

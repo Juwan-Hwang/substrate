@@ -1,0 +1,84 @@
+/**
+ * Global styles for the minimal-site example.
+ *
+ * A restrained dark theme built on CSS custom properties. The accent token
+ * (--accent-primary) is intentionally consumed by @substrate/ui, so the
+ * shared component library inherits the site's identity without a fork.
+ */
+:root {
+  --bg-primary: #0a0a0c;
+  --bg-secondary: #131316;
+  --text-primary: #e8e8ea;
+  --text-secondary: #999;
+  --text-tertiary: #666;
+  --border-primary: #2a2a30;
+  --accent-primary: #7c8ba0;
+
+  --max-width: 720px;
+  --gutter: 1.5rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+a:hover {
+  opacity: 0.8;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+code,
+pre {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.tertiary {
+  color: var(--text-tertiary);
+}
+
+/* View Transitions API — smooth route cross-fades where supported. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.25s;
+  animation-timing-function: ease-out;
+}

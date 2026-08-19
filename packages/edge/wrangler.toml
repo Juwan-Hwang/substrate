@@ -1,0 +1,66 @@
+name = "aevum-edge"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SITE_BRAND = "Aevum"
+
+# Upstash Redis (REST API — no TCP socket needed in Workers)
+# Set via: wrangler secret put UPSTASH_REDIS_URL / UPSTASH_REDIS_TOKEN
+# [vars] cannot hold secrets — use `wrangler secret put` for production.
+
+# Cloudflare Turnstile
+# Set via: wrangler secret put TURNSTILE_SECRET
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "aevum-assets"
+
+[[queues.producers]]
+queue = "aevum-tasks"
+binding = "QUEUE"
+
+[[queues.consumers]]
+queue = "aevum-tasks"
+max_batch_size = 10
+max_batch_timeout = 5
+
+[[durable_objects.bindings]]
+name = "DO"
+class_name = "ExperimentDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ExperimentDO"]
+
+[[hyperdrive.configurations]]
+binding = "HYPERDRIVE"
+localConnectionString = "postgresql://localhost:5432/aevum"
+
+# Cloudflare Workers AI — edge inference binding
+[ai]
+binding = "AI"
+
+# Turso / libSQL (edge read replica)
+# Set via environment variables:
+# TURSO_DATABASE_URL=libsql://aevum.turso.io
+# TURSO_AUTH_TOKEN=...
+
+# ── Production environment ────────────────────────────────────────────
+# Deploy with: wrangler deploy --env production
+[env.production]
+
+[env.production.vars]
+SITE_BRAND = "Aevum"
+ALLOWED_ORIGINS = "https://aevum.dev"
+
+# Route the edge API through api.aevum.dev
+[[env.production.routes]]
+pattern = "api.aevum.dev/*"
+zone_name = "aevum.dev"
+
+# Production secrets — set with `wrangler secret put --env production`:
+#   UPSTASH_REDIS_URL
+#   UPSTASH_REDIS_TOKEN
+#   TURNSTILE_SECRET

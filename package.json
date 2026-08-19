@@ -1,0 +1,52 @@
+{
+  "name": "substrate",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "packageManager": "bun@1.4.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "biome check . && oxlint .",
+    "lint:fix": "biome check --write . && oxlint --fix .",
+    "test": "turbo run test",
+    "test:fast": "bun test",
+    "test:e2e": "playwright test",
+    "clean": "turbo run clean",
+    "format": "biome format --write .",
+    "typecheck": "turbo run typecheck",
+    "rust:build": "cargo build --workspace",
+    "rust:test": "cargo test --workspace",
+    "wasm:build": "wasm-pack build crates/wasm --target web --release && node -e \"const p=require('./crates/wasm/pkg/package.json');p.name='@substrate/wasm';require('fs').writeFileSync('./crates/wasm/pkg/package.json',JSON.stringify(p,null,2))\"",
+    "wasm:component": "cargo build -p substrate-wasm --no-default-features --features component --target wasm32-wasip2 --release",
+    "wasm:component-embed": "wasm-tools component new target/wasm32-wasip2/release/substrate_wasm.wasm -o crates/wasm/substrate.component.wasm",
+    "wasm:wasip3": "cargo +nightly build -p substrate-wasm --no-default-features --features component --target wasm32-wasip3 --release",
+    "devshell": "nix develop --impure",
+    "create-site": "bun run scripts/create-substrate-site.ts",
+    "boundary:check": "bun run scripts/check-boundary.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@lhci/cli": "^0.15.0",
+    "@playwright/test": "^1.54.0",
+    "@types/node": "^22.0.0",
+    "@typescript/typescript6": "^6.0.2",
+    "http-server": "^14.1.1",
+    "oxlint": "^1.2.0",
+    "substrate-ui": "^0.0.0",
+    "turbo": "^2.5.0",
+    "typescript": "^7.0.2",
+    "vitest": "^3.2.0",
+    "wait-on": "^9.1.0",
+    "wasm-pack": "^0.13.1"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "bun": ">=1.4.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "examples/*",
+    "crates/wasm/pkg"
+  ]
+}

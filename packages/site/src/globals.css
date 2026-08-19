@@ -1,0 +1,220 @@
+/**
+ * @substrate/site — platform global styles.
+ *
+ * ## CSS Package Boundary Contract
+ *
+ * The CSS layering is explicitly defined as three tiers:
+ *
+ *   1. @substrate/ui/styles.css
+ *      Design tokens (--substrate-*) and component styles (.substrate-*).
+ *      Uses relative @import only (./tokens.css, ./theme.css).
+ *      Zero external module dependencies.
+ *
+ *   2. @substrate/site/globals.css  (THIS FILE)
+ *      Tailwind v4 @theme bridge: maps --substrate-* tokens into
+ *      Tailwind's --color-* / --font-* / --radius-* namespace.
+ *      Platform utility classes (.glass, .text-gradient, paint worklets).
+ *      Container queries and anchor positioning.
+ *      Does NOT @import "tailwindcss" — that is the consumer's responsibility.
+ *
+ *   3. Application globals.css
+ *      `@import "tailwindcss"` — the Tailwind v4 entry point.
+ *      Application-specific tokens (--accent-primary, --bg-primary, etc.).
+ *      Application-specific styles, layouts, and overrides.
+ *
+ * ## Consumer CSS Template
+ *
+ * A consumer's globals.css should look like:
+ *
+ *   @import "tailwindcss";
+ *   @import "@substrate/ui/styles.css";
+ *   @import "@substrate/site/globals.css";   // optional
+ *
+ *   :root {
+ *     --accent-primary: #your-brand-color;
+ *     --bg-primary: #your-bg;
+ *     ...
+ *   }
+ *
+ * Or, if the consumer does not need the Tailwind theme bridge:
+ *
+ *   @import "tailwindcss";
+ *   @import "@substrate/ui/styles.css";
+ *
+ *   :root { ... }
+ *
+ * ## Why @substrate/site/globals.css does NOT @import "tailwindcss"
+ *
+ * Tailwind v4's `@import "tailwindcss"` is processed by the
+ * @tailwindcss/postcss plugin, which runs in the consumer project's
+ * PostCSS environment. If a platform CSS file contains this directive,
+ * Turbopack's CSS module resolver attempts to resolve "tailwindcss" from
+ * the platform package's directory — but tailwindcss is installed in the
+ * consumer's node_modules, not the platform package's. This causes a
+ * "Can't resolve 'tailwindcss'" build error.
+ *
+ * The fix is architectural: the Tailwind entry directive belongs in the
+ * consumer's CSS, where the PostCSS environment can resolve it correctly.
+ */
+
+/* ── Tailwind v4 theme bridge ───────────────────────────────────────
+ *
+ * Maps the platform's --substrate-* design tokens into Tailwind v4's
+ * --color-* / --font-* / --radius-* namespace, so Tailwind utility
+ * classes (bg-bg-base, text-text-primary, etc.) work with the platform's
+ * design system.
+ *
+ * This block does not require @import "tailwindcss" — it only declares
+ * custom properties that Tailwind's @theme processor picks up if the
+ * consumer has imported Tailwind elsewhere in the CSS graph.
+ */
+@theme {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --color-accent: var(--color-accent);
+  --color-accent-glow: var(--color-accent-glow);
+
+  --color-bg-base: var(--substrate-bg-base);
+  --color-bg-secondary: var(--substrate-bg-secondary);
+  --color-bg-muted: var(--substrate-bg-muted);
+  --color-bg-elevated: var(--substrate-bg-elevated);
+
+  --color-text-primary: var(--substrate-text-primary);
+  --color-text-secondary: var(--substrate-text-secondary);
+  --color-text-tertiary: var(--substrate-text-tertiary);
+  --color-text-muted: var(--substrate-text-muted);
+
+  --color-border-default: var(--substrate-border-default);
+  --color-border-subtle: var(--substrate-border-subtle);
+  --color-border-strong: var(--substrate-border-strong);
+
+  --color-danger: var(--substrate-color-danger);
+  --color-warning: var(--substrate-color-warning);
+  --color-success: var(--substrate-color-success);
+  --color-info: var(--substrate-color-info);
+
+  --radius-card: var(--substrate-card-radius);
+  --radius-button: var(--substrate-button-radius);
+}
+
+/* ── Platform base styles ─────────────────────────────────────────── */
+
+@layer base {
+  body {
+    background: var(--substrate-bg-base);
+    color: var(--substrate-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* View Transitions API */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+    animation-timing-function: var(--substrate-easing-spring);
+  }
+}
+
+@layer utilities {
+  .glass {
+    backdrop-filter: var(--substrate-glass-blur);
+    -webkit-backdrop-filter: var(--substrate-glass-blur);
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-accent), var(--substrate-color-info));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ── Houdini Paint Worklet ── */
+  .paint-noise {
+    background-image: paint(substrate-noise);
+    background-color: var(--substrate-bg-elevated);
+  }
+  .paint-mesh {
+    background-image: paint(substrate-mesh);
+    background-color: var(--substrate-bg-base);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CSS Container Queries
+   ═══════════════════════════════════════════════════════════════ */
+
+.card-container {
+  container-type: inline-size;
+  container-name: card;
+}
+
+.sidebar-layout {
+  container-type: inline-size;
+  container-name: sidebar;
+}
+
+@container card (min-width: 400px) {
+  .card-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@container card (min-width: 640px) {
+  .card-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@container sidebar (max-width: 768px) {
+  .sidebar-nav {
+    display: none;
+  }
+  .sidebar-toggle {
+    display: block;
+  }
+}
+
+@container sidebar (min-width: 769px) {
+  .sidebar-toggle {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CSS Anchor Positioning
+   ═══════════════════════════════════════════════════════════════ */
+
+.anchor-tooltip {
+  anchor-name: --tooltip-anchor;
+  position: fixed;
+  position-anchor: --tooltip-anchor;
+  position-area: top span-left;
+  margin-bottom: 8px;
+}
+
+.anchor-popover {
+  anchor-name: --popover-anchor;
+  position: fixed;
+  position-anchor: --popover-anchor;
+  position-area: bottom span-right;
+  margin-top: 8px;
+}
+
+.anchor-dropdown {
+  anchor-name: --dropdown-anchor;
+  position: fixed;
+  position-anchor: --dropdown-anchor;
+  position-area: bottom span-left;
+  margin-top: 4px;
+}
+
+@supports not (anchor-name: --test) {
+  .anchor-tooltip,
+  .anchor-popover,
+  .anchor-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "@substrate/site",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./providers": "./src/providers.tsx",
+    "./layout": "./src/layout.tsx",
+    "./shells": "./src/shells.tsx",
+    "./metadata": "./src/metadata.ts",
+    "./instrumentation": "./src/instrumentation.ts",
+    "./animations": "./src/animations.ts",
+    "./smooth-scroll": "./src/smooth-scroll.tsx",
+    "./paint-registrar": "./src/paint-registrar.tsx",
+    "./theme-script": "./src/theme-script.tsx",
+    "./globals.css": "./src/globals.css"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "biome check src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@substrate/ui": "workspace:*",
+    "@substrate/contracts": "workspace:*",
+    "@substrate/config": "workspace:*",
+    "@substrate/observability": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": "16.3.0-preview.6",
+    "react": "19.3.0-canary-28cd4bb0-20260723",
+    "react-dom": "19.3.0-canary-28cd4bb0-20260723",
+    "gsap": "^3.13.0",
+    "lenis": "^1.1.18",
+    "@tanstack/react-query": "^5.65.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  }
+}

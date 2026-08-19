@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxlint/rs/main/oxlint/configuration/oxlintrc.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    "no-unused-vars": "error",
+    "no-console": "warn",
+    "prefer-const": "error",
+    "no-explicit-any": "warn"
+  },
+  "ignorePatterns": ["node_modules/", "dist/", ".next/", "target/", "pkg/", "*.config.{ts,js,mjs}"]
+}

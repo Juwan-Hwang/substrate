@@ -1,0 +1,335 @@
+/* ═══════════════════════════════════════════════════════════════
+   @substrate/ui — Substrate CSS Entry
+   Ported from Zephyr design system, adapted for Tailwind v4.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. Design Tokens (from @substrate/tokens) */
+@import "./tokens.css";
+@import "./theme.css";
+
+/* ── Font stack + Accent + Radius system ── */
+:root {
+  --ui-scale: 1;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif, "Noto Sans", "DejaVu Sans",
+    "WenQuanYi Micro Hei", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "DejaVu Sans Mono",
+    "Ubuntu Mono", "Courier New", monospace;
+  --color-accent: var(--accent-primary, #af52de);
+  --color-accent-glow: var(--accent-glow, rgba(175, 82, 222, 0.2));
+  --color-accent-rgb: var(--accent-rgb, 175, 82, 222);
+  --radius-sm: var(--substrate-radius-control);
+  --radius-md: var(--substrate-radius-md);
+  --radius-lg: var(--substrate-radius-overlay);
+  --radius-full: var(--substrate-radius-full);
+  --radius-button: var(--substrate-button-radius);
+  --radius-card: var(--substrate-card-radius);
+  --brightness: 0.95;
+  --glass-card: var(--substrate-glass-blur);
+  --transition-micro: var(--substrate-transition-micro);
+  --transition-standard: var(--substrate-transition-standard);
+  --transition-fast: var(--substrate-transition-fast);
+  color-scheme: light dark;
+}
+
+html.dark {
+  --brightness: 0.88;
+}
+html:not(.dark) {
+  --brightness: 0.95;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--substrate-bg-muted);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.05);
+}
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--substrate-bg-muted) transparent;
+}
+
+/* ── Button System ── */
+.btn,
+.btn-ghost,
+.btn-accent,
+.btn-danger,
+.btn-warning,
+.btn-success,
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--substrate-button-gap);
+  padding: var(--substrate-button-padding-y) var(--substrate-button-padding-x);
+  border-radius: var(--radius-button);
+  font-size: var(--substrate-button-font-size);
+  line-height: 1.4;
+  font-weight: var(--substrate-button-weight);
+  text-transform: var(--substrate-button-transform);
+  letter-spacing: var(--substrate-button-tracking);
+  transition-property: color, background-color, border-color, box-shadow, opacity;
+  transition-duration: var(--substrate-time-standard);
+  transition-timing-function: var(--substrate-easing-ease-out);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.btn-ghost {
+  background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--substrate-text-primary);
+}
+.btn-ghost:hover:not(:disabled, [disabled], [aria-disabled="true"], .active) {
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+.btn-ghost.active {
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
+  color: var(--color-accent);
+}
+
+.btn-accent {
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 25%, transparent);
+  color: var(--color-accent);
+}
+.btn-accent:hover:not(:disabled, [disabled], [aria-disabled="true"]) {
+  background-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+.btn-danger {
+  background-color: color-mix(in srgb, var(--substrate-color-danger) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--substrate-color-danger) 20%, transparent);
+  color: var(--substrate-color-danger);
+}
+.btn-danger:hover:not(:disabled, [disabled], [aria-disabled="true"]) {
+  background-color: color-mix(in srgb, var(--substrate-color-danger) 20%, transparent);
+}
+
+.btn-warning {
+  background-color: color-mix(in srgb, var(--substrate-color-warning) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--substrate-color-warning) 20%, transparent);
+  color: var(--substrate-color-warning);
+}
+.btn-warning:hover:not(:disabled, [disabled], [aria-disabled="true"]) {
+  background-color: color-mix(in srgb, var(--substrate-color-warning) 20%, transparent);
+}
+
+.btn-success {
+  background-color: color-mix(in srgb, var(--substrate-color-success) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--substrate-color-success) 25%, transparent);
+  color: var(--substrate-color-success);
+}
+.btn-success:hover:not(:disabled, [disabled], [aria-disabled="true"]) {
+  background-color: color-mix(in srgb, var(--substrate-color-success) 25%, transparent);
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  color: var(--substrate-text-on-accent);
+  box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+.btn-primary:hover:not(:disabled, [disabled], [aria-disabled="true"]) {
+  opacity: 0.85;
+}
+
+/* Disabled state */
+:is(button, input, select, textarea, .btn, [role="button"]):is(
+  :disabled,
+  [disabled],
+  [aria-disabled="true"]
+) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Loading state */
+.btn[aria-busy="true"] {
+  pointer-events: none;
+  opacity: 0.7;
+}
+.btn[aria-busy="true"]::after {
+  content: "";
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-left: 0.5rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: substrate-btn-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes substrate-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Glass Card ── */
+.substrate-glass-card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: var(--glass-card);
+  -webkit-backdrop-filter: var(--glass-card);
+  border: 1px solid var(--substrate-border-primary);
+  border-radius: var(--radius-card);
+  box-shadow: var(--substrate-shadow-sm);
+  transition-property:
+    background-color, border-color, box-shadow, backdrop-filter, -webkit-backdrop-filter;
+  transition-duration: var(--substrate-time-standard);
+  transition-timing-function: var(--substrate-easing-ease-out);
+}
+.substrate-glass-card:hover {
+  background: var(--substrate-bg-muted);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: var(--substrate-shadow-md);
+  --glass-card-hover: blur(16px) saturate(1.2) brightness(calc(var(--brightness, 1) * 0.9));
+  backdrop-filter: var(--glass-card-hover);
+  -webkit-backdrop-filter: var(--glass-card-hover);
+}
+
+/* ── iOS Switch ── */
+.substrate-ios-switch {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: var(--substrate-switch-width);
+  height: var(--substrate-switch-height);
+}
+.substrate-ios-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.substrate-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #8e8e93;
+  transition: 0.4s;
+  border-radius: var(--substrate-switch-radius);
+}
+.substrate-switch-slider:before {
+  position: absolute;
+  content: "";
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+}
+input:checked + .substrate-switch-slider {
+  background-color: var(--color-accent);
+}
+input:checked + .substrate-switch-slider:before {
+  transform: translateX(16px);
+}
+
+/* ── Badge ── */
+.substrate-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--substrate-badge-radius);
+  padding: var(--substrate-badge-padding);
+  font-size: var(--substrate-badge-font-size);
+  font-weight: 600;
+}
+.substrate-badge-default {
+  background: var(--substrate-bg-muted);
+  color: var(--substrate-text-secondary);
+}
+.substrate-badge-accent {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+}
+.substrate-badge-danger {
+  background: color-mix(in srgb, var(--substrate-color-danger) 15%, transparent);
+  color: var(--substrate-color-danger);
+}
+.substrate-badge-warning {
+  background: color-mix(in srgb, var(--substrate-color-warning) 15%, transparent);
+  color: var(--substrate-color-warning);
+}
+.substrate-badge-success {
+  background: color-mix(in srgb, var(--substrate-color-success) 15%, transparent);
+  color: var(--substrate-color-success);
+}
+
+/* ── Status Ring ── */
+.substrate-sr-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.substrate-sr-wrap {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+.substrate-sr-svg {
+  width: 100%;
+  height: 100%;
+}
+.substrate-sr-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--substrate-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.substrate-sr-spinning {
+  animation: substrate-sr-spin 0.8s linear infinite;
+}
+.substrate-sr-dashing {
+  animation: substrate-sr-dash 1.5s ease-in-out infinite;
+}
+@keyframes substrate-sr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes substrate-sr-dash {
+  0% {
+    stroke-dashoffset: 100.53;
+  }
+  50% {
+    stroke-dashoffset: 30;
+  }
+  100% {
+    stroke-dashoffset: 100.53;
+  }
+}
+@keyframes substrate-sr-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

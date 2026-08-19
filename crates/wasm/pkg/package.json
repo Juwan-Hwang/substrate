@@ -1,0 +1,17 @@
+{
+  "name": "@substrate/wasm",
+  "type": "module",
+  "description": "Substrate WASM — browser bindings with GPU acceleration",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "files": [
+    "substrate_wasm_bg.wasm",
+    "substrate_wasm.js",
+    "substrate_wasm.d.ts"
+  ],
+  "main": "substrate_wasm.js",
+  "types": "substrate_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

@@ -1,0 +1,59 @@
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/Juwan-Hwang/substrate"
+description = "Substrate — open-source platform for building modern personal sites"
+
+[workspace.dependencies]
+substrate-core = { path = "crates/core", version = "0.1.0" }
+substrate-wasm = { path = "crates/wasm", version = "0.1.0" }
+
+# GPU / graphics
+wgpu = "28"
+bytemuck = { version = "1.22", features = ["derive"] }
+glam = { version = "0.30", features = ["bytemuck"] }
+
+# SIMD (portable, works on stable)
+wide = "0.7"
+
+# WASM interop
+wasm-bindgen = "0.2.106"
+wasm-bindgen-futures = "0.4.50"
+js-sys = "0.3.77"
+web-sys = "0.3.77"
+serde-wasm-bindgen = "0.6"
+
+# WASM Component Model
+wit-bindgen = "0.40"
+
+# WASI Preview 0.3 target (wasm32-wasip3) — native async I/O for server-side
+# WASM. Requires nightly Rust. Build with: bun wasm:wasip3
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+
+# Utilities
+pollster = "0.4"
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 1
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1

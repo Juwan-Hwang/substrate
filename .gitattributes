@@ -1,0 +1,13 @@
+# Normalize line endings to LF on checkout, regardless of OS.
+# Biome enforces lineEnding: "lf" — CRLF on Windows causes CI lint failures.
+* text=auto eol=lf
+
+# Binary files — don't touch.
+*.wasm binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

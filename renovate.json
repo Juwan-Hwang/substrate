@@ -1,0 +1,78 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", ":automergeMinor"],
+  "schedule": ["before 6am on Monday"],
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "groupName": "biome",
+      "matchPackageNames": ["@biomejs/biome"]
+    },
+    {
+      "groupName": "react",
+      "matchPackagePatterns": ["^react", "^@types/react"]
+    },
+    {
+      "groupName": "next.js",
+      "matchPackagePatterns": ["^next"]
+    },
+    {
+      "groupName": "three.js",
+      "matchPackagePatterns": ["^three", "^@react-three"]
+    },
+    {
+      "groupName": "tailwindcss",
+      "matchPackagePatterns": ["^tailwindcss", "^@tailwindcss"]
+    },
+    {
+      "groupName": "drizzle",
+      "matchPackagePatterns": ["^drizzle-orm", "^drizzle-kit"]
+    },
+    {
+      "groupName": "cloudflare",
+      "matchPackagePatterns": ["^@cloudflare", "^wrangler", "^miniflare"]
+    },
+    {
+      "groupName": "rust",
+      "matchPackagePatterns": ["^wasm-", "^wgpu"],
+      "matchManagers": ["cargo"]
+    },
+    {
+      "groupName": "opentelemetry",
+      "matchPackagePatterns": ["^@opentelemetry"]
+    },
+    {
+      "groupName": "ai-sdk",
+      "matchPackagePatterns": ["^ai", "^@ai-sdk"]
+    },
+    {
+      "groupName": "radix-ui",
+      "matchPackagePatterns": ["^@radix-ui"]
+    },
+    {
+      "groupName": "storybook",
+      "matchPackagePatterns": ["^storybook", "^@storybook"]
+    },
+    {
+      "groupName": "fumadocs",
+      "matchPackagePatterns": ["^fumadocs"]
+    },
+    {
+      "description": "Pin canary/preview versions — React 19 canary and Next.js preview builds are pinned to specific commit hashes. Renovate should not auto-bump these.",
+      "matchPackagePatterns": ["^react$", "^react-dom$", "^next$"],
+      "matchCurrentVersion": "/-canary|-preview/",
+      "enabled": false
+    },
+    {
+      "description": "Pin Bun canary — oven/bun:canary tracks the Rust rewrite (1.4.0). Re-enable after stable release.",
+      "matchPackageNames": ["oven/bun"],
+      "matchCurrentVersion": "canary",
+      "enabled": false
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "moduleResolution": "bundler",
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+    "types": ["@webgpu/types"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "three": ["../../packages/graphics/src/stubs/three.d.ts"],
+      "three/tsl": ["../../packages/graphics/src/stubs/three-tsl.d.ts"],
+      "three/webgpu": ["../../packages/graphics/src/stubs/three-webgpu.d.ts"],
+      "@react-three/fiber": ["../../packages/graphics/src/stubs/r3f.d.ts"],
+      "@react-three/drei": ["../../packages/graphics/src/stubs/drei.d.ts"]
+    }
+  },
+  "include": ["src", "next.config.ts", "../../packages/graphics/src/r3f-jsx.ts"]
+}

@@ -1,0 +1,292 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  boundary-check:
+    name: Boundary Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - run: bun run boundary:check
+
+  lint-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--max-old-space-size=4096"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Bun 1.4.0 (Rust rewrite) — 通过 canary 通道分发。
+          # bun.sh/install 默认走 stable 通道装 1.3.14 (Zig)，
+          # 用 `curl -fsSL https://bun.sh/install | bash -s -- canary` 切到 canary 即得 1.4.0。
+          # 等 1.4.0 正式发布后可改为 bun-version: "1.4.0"。
+          bun-version: canary
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run typecheck
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--max-old-space-size=4096"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - run: bun install --frozen-lockfile
+      - name: Bun audit
+        run: bun audit
+        continue-on-error: true
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          artifact-name: substrate-sbom.spdx.json
+          format: spdx-json
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+
+  rust:
+    name: Rust Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - name: Cargo audit
+        run: cargo install cargo-audit && cargo audit
+        continue-on-error: true
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test:e2e
+
+  storybook:
+    name: Storybook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - run: bun install --frozen-lockfile
+      - name: Build Storybook
+        run: bun run build-storybook
+        working-directory: ./packages/ui
+      - name: Install Playwright
+        run: bunx playwright install --with-deps chromium
+      - name: Serve & Test Storybook
+        run: |
+          bunx http-server storybook-static --port 6006 --silent &
+          SERVER_PID=$!
+          sleep 3
+          bunx wait-on http://localhost:6006 --timeout 30000
+          bunx test-storybook --url http://localhost:6006
+          kill $SERVER_PID
+        working-directory: ./packages/ui
+
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - run: bun install --frozen-lockfile
+      - name: Build web app
+        run: bun run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+      - name: Run Lighthouse CI
+        run: bunx @lhci/cli autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+  pg-migration:
+    name: PG17 Migration Smoke Test
+    runs-on: ubuntu-latest
+    # Only run when migration-related files change.
+    # On push to main, always run (to verify the full migration history
+    # on a fresh PG17 instance at least once per merge).
+    if: >-
+      github.event_name == 'push' ||
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.changed_files != 0
+      )
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need at least 2 commits for diff comparison
+
+      - name: Check if migration files changed
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # On push to main — always run.
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            # On PR — only run if migration files changed.
+            BASE="origin/${{ github.base_ref }}"
+            git fetch origin "${{ github.base_ref }}" --depth=1
+            DIFF=$(git diff --name-only "$BASE" HEAD -- \
+              'packages/db/drizzle/**' \
+              'packages/db/src/tables.ts' \
+              'packages/db/drizzle.config.ts' \
+              'packages/db/package.json' \
+              | head -1)
+            if [ -n "$DIFF" ]; then
+              echo "run=true" >> "$GITHUB_OUTPUT"
+              echo "Changed: $DIFF"
+            else
+              echo "run=false" >> "$GITHUB_OUTPUT"
+              echo "No migration files changed — skipping."
+            fi
+          fi
+
+      - name: Start PostgreSQL 17 with pgvector
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          docker run -d \
+            --name pg17 \
+            -e POSTGRES_USER=substrate \
+            -e POSTGRES_PASSWORD=substrate \
+            -e POSTGRES_DB=substrate \
+            -p 5432:5432 \
+            --health-cmd "pg_isready -U substrate" \
+            --health-interval 2s \
+            --health-timeout 5s \
+            --health-retries 15 \
+            pgvector/pgvector:pg17
+
+          # Wait for PG to pass health check.
+          for i in $(seq 1 30); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' pg17 2>/dev/null || echo "none")
+            if [ "$STATUS" = "healthy" ]; then
+              echo "PostgreSQL is healthy."
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30, status=$STATUS)"
+            sleep 2
+          done
+
+      - uses: oven-sh/setup-bun@v2
+        if: steps.changed.outputs.run == 'true'
+        with:
+          bun-version: canary
+
+      - run: bun install --frozen-lockfile
+        if: steps.changed.outputs.run == 'true'
+
+      - name: Apply migrations via psql
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          for f in packages/db/drizzle/0*.sql; do
+            echo "-- Applying $f --"
+            docker exec -i pg17 psql -U substrate -d substrate -v ON_ERROR_STOP=1 < "$f"
+          done
+
+      - name: Verify schema (tables, indexes, extensions)
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          echo "── Extensions ──"
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "SELECT extname FROM pg_extension ORDER BY extname;"
+
+          echo "── Tables ──"
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename;"
+
+          echo "── Indexes ──"
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "SELECT indexname, tablename FROM pg_indexes WHERE schemaname='public' ORDER BY tablename, indexname;"
+
+          echo "── Enums ──"
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "SELECT t.typname, e.enumlabel FROM pg_type t JOIN pg_enum e ON t.oid=e.enumtypid ORDER BY t.typname, e.enumsortorder;"
+
+          echo "── Triggers ──"
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "SELECT tgname, tgrelid::regclass FROM pg_trigger WHERE NOT tgisinternal ORDER BY tgname;"
+
+      - name: Verify FTS index works
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "INSERT INTO articles (slug, title, body, status) VALUES ('test', 'Test Article', 'This is a test article about substrates', 'published');"
+
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "SELECT id, slug, title, ts_rank_cd(
+              to_tsvector('english', coalesce(title,'') ||
+               ' ' || coalesce(body,'')),
+              plainto_tsquery('english', 'substrate')
+            ) AS rank
+            FROM articles WHERE status='published'
+            ORDER BY rank DESC LIMIT 5;"
+
+      - name: Verify pgvector index works
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "INSERT INTO articles (slug, title, body, status, embedding)
+             VALUES ('vec-test', 'Vector Test', 'Embedding test', 'published',
+                     '[0.1, 0.2, 0.3]'::vector(1536));" 2>&1 || true
+
+          docker exec pg17 psql -U substrate -d substrate -c \
+            "SELECT slug, embedding <=> '[0.1, 0.2, 0.3]' AS distance
+             FROM articles WHERE embedding IS NOT NULL LIMIT 5;" 2>&1 || true

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "globalDependencies": ["**/.env.*local"],
+  "globalEnv": [
+    "NODE_ENV",
+    "NODE_OPTIONS",
+    "FEATURE_PROFILE",
+    "VERCEL_URL",
+    "DATABASE_URL",
+    "AUTH_SECRET",
+    "GITHUB_OAUTH_CLIENT_ID",
+    "GITHUB_OAUTH_CLIENT_SECRET",
+    "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_POSTHOG_KEY",
+    "NEXT_PUBLIC_SENTRY_DSN",
+    "CLOUDFLARE_ACCOUNT_ID",
+    "CLOUDFLARE_API_TOKEN",
+    "TURNSTILE_SECRET",
+    "TURNSTILE_SECRET_KEY",
+    "TURNSTILE_SITE_KEY",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+    "UPSTASH_REDIS_URL",
+    "UPSTASH_REDIS_TOKEN",
+    "ALLOWED_ORIGINS",
+    "R2_BUCKET_ID",
+    "CF_R2_BUCKET_ID",
+    "CF_QUEUE_NAME",
+    "QUEUE_NAME",
+    "CF_DO_NAMESPACE",
+    "DURABLE_OBJECT_NAMESPACE",
+    "SENTRY_DSN",
+    "POSTHOG_KEY",
+    "OTEL_EXPORTER_OTLP_ENDPOINT",
+    "OTEL_EXPORTER_OTLP_HEADERS",
+    "OTEL_SERVICE_NAME",
+    "OTEL_TRACES_SAMPLE_RATE",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GOOGLE_API_KEY",
+    "TURSO_DATABASE_URL",
+    "TURSO_AUTH_TOKEN",
+    "LANGFUSE_PUBLIC_KEY",
+    "LANGFUSE_SECRET_KEY"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "clean": {
+      "cache": false
+    },
+    "deploy": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "build-storybook": {
+      "dependsOn": ["^build"],
+      "outputs": ["storybook-static/**"]
+    },
+    "test-storybook": {
+      "dependsOn": ["build-storybook"],
+      "outputs": []
+    }
+  }
+}

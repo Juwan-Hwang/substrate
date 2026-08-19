@@ -1,0 +1,12 @@
+# Bun configuration — Bun is the sole package manager and runtime.
+# Used for: install, scripts, test runner, and bunx execution.
+
+[test]
+coverage = false
+preload = ["./setup.ts"]
+
+[install]
+# Use bun.lock (Bun's native lockfile).
+lockfile = true
+# China/Asia mirror — 20 MB/s vs 16 KB/s from official registry.
+registry = "https://registry.npmmirror.com"

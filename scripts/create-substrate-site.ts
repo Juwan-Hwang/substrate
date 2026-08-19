@@ -1,0 +1,767 @@
+#!/usr/bin/env bun
+/**
+ * create-substrate-site — scaffolding CLI for Substrate.
+ *
+ * Scaffolds a new site from the `northstar` consumer fixture, rewriting
+ * branding, metadata, feature preset, and package identity.
+ *
+ * ## Usage
+ *
+ * From the monorepo root (workspace mode — `workspace:*` deps):
+ *   bun create-site my-site
+ *   bun create-site my-site --preset minimal --author Alice --url https://alice.dev
+ *
+ * From any directory (standalone mode — versioned npm deps):
+ *   bun run ./scripts/create-substrate-site.ts my-site --preset minimal
+ *
+ * ## Interactive mode
+ *
+ * When run without enough flags, the CLI prompts for:
+ *   1. Site name (kebab-case)
+ *   2. Feature preset (numbered menu)
+ *   3. Author name
+ *   4. Site URL
+ *
+ * Zero external dependencies — uses only Bun builtins.
+ */
+
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { dirname, join, relative } from 'node:path';
+import { argv, cwd, exit, platform } from 'node:process';
+
+// ── Types ───────────────────────────────────────────────────────────
+
+type Preset = 'minimal' | 'graphics' | 'ai-archive' | 'realtime' | 'reference';
+
+type Answers = {
+  name: string;
+  preset: Preset;
+  author: string;
+  siteUrl: string;
+};
+
+// ── Constants ───────────────────────────────────────────────────────
+
+const PRESET_TO_MANIFEST: Record<Preset, string> = {
+  minimal: 'minimalSiteFeatures',
+  graphics: 'graphicsLabFeatures',
+  'ai-archive': 'aiArchiveFeatures',
+  realtime: 'realtimeRoomFeatures',
+  reference: 'referenceFeatures',
+};
+
+const PRESET_DESCRIPTIONS: Record<Preset, string> = {
+  minimal: 'Pure static content site — no backend, no database',
+  graphics: 'WebGPU / WASM / R3F interactive graphics demos',
+  'ai-archive': 'AI-powered knowledge base with RAG, hybrid search, chat',
+  realtime: 'Realtime collaboration via Cloudflare Durable Objects',
+  reference: 'All features enabled — platform reference surface',
+};
+
+/**
+ * The base template is always `northstar` — it exercises the full platform
+ * API surface (@substrate/site primitives, @substrate/ui, @substrate/content),
+ * so scaffolding from it guarantees the generated site uses every integration
+ * point a consumer would need.
+ */
+const TEMPLATE_DIR = 'northstar';
+
+/**
+ * Substrate platform packages that consumers depend on.
+ * In monorepo mode, these stay as `workspace:*`.
+ * In standalone mode, they are replaced with the Substrate version
+ * read from the monorepo's root package.json — so `create-site`
+ * always pins the version it was shipped from, not a hardcoded constant.
+ */
+const PLATFORM_PACKAGE_NAMES = [
+  '@substrate/site',
+  '@substrate/ui',
+  '@substrate/content',
+  '@substrate/config',
+  '@substrate/contracts',
+] as const;
+
+// ── Helpers ─────────────────────────────────────────────────────────
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function titleCase(s: string): string {
+  return s
+    .split('-')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+/**
+ * Read a line from stdin. Uses Bun's global prompt() when available
+ * (works on all platforms including Windows), falls back to synchronous
+ * stdin read on POSIX.
+ */
+function ask(question: string, defaultValue?: string): string {
+  const suffix = defaultValue ? ` (${defaultValue})` : '';
+  const promptText = `${question}${suffix}: `;
+
+  // Bun provides a global `prompt` function (like the browser one).
+  // This works on all platforms including Windows.
+  if (typeof globalThis.prompt === 'function') {
+    const answer = globalThis.prompt(promptText);
+    return (answer ?? '').trim() || defaultValue || '';
+  }
+
+  // Fallback: synchronous stdin read (POSIX only — won't work on Windows).
+  process.stdout.write(promptText);
+  const { openSync, readSync, closeSync } = require('node:fs') as typeof import('node:fs');
+  const fd = existsSync('/dev/stdin') ? openSync('/dev/stdin', 'rs') : 0;
+  const buf = Buffer.alloc(256);
+  const bytes = readSync(fd, buf, 0, 256, null);
+  if (fd !== 0) closeSync(fd);
+  return buf.toString('utf8', 0, bytes).trim() || defaultValue || '';
+}
+
+/**
+ * Interactive preset selector — displays a numbered menu and returns
+ * the chosen preset. Falls back to text input if the number is invalid.
+ */
+function askPreset(defaultPreset?: Preset): Preset {
+  const entries = Object.entries(PRESET_DESCRIPTIONS) as [Preset, string][];
+  console.log('\n  Feature presets:\n');
+  for (let i = 0; i < entries.length; i++) {
+    const [key, desc] = entries[i];
+    const marker = key === defaultPreset ? ' (default)' : '';
+    console.log(`    \x1b[36m${i + 1}\x1b[0m. ${key.padEnd(12)} ${desc}${marker}`);
+  }
+  console.log('');
+
+  const input = ask('Choose preset (1-5)', defaultPreset ?? 'minimal');
+  const num = Number(input);
+  if (Number.isInteger(num) && num >= 1 && num <= entries.length) {
+    return entries[num - 1][0];
+  }
+  // Allow direct text input too.
+  if (PRESET_TO_MANIFEST[input as Preset]) {
+    return input as Preset;
+  }
+  return defaultPreset ?? 'minimal';
+}
+
+function copyDir(src: string, dest: string): void {
+  mkdirSync(dest, { recursive: true });
+  for (const entry of readdirSync(src)) {
+    if (entry === 'node_modules' || entry === '.next' || entry === '.turbo') continue;
+    if (entry.endsWith('.tsbuildinfo')) continue;
+    const srcPath = join(src, entry);
+    const destPath = join(dest, entry);
+    if (statSync(srcPath).isDirectory()) {
+      copyDir(srcPath, destPath);
+    } else {
+      writeFileSync(destPath, readFileSync(srcPath));
+    }
+  }
+}
+
+function rewriteFile(filePath: string, replacements: Array<[RegExp, string]>): void {
+  if (!existsSync(filePath)) return;
+  let content = readFileSync(filePath, 'utf-8');
+  for (const [pattern, replacement] of replacements) {
+    content = content.replace(pattern, replacement);
+  }
+  writeFileSync(filePath, content);
+}
+
+// ── CLI parsing ─────────────────────────────────────────────────────
+
+function parseArgs(args: string[]): Partial<Answers> & { help?: boolean; standalone?: boolean } {
+  const result: Partial<Answers> & { help?: boolean; standalone?: boolean } = {};
+  const positional: string[] = [];
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--preset') {
+      const val = args[++i] as Preset;
+      if (!PRESET_TO_MANIFEST[val]) {
+        console.error(
+          `Error: unknown preset "${val}". Valid: ${Object.keys(PRESET_TO_MANIFEST).join(', ')}`,
+        );
+        exit(1);
+      }
+      result.preset = val;
+    } else if (arg === '--author') {
+      result.author = args[++i];
+    } else if (arg === '--url') {
+      result.siteUrl = args[++i];
+    } else if (arg === '--standalone') {
+      result.standalone = true;
+    } else if (arg === '--help' || arg === '-h') {
+      result.help = true;
+    } else if (!arg.startsWith('-')) {
+      positional.push(arg);
+    }
+  }
+
+  if (positional[0]) result.name = positional[0];
+  return result;
+}
+
+function printHelp(): void {
+  const presets = Object.entries(PRESET_DESCRIPTIONS)
+    .map(([key, desc]) => `  ${key.padEnd(12)} ${desc}`)
+    .join('\n');
+
+  console.log(`
+create-substrate-site — scaffold a new site from Substrate
+
+Usage:
+  bun create-site <name> [options]           (from monorepo root)
+  bun run scripts/create-substrate-site.ts <name> [options]
+
+Options:
+  --preset <name>    Feature preset (see below). Default: minimal
+  --author <name>    Site author name
+  --url <url>        Site URL (e.g. https://mysite.com)
+  --standalone       Generate with npm version deps instead of workspace:*
+  --help, -h         Show this help message
+
+Presets:
+${presets}
+
+Examples:
+  bun create-site my-site
+  bun create-site my-site --preset minimal --author Alice
+  bun create-site my-site --preset ai-archive --url https://alice.dev
+  bun create-site my-site --standalone
+`);
+}
+
+// ── Monorepo detection ──────────────────────────────────────────────
+
+function isMonorepoRoot(root: string): boolean {
+  return (
+    existsSync(join(root, 'packages')) &&
+    existsSync(join(root, 'examples')) &&
+    existsSync(join(root, 'package.json'))
+  );
+}
+
+/**
+ * Find the monorepo root by walking up from the script directory.
+ */
+function findMonorepoRoot(): string | null {
+  let dir = dirname(new URL(import.meta.url).pathname);
+  // On Windows, the pathname may start with a leading slash before the drive letter.
+  if (platform === 'win32') {
+    dir = dir.replace(/^\//, '');
+  }
+
+  for (let i = 0; i < 10; i++) {
+    if (isMonorepoRoot(dir)) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
+}
+
+// ── Template rewriting ──────────────────────────────────────────────
+
+/**
+ * Rewrite package.json for the generated site.
+ *
+ * In monorepo mode: keep `workspace:*` deps.
+ * In standalone mode: replace `workspace:*` with npm version ranges.
+ */
+function rewritePackageJson(
+  destDir: string,
+  slug: string,
+  author: string,
+  standalone: boolean,
+  substrateVersion: string,
+): void {
+  const pkgPath = join(destDir, 'package.json');
+  if (!existsSync(pkgPath)) return;
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+
+  pkg.name = slug;
+  pkg.version = '0.1.0';
+  pkg.private = true;
+  pkg.author = author;
+  delete pkg.license;
+
+  if (standalone) {
+    const versionRange = `^${substrateVersion}`;
+    for (const deps of [pkg.dependencies, pkg.devDependencies]) {
+      if (!deps) continue;
+      for (const [name, version] of Object.entries(deps) as [string, string][]) {
+        if (
+          version === 'workspace:*' &&
+          PLATFORM_PACKAGE_NAMES.includes(name as (typeof PLATFORM_PACKAGE_NAMES)[number])
+        ) {
+          deps[name] = versionRange;
+        }
+      }
+    }
+  }
+
+  writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+}
+
+/**
+ * Rewrite all branding references in the generated site.
+ *
+ * The northstar template uses these brand tokens:
+ *   - "Northstar"             → display name (Title Case of slug)
+ *   - "northstar"             → slug (in instrumentation serviceName)
+ *   - "northstar.example.com" → user's site URL host
+ *   - "#d4a052" (amber)       → neutral accent (#7c8ba0)
+ *   - Monogram 'N'            → first letter of display name
+ *
+ * Also renames the "logs" content model to "articles":
+ *   - src/app/logs/    → src/app/articles/
+ *   - src/lib/logs.ts  → src/lib/articles.ts
+ *   - MissionLog       → Article
+ *   - getLog           → getArticle
+ */
+function rewriteBranding(destDir: string, answers: Answers): void {
+  const slug = slugify(answers.name);
+  const displayName = titleCase(slug);
+  const firstLetter = displayName.charAt(0).toUpperCase();
+  const { siteUrl, preset } = answers;
+  const host = siteUrl.replace(/^https?:\/\//, '');
+  const manifestConst = PRESET_TO_MANIFEST[preset];
+
+  // ── layout.tsx ──────────────────────────────────────────────────
+  // Replace the Northstar-specific comment block with a generic one.
+  // The regex matches from "Northstar is the first example site" through
+  // the closing "*/" of the comment block.
+  rewriteFile(join(destDir, 'src/app/layout.tsx'), [
+    [/minimalSiteFeatures/g, manifestConst],
+    [/Northstar/g, displayName],
+    [/northstar\.example\.com/g, host],
+    [
+      /a fictional interstellar technology journal\. Built on Substrate\./g,
+      'A personal site built on Substrate.',
+    ],
+    [
+      /Northstar is the first example site that consumes @substrate\/site's[\s\S]*?See globals\.css for the full contract documentation\.\s*\*\//g,
+      `A personal site built on the Substrate platform.\n */`,
+    ],
+    // Remove the Northstar-specific poweredBy override and custom footer.
+    // The generated site uses the platform default footer ("Powered by Substrate").
+    [/\s+poweredBy=\{\{ enabled: false \}\}\s*/g, ' '],
+    [/\s*<footer[\s\S]*?<\/footer>\s*/g, ''],
+    // Remove `features` from the import (only used by the removed footer).
+    [
+      /import \{ minimalSiteFeatures, initFeatures, features \} from '@substrate\/config\/features'/g,
+      "import { minimalSiteFeatures, initFeatures } from '@substrate/config/features'",
+    ],
+    // Remove the `const manifest = features()` line.
+    [/\s*const manifest = features\(\);\s*\n/g, '\n'],
+  ]);
+
+  // ── page.tsx ────────────────────────────────────────────────────
+  rewriteFile(join(destDir, 'src/app/page.tsx'), [
+    [/Northstar/g, displayName],
+    [/Field reports from the edge of human reach\./g, 'A personal site built on Substrate.'],
+    [/Mission Logs/g, 'Articles'],
+    [/\/logs\//g, '/articles/'],
+    [/import \{ logs \} from '@\/lib\/logs'/g, "import { articles } from '@/lib/articles'"],
+    [/logs\.map/g, 'articles.map'],
+    // Replace variable name `log` → `article` using word boundaries.
+    [/\blog\b/g, 'article'],
+  ]);
+
+  // ── instrumentation.ts ──────────────────────────────────────────
+  rewriteFile(join(destDir, 'src/instrumentation.ts'), [
+    [/featurePreset: 'minimal'/g, `featurePreset: '${preset === 'full' ? 'minimal' : preset}'`],
+    [/serviceName: 'northstar'/g, `serviceName: '${slug}'`],
+    [
+      /Northstar overrides the service name[\s\S]*?platform factory accepts application-specific configuration\.\s*\*\//g,
+      `Uses the @substrate/site instrumentation factory to bootstrap the feature manifest.\n */`,
+    ],
+  ]);
+
+  // ── globals.css ─────────────────────────────────────────────────
+  rewriteFile(join(destDir, 'src/app/globals.css'), [
+    [/Northstar/g, displayName],
+    [
+      /Northstar uses a warm amber accent[\s\S]*?shared component library inherits Northstar's identity without a fork\./g,
+      `${displayName} uses a custom accent colour on a dark backdrop. The accent token (--accent-primary) is consumed by @substrate/ui, so the shared component library inherits the site's identity without a fork.`,
+    ],
+    // Reset accent colour to a neutral default — the user can change it.
+    [/#d4a052/g, '#7c8ba0'],
+    [/rgba\(212, 160, 82, 0\.15\)/g, 'rgba(124, 139, 160, 0.15)'],
+    [/#0b0d14/g, '#0a0a0c'],
+    [/#12141f/g, '#131316'],
+    [/#1a1d2c/g, '#1a1a20'],
+    [/#e6e4dc/g, '#e8e8ea'],
+    [/#9b988e/g, '#999'],
+    [/#5e5c54/g, '#666'],
+    [/#282b3d/g, '#2a2a30'],
+    [/#8a6a2e/g, '#4a5568'],
+  ]);
+
+  // ── OG route ────────────────────────────────────────────────────
+  rewriteFile(join(destDir, 'src/app/api/og/route.tsx'), [
+    [/Northstar/g, displayName],
+    [/northstar/g, slug],
+    [/Field reports from the edge of human reach/g, 'A personal site built on Substrate'],
+    [/>N</g, `>${firstLetter}<`],
+    [/#d4a052/g, '#7c8ba0'],
+    [/#0b0d14/g, '#0a0a0c'],
+    [/#12141f/g, '#131316'],
+    [/#e6e4dc/g, '#e8e8ea'],
+    [/#9b988e/g, '#999'],
+    [/#5e5c54/g, '#666'],
+    [/#8a6a2e/g, '#4a5568'],
+  ]);
+
+  // ── logs/[slug]/page.tsx → articles/[slug]/page.tsx ─────────────
+  const logsDir = join(destDir, 'src/app/logs');
+  const articlesDir = join(destDir, 'src/app/articles');
+  if (existsSync(logsDir)) {
+    mkdirSync(articlesDir, { recursive: true });
+    const slugDir = join(logsDir, '[slug]');
+    const targetSlugDir = join(articlesDir, '[slug]');
+    if (existsSync(slugDir)) {
+      mkdirSync(targetSlugDir, { recursive: true });
+      const pageFile = join(slugDir, 'page.tsx');
+      if (existsSync(pageFile)) {
+        const content = readFileSync(pageFile, 'utf-8')
+          .replace(/MissionLog/g, 'Article')
+          .replace(/mission log/g, 'article')
+          .replace(/Mission Log/g, 'Article')
+          .replace(/Mission Logs/g, 'Articles')
+          .replace(/getLog/g, 'getArticle')
+          .replace(/getAllSlugs/g, 'getAllSlugs')
+          .replace(/logs/g, 'articles')
+          .replace(/@\/lib\/logs/g, '@/lib/articles')
+          .replace(/LogPage/g, 'ArticlePage')
+          .replace(/Search mission logs/g, 'Search articles')
+          // Replace variable name `log` → `article` using word boundaries.
+          // Must come AFTER HTML tag replacements to avoid touching <article>.
+          .replace(/\blog\b/g, 'article');
+        writeFileSync(join(targetSlugDir, 'page.tsx'), content);
+      }
+    }
+    rmSync(logsDir, { recursive: true, force: true });
+  }
+
+  // ── lib/logs.ts → lib/articles.ts ──────────────────────────────
+  const logsLib = join(destDir, 'src/lib/logs.ts');
+  if (existsSync(logsLib)) {
+    const content = readFileSync(logsLib, 'utf-8')
+      .replace(/MissionLog/g, 'Article')
+      .replace(/mission log/g, 'article')
+      .replace(/Mission Log/g, 'Article')
+      .replace(/getLog/g, 'getArticle')
+      .replace(/Northstar/g, displayName)
+      .replace(/logs/g, 'articles')
+      .replace(/\blog\b/g, 'article')
+      .replace(
+        /Static mission log corpus for the Northstar example site[\s\S]*?\*\/\n*/g,
+        `/** Static article corpus for ${displayName}. */\n\n`,
+      );
+    writeFileSync(join(destDir, 'src/lib/articles.ts'), content);
+    rmSync(logsLib, { force: true });
+  }
+
+  // ── archive/page.tsx ────────────────────────────────────────────
+  rewriteFile(join(destDir, 'src/app/archive/page.tsx'), [
+    [/mission log/g, 'article'],
+    [/Mission Log/g, 'Article'],
+    [/logs/g, 'articles'],
+    [/@\/lib\/logs/g, '@/lib/articles'],
+    [/Search every mission log/g, 'Search every article'],
+    [/\blog\b/g, 'article'],
+  ]);
+
+  // ── archive/search.tsx ──────────────────────────────────────────
+  rewriteFile(join(destDir, 'src/app/archive/search.tsx'), [
+    [/mission log/g, 'article'],
+    [/Mission log/g, 'Article'],
+    [/Search mission logs/g, 'Search articles'],
+    [/\/logs\//g, '/articles/'],
+    [/\blog\b/g, 'article'],
+  ]);
+
+  // ── next.config.ts ──────────────────────────────────────────────
+  rewriteFile(join(destDir, 'next.config.ts'), [
+    [
+      /Northstar is a fully independent consumer of the Substrate platform[\s\S]*?built entirely on platform primitives\./g,
+      `${displayName} is built on the Substrate platform.`,
+    ],
+  ]);
+
+  // ── __tests__/search.test.ts ────────────────────────────────────
+  rewriteFile(join(destDir, 'src/__tests__/search.test.ts'), [
+    [/Northstar/g, displayName],
+    [/mission log/g, 'article'],
+    [/Northstar corpus/g, `${displayName} corpus`],
+  ]);
+}
+
+// ── Generated file templates ────────────────────────────────────────
+
+/**
+ * Generate `.env.example` with the platform's environment contract.
+ *
+ * The platform defines the variable names; the application supplies the
+ * values. This file documents all optional variables so the user knows
+ * exactly what the platform accepts.
+ */
+function generateEnvExample(destDir: string, answers: Answers): void {
+  const slug = slugify(answers.name);
+
+  const lines: string[] = [
+    '# ── Site identity ────────────────────────────────────────────────',
+    `NEXT_PUBLIC_SITE_URL=${answers.siteUrl}`,
+    `NEXT_PUBLIC_SITE_NAME=${titleCase(slug)}`,
+    '',
+    '# ── Analytics (optional) ────────────────────────────────────────',
+    '# NEXT_PUBLIC_POSTHOG_KEY=',
+    '# NEXT_PUBLIC_SENTRY_DSN=',
+    '',
+    '# ── AI features (optional, ai-archive preset) ───────────────────',
+    '# OPENAI_API_KEY=',
+    '',
+    '# ── Database (optional, ai-archive preset) ──────────────────────',
+    '# DATABASE_URL=',
+    '',
+    '# ── Auth (optional) ─────────────────────────────────────────────',
+    '# AUTH_SECRET=',
+    '# GITHUB_OAUTH_CLIENT_ID=',
+    '# GITHUB_OAUTH_CLIENT_SECRET=',
+    '',
+    '# ── Deployment (optional) ───────────────────────────────────────',
+    '# Cloudflare',
+    '# CLOUDFLARE_ACCOUNT_ID=',
+    '# CLOUDFLARE_API_TOKEN=',
+    '',
+    '# Upstash Redis (realtime preset)',
+    '# UPSTASH_REDIS_URL=',
+    '# UPSTASH_REDIS_TOKEN=',
+    '',
+  ];
+
+  writeFileSync(join(destDir, '.env.example'), lines.join('\n'));
+}
+
+/**
+ * Generate a `README.md` for the new site.
+ *
+ * This gives the generated project a professional, self-contained
+ * README — not a copy of the platform's README.
+ */
+function generateReadme(
+  destDir: string,
+  slug: string,
+  answers: Answers,
+  standalone: boolean,
+  substrateVersion: string,
+): void {
+  const displayName = titleCase(slug);
+  const presetDesc = PRESET_DESCRIPTIONS[answers.preset];
+
+  const lines: string[] = [
+    `# ${displayName}`,
+    '',
+    `> ${presetDesc}`,
+    '',
+    `Built on [Substrate](https://github.com/Juwan-Hwang/substrate)${standalone ? ` v${substrateVersion}` : ''}.`,
+    '',
+    '## Quick start',
+    '',
+    '```bash',
+    'bun install',
+    'bun dev',
+    '```',
+    '',
+    'Then open [http://localhost:3000](http://localhost:3000).',
+    '',
+    '## Customisation',
+    '',
+    '| File | Purpose |',
+    '|------|---------|',
+    '| `src/app/layout.tsx` | Metadata, fonts, global layout |',
+    '| `src/app/globals.css` | Theme tokens (colours, spacing) |',
+    '| `src/app/page.tsx` | Homepage |',
+    '| `src/lib/articles.ts` | Your content corpus |',
+    '| `src/instrumentation.ts` | Feature preset, service name |',
+    '| `.env.example` | Environment variables contract |',
+    '',
+    '## Build',
+    '',
+    '```bash',
+    'bun run build',
+    'bun run start',
+    '```',
+    '',
+    '## License',
+    '',
+    'Private — all rights reserved.',
+    '',
+  ];
+
+  writeFileSync(join(destDir, 'README.md'), lines.join('\n'));
+}
+
+// ── Main ────────────────────────────────────────────────────────────
+
+async function main(): Promise<void> {
+  const scriptDir = dirname(new URL(import.meta.url).pathname.replace(/^\//, ''));
+  const monorepoRoot = findMonorepoRoot();
+
+  const cliArgs = parseArgs(argv.slice(2));
+
+  if (cliArgs.help) {
+    printHelp();
+    exit(0);
+  }
+
+  // Determine mode: monorepo (workspace:*) or standalone (npm versions).
+  const inMonorepo = monorepoRoot !== null;
+  const standalone = cliArgs.standalone === true || !inMonorepo;
+
+  // Read the Substrate version from the monorepo's root package.json.
+  // In standalone mode, this version is pinned into the generated site's
+  // dependencies so `create-site` always ships the version it was built from.
+  let substrateVersion = '0.0.0';
+  if (monorepoRoot) {
+    const rootPkgPath = join(monorepoRoot, 'package.json');
+    if (existsSync(rootPkgPath)) {
+      const rootPkg = JSON.parse(readFileSync(rootPkgPath, 'utf-8'));
+      substrateVersion = rootPkg.version ?? '0.0.0';
+    }
+  }
+
+  // Find the template directory.
+  let templateDir: string;
+  if (monorepoRoot) {
+    templateDir = join(monorepoRoot, 'examples', TEMPLATE_DIR);
+  } else {
+    templateDir = join(scriptDir, '..', 'examples', TEMPLATE_DIR);
+  }
+
+  if (!existsSync(templateDir)) {
+    console.error(`Error: template directory not found: ${templateDir}`);
+    console.error(
+      standalone
+        ? 'Run this script from within the Substrate monorepo, or ensure examples/northstar/ exists.'
+        : 'Expected to find examples/northstar/ in the monorepo.',
+    );
+    exit(1);
+  }
+
+  // Collect answers — interactive or non-interactive.
+  let answers: Answers;
+
+  if (cliArgs.name && cliArgs.preset) {
+    answers = {
+      name: cliArgs.name,
+      preset: cliArgs.preset,
+      author: cliArgs.author ?? 'Anonymous',
+      siteUrl: cliArgs.siteUrl ?? `https://${slugify(cliArgs.name)}.com`,
+    };
+  } else {
+    // Interactive mode — prompt for each field.
+    console.log('\n  \x1b[1mcreate-substrate-site\x1b[0m — scaffold a new site from Substrate\n');
+
+    const name = ask('Site name (kebab-case)', cliArgs.name ?? 'my-site');
+    const preset = askPreset(cliArgs.preset);
+    const author = ask('Author name', cliArgs.author ?? 'Anonymous');
+    const defaultUrl = `https://${slugify(name)}.com`;
+    const siteUrl = ask('Site URL', cliArgs.siteUrl ?? defaultUrl);
+
+    answers = {
+      name: name || 'my-site',
+      preset,
+      author: author || 'Anonymous',
+      siteUrl: siteUrl || `https://${slugify(name)}.com`,
+    };
+  }
+
+  const slug = slugify(answers.name);
+
+  // Target directory:
+  //   Monorepo mode  → examples/<slug>  (picked up by workspace glob)
+  //   Standalone mode → <cwd>/<slug>     (independent project)
+  const targetDir = standalone ? join(cwd(), slug) : join(cwd(), 'examples', slug);
+
+  if (existsSync(targetDir)) {
+    console.error(`Error: target directory already exists: ${targetDir}`);
+    exit(1);
+  }
+
+  // ── Scaffold ──────────────────────────────────────────────────────
+
+  console.log('');
+  console.log(`  \x1b[1m${titleCase(slug)}\x1b[0m`);
+  console.log(`  Preset:    ${answers.preset}`);
+  console.log(`  Template:  examples/${TEMPLATE_DIR}/`);
+  console.log(`  Target:    ${relative(cwd(), targetDir) || targetDir}`);
+  console.log(`  Mode:      ${standalone ? 'standalone (npm deps)' : 'monorepo (workspace:*)'}`);
+  if (standalone) {
+    console.log(`  Substrate: ^${substrateVersion}`);
+  }
+  console.log(`  Author:    ${answers.author}`);
+  console.log(`  URL:       ${answers.siteUrl}`);
+  console.log('');
+
+  copyDir(templateDir, targetDir);
+
+  // Remove generated artifacts.
+  const cleanupPaths = [join(targetDir, 'next-env.d.ts'), join(targetDir, 'tsconfig.tsbuildinfo')];
+  for (const p of cleanupPaths) {
+    if (existsSync(p)) rmSync(p, { force: true });
+  }
+
+  // Rewrite branding and package.json.
+  rewritePackageJson(targetDir, slug, answers.author, standalone, substrateVersion);
+  rewriteBranding(targetDir, { ...answers, name: slug });
+
+  // Generate .env.example with the platform's environment contract.
+  generateEnvExample(targetDir, answers);
+
+  // Generate README.md for the new site.
+  generateReadme(targetDir, slug, answers, standalone, substrateVersion);
+
+  // ── Done ──────────────────────────────────────────────────────────
+
+  console.log('  \x1b[32m✓ Done.\x1b[0m Next steps:\n');
+
+  if (standalone) {
+    console.log(`    \x1b[36mcd\x1b[0m ${slug}`);
+    console.log(`    \x1b[36mbun install\x1b[0m`);
+    console.log(`    \x1b[36mbun dev\x1b[0m\n`);
+  } else {
+    console.log(`    \x1b[36mbun install\x1b[0m`);
+    console.log(`    \x1b[36mbun dev\x1b[0m --filter ${slug}\n`);
+  }
+
+  console.log('  Then customise:');
+  const basePath = standalone ? slug : `examples/${slug}`;
+  console.log(`    ${basePath}/src/app/layout.tsx      — metadata, fonts`);
+  console.log(`    ${basePath}/src/app/globals.css     — theme tokens`);
+  console.log(`    ${basePath}/src/lib/articles.ts     — your content`);
+  console.log(`    ${basePath}/src/instrumentation.ts  — feature preset`);
+  console.log(`    ${basePath}/.env.example            — environment vars\n`);
+
+  console.log(
+    '  \x1b[2mBuilt on Substrate — open-source platform for modern personal sites.\x1b[0m\n',
+  );
+}
+
+main();

@@ -1,0 +1,85 @@
+# Docker Compose — local development & self-hosted deployment stack.
+#
+# Profiles:
+#   docker compose up -d                       # Start only web (minimal)
+#   docker compose --profile database up -d    # Start web + Postgres + Redis
+#   docker compose --profile full up -d        # Start everything
+#   docker compose down -v                     # Tear down and remove volumes
+
+services:
+  # ── PostgreSQL 17 with pgvector ──────────────────────────────────────
+  postgres:
+    profiles: [database, full]
+    image: pgvector/pgvector:pg17
+    container_name: substrate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-substrate}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-substrate}
+      POSTGRES_DB: ${POSTGRES_DB:-substrate}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-substrate} -d ${POSTGRES_DB:-substrate}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - substrate-net
+
+  # ── Redis 7 ──────────────────────────────────────────────────────────
+  redis:
+    profiles: [database, full]
+    image: redis:7-alpine
+    container_name: substrate-redis
+    restart: unless-stopped
+    command: >-
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - substrate-net
+
+  # ── Web app (Next.js 16 on Bun) ──────────────────────────────────────
+  # Always available — no profile needed.
+  # When using database/full profile, depends_on ensures healthy Postgres+Redis.
+  # When running without a profile, set DATABASE_URL and REDIS_URL externally.
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: substrate-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-substrate}:${POSTGRES_PASSWORD:-substrate}@postgres:5432/${POSTGRES_DB:-substrate}
+      REDIS_URL: redis://redis:6379
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+    networks:
+      - substrate-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  substrate-net:
+    driver: bridge

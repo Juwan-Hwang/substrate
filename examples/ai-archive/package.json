@@ -1,0 +1,39 @@
+{
+  "name": "@example/ai-archive",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "biome check src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf .next dist .turbo"
+  },
+  "dependencies": {
+    "@substrate/db": "workspace:*",
+    "@substrate/ai": "workspace:*",
+    "@substrate/config": "workspace:*",
+    "@substrate/content": "workspace:*",
+    "next": "16.3.0-preview.6",
+    "react": "19.3.0-canary-28cd4bb0-20260723",
+    "react-dom": "19.3.0-canary-28cd4bb0-20260723",
+    "ai": "^4.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "@vercel/og": "^0.6.5",
+    "geist": "^1.4.1",
+    "zod": "^3.24.0",
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.3",
+    "vitest": "^3.2.0"
+  }
+}
