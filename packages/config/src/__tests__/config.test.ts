@@ -1,5 +1,10 @@
 /**
  * Unit tests for @substrate/config — feature manifest, presets, runtime accessor.
+ *
+ * Updated for v1.3: search enum is now 'off'|'static'|'server'|'hybrid',
+ * and new fields snapshot/contentAddressedStorage/assets are tested.
+ *
+ * I23 (CAS requires Snapshot) is tested via initFeatures throwing.
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -24,6 +29,9 @@ describe('featureManifestSchema', () => {
     expect(result.auth).toBe(true);
     expect(result.analytics).toBe(true);
     expect(result.ai).toBe(false);
+    expect(result.snapshot).toBe(false);
+    expect(result.contentAddressedStorage).toBe(false);
+    expect(result.assets).toBe(false);
   });
 
   it('rejects an invalid webgpu value', () => {
@@ -32,6 +40,23 @@ describe('featureManifestSchema', () => {
 
   it('rejects an invalid search value', () => {
     expect(() => featureManifestSchema.parse({ search: 'nonexistent' })).toThrow();
+  });
+
+  it('accepts v1.3 search enum values', () => {
+    expect(featureManifestSchema.parse({ search: 'static' }).search).toBe('static');
+    expect(featureManifestSchema.parse({ search: 'server' }).search).toBe('server');
+    expect(featureManifestSchema.parse({ search: 'hybrid' }).search).toBe('hybrid');
+    expect(featureManifestSchema.parse({ search: 'off' }).search).toBe('off');
+  });
+
+  it('rejects v1.2 search enum values (orama/postgres)', () => {
+    expect(() => featureManifestSchema.parse({ search: 'orama' })).toThrow();
+    expect(() => featureManifestSchema.parse({ search: 'postgres' })).toThrow();
+  });
+
+  it('defaults search to static (v1.3)', () => {
+    const result = featureManifestSchema.parse({});
+    expect(result.search).toBe('static');
   });
 });
 
@@ -43,7 +68,10 @@ describe('preset profiles', () => {
     expect(minimalSiteFeatures.ai).toBe(false);
     expect(minimalSiteFeatures.graphics).toBe(false);
     expect(minimalSiteFeatures.webgpu).toBe('off');
-    expect(minimalSiteFeatures.search).toBe('orama');
+    expect(minimalSiteFeatures.search).toBe('static');
+    expect(minimalSiteFeatures.snapshot).toBe(false);
+    expect(minimalSiteFeatures.contentAddressedStorage).toBe(false);
+    expect(minimalSiteFeatures.assets).toBe(false);
   });
 
   it('graphicsLabFeatures enables graphics + wasm', () => {
@@ -53,12 +81,15 @@ describe('preset profiles', () => {
     expect(graphicsLabFeatures.ai).toBe(false);
   });
 
-  it('aiArchiveFeatures enables the full AI stack', () => {
+  it('aiArchiveFeatures enables the full AI stack with snapshot+CAS', () => {
     expect(aiArchiveFeatures.ai).toBe(true);
     expect(aiArchiveFeatures.search).toBe('hybrid');
     expect(aiArchiveFeatures.auth).toBe(true);
     expect(aiArchiveFeatures.edge).toBe(true);
     expect(aiArchiveFeatures.queue).toBe(true);
+    expect(aiArchiveFeatures.snapshot).toBe(true);
+    expect(aiArchiveFeatures.contentAddressedStorage).toBe(true);
+    expect(aiArchiveFeatures.assets).toBe(true);
   });
 
   it('realtimeRoomFeatures enables realtime + edge', () => {
@@ -73,6 +104,9 @@ describe('preset profiles', () => {
     expect(referenceFeatures.ai).toBe(true);
     expect(referenceFeatures.realtime).toBe(true);
     expect(referenceFeatures.observability).toBe(true);
+    expect(referenceFeatures.snapshot).toBe(true);
+    expect(referenceFeatures.contentAddressedStorage).toBe(true);
+    expect(referenceFeatures.assets).toBe(true);
   });
 });
 
@@ -85,19 +119,58 @@ describe('runtime accessor', () => {
 
   it('returns the initialised manifest', () => {
     expect(features().auth).toBe(false);
-    expect(features().search).toBe('orama');
+    expect(features().search).toBe('static');
   });
 
   it('isEnabled returns correct boolean for boolean features', () => {
     expect(isEnabled('auth')).toBe(false);
     expect(isEnabled('analytics')).toBe(true);
     expect(isEnabled('graphics')).toBe(false);
+    expect(isEnabled('snapshot')).toBe(false);
   });
 
   it('isEnabled handles string features', () => {
     expect(isEnabled('webgpu')).toBe(false); // 'off'
     initFeatures(graphicsLabFeatures);
     expect(isEnabled('webgpu')).toBe(true); // 'progressive'
+  });
+});
+
+// ── I23: CAS requires Snapshot ─────────────────────────────────────
+
+describe('I23: CAS requires Snapshot', () => {
+  it('initFeatures throws when cas=true but snapshot=false', () => {
+    expect(() =>
+      initFeatures({
+        ...minimalSiteFeatures,
+        contentAddressedStorage: true,
+        snapshot: false,
+      }),
+    ).toThrow(/contentAddressedStorage.*requires.*snapshot/i);
+  });
+
+  it('initFeatures succeeds when cas=true and snapshot=true', () => {
+    expect(() =>
+      initFeatures({
+        ...minimalSiteFeatures,
+        contentAddressedStorage: true,
+        snapshot: true,
+      }),
+    ).not.toThrow();
+  });
+
+  it('initFeatures succeeds when cas=false and snapshot=false', () => {
+    expect(() => initFeatures(minimalSiteFeatures)).not.toThrow();
+  });
+
+  it('initFeatures succeeds when cas=false and snapshot=true', () => {
+    expect(() =>
+      initFeatures({
+        ...minimalSiteFeatures,
+        snapshot: true,
+        contentAddressedStorage: false,
+      }),
+    ).not.toThrow();
   });
 });
 

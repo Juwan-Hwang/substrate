@@ -105,6 +105,118 @@ export {
   rendererMachine,
 } from './state-machine';
 
+// ── v1.3 Core Primitives ─────────────────────────────────────────────
+
+// Lifecycle primitive — pure types, no deps.
+export type { LifecycleDefinition, LifecycleValidationResult } from './lifecycle';
+export {
+  validateLifecycle,
+  resolveTransition,
+  availableTransitions,
+} from './lifecycle';
+
+// Entity resolver — pure types, no deps.
+export type { EntityRef, EntitySnapshot, EntityResolver } from './entity-resolver';
+export { entityRef, entityRefKey } from './entity-resolver';
+
+// Authorization engine — depends on entity-resolver for EntityRef.
+export type {
+  Principal,
+  AuthOperation,
+  AuthorizationContext,
+  AuthorizationDecision,
+  AuthorizationPolicy,
+  AuthQueryIntent,
+  SqlFragment,
+  OramaFilter,
+  MemoryPredicate,
+  ConstraintCompiler,
+  AuthorizationBundle,
+  PreflightResult,
+} from './authorization';
+export {
+  principal,
+  ANONYMOUS,
+  preflight,
+  revalidate,
+} from './authorization';
+
+// ChangeSet + TransactionalCommitEngine — depends on entity-resolver + authorization.
+export type {
+  DomainOperation,
+  ChangeSet,
+  SnapshotReference,
+  Transaction,
+  CommitResult,
+  TransactionalCommitEngine,
+} from './changeset';
+export {
+  createChangeSet,
+  commitOk,
+  commitFail,
+} from './changeset';
+
+// Publish protocol — depends on all above.
+export type {
+  PreviewState,
+  PublicImpactAssessment,
+  PreviewConfirmation,
+  PublishDeps,
+  PublishError,
+  PublishSuccess,
+  PublishFailure,
+  PublishResult,
+} from './publish';
+export {
+  executePublish,
+  buildPreview,
+  buildImpact,
+  confirmPreview,
+  hashPreviewState,
+  hashPublicImpact,
+} from './publish';
+
+// Search privacy — depends on authorization.
+export type {
+  SearchMode,
+  SearchRequest,
+  SearchResult,
+  SearchResponse,
+  ServerSearchParams,
+} from './search-privacy';
+export {
+  mustUseServer,
+  assertStaticIndexIsPublic,
+  authorizedSearch,
+  SearchPrivacyViolation,
+} from './search-privacy';
+
+// Association primitive — depends on entity-resolver for EntityRef.
+export type { Association } from './association';
+export { association, isSameAssociation } from './association';
+
+// Purge safety — depends on entity-resolver for EntityRef.
+export type {
+  PurgeContract,
+  GarbageCollector,
+  GarbageCollectionResult,
+} from './purge';
+
+// Storage abstraction — pure interfaces, no deps.
+export type {
+  Hash,
+  SerializedState,
+  AssetMetadata,
+  Asset,
+  Representation,
+  SnapshotStore,
+  StoredSnapshot,
+  SnapshotListFilter,
+  ContentAddressedStore,
+  AssetStore,
+  StoreAdapter,
+} from './storage';
+
 // ── Zustand stores ──────────────────────────────────────────────────
 
 export type { CrucibleState, LatticeState, Toast, UIState } from './store';

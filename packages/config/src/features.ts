@@ -28,8 +28,20 @@ export const featureManifestSchema = z.object({
   webgpu: z.enum(['progressive', 'off']).default('progressive'),
   /** Rust/WASM compute modules. */
   wasm: z.boolean().default(true),
-  /** Search provider: 'orama' = client-side static, 'postgres' = PG FTS, 'hybrid' = FTS + pgvector, 'off' = disabled. */
-  search: z.enum(['orama', 'postgres', 'hybrid', 'off']).default('orama'),
+  /** Immutable snapshot layer — independent capability. */
+  snapshot: z.boolean().default(false),
+  /** Content-addressed storage — depends on snapshot. FORBIDDEN if snapshot=false. */
+  contentAddressedStorage: z.boolean().default(false),
+  /** Binary asset storage (media, attachments). */
+  assets: z.boolean().default(false),
+  /**
+   * Search architecture (backend-neutral):
+   *  - 'static'  = client-side, public-only pre-built index
+   *  - 'server'  = server-side authorized retrieval
+   *  - 'hybrid'  = static for anonymous + server for authenticated
+   *  - 'off'     = disabled
+   */
+  search: z.enum(['off', 'static', 'server', 'hybrid']).default('static'),
   /** AI features: RAG, chat, embeddings. */
   ai: z.boolean().default(false),
   /** Realtime collaboration via Durable Objects. */
@@ -65,7 +77,10 @@ export const minimalSiteFeatures: FeatureManifest = featureManifestSchema.parse(
   graphics: false,
   webgpu: 'off',
   wasm: false,
-  search: 'orama',
+  snapshot: false,
+  contentAddressedStorage: false,
+  assets: false,
+  search: 'static',
   ai: false,
   realtime: false,
   edgeReadModel: false,
@@ -88,6 +103,9 @@ export const graphicsLabFeatures: FeatureManifest = featureManifestSchema.parse(
   graphics: true,
   webgpu: 'progressive',
   wasm: true,
+  snapshot: false,
+  contentAddressedStorage: false,
+  assets: false,
   search: 'off',
   ai: false,
   realtime: false,
@@ -111,6 +129,9 @@ export const aiArchiveFeatures: FeatureManifest = featureManifestSchema.parse({
   graphics: false,
   webgpu: 'off',
   wasm: false,
+  snapshot: true,
+  contentAddressedStorage: true,
+  assets: true,
   search: 'hybrid',
   ai: true,
   realtime: false,
@@ -134,6 +155,9 @@ export const realtimeRoomFeatures: FeatureManifest = featureManifestSchema.parse
   graphics: false,
   webgpu: 'off',
   wasm: false,
+  snapshot: false,
+  contentAddressedStorage: false,
+  assets: false,
   search: 'off',
   ai: false,
   realtime: true,
@@ -157,6 +181,9 @@ export const referenceFeatures: FeatureManifest = featureManifestSchema.parse({
   graphics: true,
   webgpu: 'progressive',
   wasm: true,
+  snapshot: true,
+  contentAddressedStorage: true,
+  assets: true,
   search: 'hybrid',
   ai: true,
   realtime: true,
@@ -178,7 +205,15 @@ let activeManifest: FeatureManifest = minimalSiteFeatures;
  * Call this in instrumentation.ts or the app's entry point.
  */
 export function initFeatures(manifest: FeatureManifest): void {
-  activeManifest = featureManifestSchema.parse(manifest);
+  const parsed = featureManifestSchema.parse(manifest);
+  // I23: CAS depends on Snapshot. snapshot=false, cas=true is forbidden.
+  if (parsed.contentAddressedStorage && !parsed.snapshot) {
+    throw new Error(
+      'Feature manifest violation: contentAddressedStorage=true requires snapshot=true (§2.5, I23). ' +
+        'CAS is an optional enhancement that DEPENDS ON Snapshot — it cannot be enabled independently.',
+    );
+  }
+  activeManifest = parsed;
 }
 
 /**

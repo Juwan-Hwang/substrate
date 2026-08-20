@@ -25,7 +25,7 @@ import {
 
 export const contentStatusEnum = pgEnum('content_status', ['draft', 'published', 'archived']);
 
-// ── Tables ───────────────────────────────────────────────────────────
+// ── Example Tables ───────────────────────────────────────────────────
 
 export const articles = pgTable('articles', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -78,10 +78,119 @@ export const experiments = pgTable(
   (table) => [index('experiments_user_id_idx').on(table.userId)],
 );
 
-// graph_snapshots and newsletter_subscribers tables are intentionally
-// absent from the platform schema. They are application-specific and
-// should be defined by the application (or a capability package) that
-// needs them.
+// ── Platform Core Tables (Migration 0002) ───────────────────────────
+//
+// These tables are the platform's generic metadata authority.
+// Application typed tables (writings, projects, etc.) store ONLY
+// business/extension fields — lifecycle_state, visibility, owner_id
+// all live in `entities`.
+//
+// See: architecture-contract-v1.3.md §11 + §14.3.
+
+/**
+ * Generic Entity Registry — sole authority for lifecycle, visibility,
+ * owner, timestamps, and deletion state.
+ *
+ * `type` is app-defined ('writing', 'project', etc.).
+ * `lifecycle_state` is app-defined ('draft', 'published', etc.).
+ * `visibility` is app-defined ('private', 'restricted', 'public').
+ * The platform NEVER hardcodes any of these values.
+ */
+export const entities = pgTable(
+  'entities',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    type: text('type').notNull(),
+    lifecycleState: text('lifecycle_state').notNull(),
+    visibility: text('visibility').notNull(),
+    ownerId: text('owner_id'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
+  },
+  (table) => [
+    index('entities_type_id_idx').on(table.type, table.id),
+    index('entities_lifecycle_idx').on(table.lifecycleState),
+    index('entities_visibility_idx').on(table.visibility),
+  ],
+);
+
+/**
+ * Association — undirected, untyped entity relation.
+ *
+ * NO `kind` column. NO `relation_type` column.
+ * Association only expresses "A and B are related."
+ * See: architecture-contract-v1.3.md §9.
+ */
+export const associations = pgTable(
+  'associations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    entityAType: text('entity_a_type').notNull(),
+    entityAId: text('entity_a_id').notNull(),
+    entityBType: text('entity_b_type').notNull(),
+    entityBId: text('entity_b_id').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('associations_a_idx').on(table.entityAType, table.entityAId),
+    index('associations_b_idx').on(table.entityBType, table.entityBId),
+  ],
+);
+
+/**
+ * Entity indexes — query optimization for the entities table.
+ */
+export const entityIndexes = pgTable(
+  'entity_indexes',
+  {
+    entityType: text('entity_type').notNull(),
+    entityId: text('entity_id').notNull(),
+    lifecycleState: text('lifecycle_state').notNull(),
+    visibility: text('visibility').notNull(),
+  },
+  (table) => [
+    index('entity_indexes_type_id_idx').on(table.entityType, table.entityId),
+    index('entity_indexes_lifecycle_visibility_idx').on(
+      table.lifecycleState,
+      table.visibility,
+    ),
+  ],
+);
+
+// ── History Layer Tables (Migration 0003) ───────────────────────────
+//
+// Platform primitives only: snapshots + cas_objects.
+// NO revisions table — Revision is an Aevum application entity.
+// Aevum creates aevum_revisions in its own migration.
+//
+// See: architecture-contract-v1.3.md §2.5 + §14.3.
+
+/**
+ * Site-level State Snapshot — immutable point-in-time copy of the
+ * entire application state at publish time.
+ *
+ * `state_ref`: when CAS is enabled -> Manifest hash -> CAS objects.
+ *              when CAS is disabled -> direct serialized state blob identifier.
+ * NO entity_type, NO entity_id — one Snapshot = entire application state.
+ */
+export const snapshots = pgTable('snapshots', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  stateRef: text('state_ref').notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Content-Addressed Storage objects — immutable, content-addressed blobs.
+ * Orphans are GC-safe (idempotent, content-addressed).
+ */
+export const casObjects = pgTable('cas_objects', {
+  hash: text('hash').primaryKey(),
+  size: integer('size').notNull(),
+  storageBackend: text('storage_backend').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 
 // ── Inferred types ───────────────────────────────────────────────────
 
@@ -92,3 +201,13 @@ export type NewProject = typeof projects.$inferInsert;
 export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
 export type Experiment = typeof experiments.$inferSelect;
+export type Entity = typeof entities.$inferSelect;
+export type NewEntity = typeof entities.$inferInsert;
+export type AssociationRow = typeof associations.$inferSelect;
+export type NewAssociationRow = typeof associations.$inferInsert;
+export type EntityIndex = typeof entityIndexes.$inferSelect;
+export type NewEntityIndex = typeof entityIndexes.$inferInsert;
+export type Snapshot = typeof snapshots.$inferSelect;
+export type NewSnapshot = typeof snapshots.$inferInsert;
+export type CasObject = typeof casObjects.$inferSelect;
+export type NewCasObject = typeof casObjects.$inferInsert;

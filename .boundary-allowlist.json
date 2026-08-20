@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Boundary CI allowlist for Layer 2 enum/union literal analysis (§13.2). The applicationEntityNames blocklist is REMOVED (correction #12) — only lifecycle/visibility values remain, checked contextually.",
+  "applicationLifecycleValues": [
+    "draft",
+    "published"
+  ],
+  "applicationVisibilityValues": [
+    "private",
+    "restricted",
+    "public"
+  ],
+  "allowedContexts": {
+    "public": ["route", "http", "css", "a11y", "cache"],
+    "published": ["documentation", "comments"]
+  }
+}
