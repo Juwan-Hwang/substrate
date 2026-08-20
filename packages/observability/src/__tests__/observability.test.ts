@@ -16,15 +16,15 @@ describe('createLogger', () => {
 
   it('log routes error level to console.error', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const logger = createLogger('experiments');
+    const logger = createLogger('content');
     const entry: LogEntry = {
       level: 'error',
-      scope: 'experiments',
-      message: 'Experiment failed',
+      scope: 'content',
+      message: 'Operation failed',
       timestamp: Date.now(),
     };
     logger.log(entry);
-    expect(spy).toHaveBeenCalledWith('[experiments]', 'Experiment failed', '');
+    expect(spy).toHaveBeenCalledWith('[content]', 'Operation failed', '');
     spy.mockRestore();
   });
 
@@ -74,7 +74,7 @@ describe('createLogger', () => {
     const logger = createLogger('graph');
     logger.log({
       level: 'info',
-      scope: 'experiments',
+      scope: 'content',
       message: 'Should be tagged graph',
       timestamp: Date.now(),
     });
@@ -84,15 +84,15 @@ describe('createLogger', () => {
 
   it('metric logs to console.debug', () => {
     const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-    const logger = createLogger('experiments');
+    const logger = createLogger('content');
     const metric: Metric = {
-      name: 'experiment_duration',
+      name: 'operation_duration',
       value: 1500,
       unit: 'ms',
       timestamp: Date.now(),
     };
     logger.metric(metric);
-    expect(spy).toHaveBeenCalledWith('[metric:experiments]', 'experiment_duration', 1500, 'ms', '');
+    expect(spy).toHaveBeenCalledWith('[metric:content]', 'operation_duration', 1500, 'ms', '');
     spy.mockRestore();
   });
 
@@ -111,7 +111,7 @@ describe('createLogger', () => {
   it('metric includes tags when provided', () => {
     const spy = vi.spyOn(console, 'debug').mockImplementation(() => {});
     const logger = createLogger('content');
-    const tags = { route: '/articles', method: 'GET' };
+    const tags = { route: '/content', method: 'GET' };
     logger.metric({
       name: 'response_time',
       value: 120,

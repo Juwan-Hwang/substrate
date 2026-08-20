@@ -11,11 +11,7 @@
  *  - ContentAddressedStore has no update/delete methods
  */
 import { describe, expect, it } from 'vitest';
-import type {
-  ContentAddressedStore,
-  SnapshotStore,
-  StoredSnapshot,
-} from './storage';
+import type { ContentAddressedStore, SnapshotStore, StoredSnapshot } from './storage';
 
 // ── In-memory SnapshotStore implementation ──────────────────────
 
@@ -23,7 +19,10 @@ class InMemorySnapshotStore implements SnapshotStore {
   private map = new Map<string, StoredSnapshot>();
   private counter = 0;
 
-  async create(state: string | Uint8Array, metadata?: Readonly<Record<string, unknown>>): Promise<StoredSnapshot> {
+  async create(
+    state: string | Uint8Array,
+    metadata?: Readonly<Record<string, unknown>>,
+  ): Promise<StoredSnapshot> {
     const id = `snap-${++this.counter}`;
     const snap: StoredSnapshot = {
       id,
@@ -85,9 +84,9 @@ describe('SnapshotStore (immutable — no update/delete)', () => {
 
     const retrieved = await store.retrieve(created.id);
     expect(retrieved).not.toBeNull();
-    expect(retrieved!.id).toBe(created.id);
-    expect(retrieved!.stateRef).toBe('{"state":"v1"}');
-    expect(retrieved!.metadata).toEqual({ version: 1 });
+    expect(retrieved?.id).toBe(created.id);
+    expect(retrieved?.stateRef).toBe('{"state":"v1"}');
+    expect(retrieved?.metadata).toEqual({ version: 1 });
   });
 
   it('retrieve non-existent snapshot → null', async () => {

@@ -7,10 +7,10 @@
  * No `kind` field. No `relationType`. No `source`/`target` bias.
  * Association only expresses "A and B are related."
  *
- * If Aevum needs typed relations, it defines its own table
+ * If the application needs typed relations, it defines its own table
  * (e.g. `collection_memberships`) on top of Association.
  *
- * Collection is NOT a platform primitive. Aevum defines `Collection`
+ * Collection is NOT a platform primitive. The application defines `Collection`
  * and `CollectionMembership` on top of Association (or its own table).
  *
  * See: architecture-contract-v1.3.md §9.

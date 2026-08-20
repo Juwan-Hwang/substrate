@@ -1,9 +1,15 @@
 /**
- * @substrate/db — Database access layer (PostgreSQL 17 + Drizzle ORM + pgvector).
+ * @substrate/db — Database access layer (PostgreSQL 17 + Drizzle ORM).
  *
- * Provides database primitives and generic table definitions.
- * Application-specific tables (graph snapshots, newsletter subscribers,
- * etc.) are defined by the application, not by the platform.
+ * Provides database primitives and platform-level table definitions:
+ *   - entities (generic entity registry)
+ *   - associations (undirected entity relations)
+ *   - entity_indexes (query optimization)
+ *   - snapshots (immutable state snapshots)
+ *   - cas_objects (content-addressed storage)
+ *
+ * Application-specific tables are defined by the application,
+ * not by the platform.
  */
 
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -21,23 +27,26 @@ export function createDb(config: DatabaseConfig) {
   return drizzle(client);
 }
 
-// ── Tables & types (defined in tables.ts to avoid circular deps) ─────
+// ── Platform Tables & types ──────────────────────────────────────────
 
 export type {
-  Article,
-  Experiment,
-  NewArticle,
-  NewNote,
-  NewProject,
-  Note,
-  Project,
+  AssociationRow,
+  CasObject,
+  Entity,
+  EntityIndex,
+  NewAssociationRow,
+  NewCasObject,
+  NewEntity,
+  NewEntityIndex,
+  NewSnapshot,
+  Snapshot,
 } from './tables';
 export {
-  articles,
-  contentStatusEnum,
-  experiments,
-  notes,
-  projects,
+  associations,
+  casObjects,
+  entities,
+  entityIndexes,
+  snapshots,
 } from './tables';
 
 // ── Turso / libSQL (edge READ-ONLY replica) ────────────────────────
@@ -48,25 +57,17 @@ export {
 export type { ReadOnlyDrizzleDb, TursoConfig } from './turso';
 export { createTursoReadClient, createTursoReadReplica } from './turso';
 
-// ── PostgreSQL Full-Text Search ─────────────────────────────────────
-
-export type { FTSQuery, FTSResult } from './fts';
-export { FTS_INDEX_SQL, ftsSearchSQL, ftsWeightedSearchSQL } from './fts';
-
-// ── Drizzle-Zod schemas (auto-generated from table definitions) ─────
+// ── Drizzle-Zod schemas (auto-generated from platform table definitions) ──
 
 export {
-  insertArticleSchema,
-  insertExperimentSchema,
-  insertNoteSchema,
-  insertProjectSchema,
-  listArticlesQuerySchema,
-  listExperimentsQuerySchema,
-  selectArticleSchema,
-  selectExperimentSchema,
-  selectNoteSchema,
-  selectProjectSchema,
-  updateArticleSchema,
-  updateNoteSchema,
-  updateProjectSchema,
+  insertCasObjectSchema,
+  insertEntityIndexSchema,
+  insertEntitySchema,
+  insertSnapshotSchema,
+  listEntitiesQuerySchema,
+  selectCasObjectSchema,
+  selectEntityIndexSchema,
+  selectEntitySchema,
+  selectSnapshotSchema,
+  updateEntitySchema,
 } from './schemas';

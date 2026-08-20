@@ -9,11 +9,10 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import {
+  type EntityResolver,
+  type EntitySnapshot,
   entityRef,
   entityRefKey,
-  type EntityResolver,
-  type EntityRef,
-  type EntitySnapshot,
 } from './entity-resolver';
 
 // ── entityRef ────────────────────────────────────────────────────

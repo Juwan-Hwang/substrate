@@ -35,10 +35,7 @@ export interface Principal {
 /**
  * Create a Principal. Convenience constructor.
  */
-export function principal(
-  userId: string | null,
-  roles: readonly string[] = [],
-): Principal {
+export function principal(userId: string | null, roles: readonly string[] = []): Principal {
   return { userId, roles } as const;
 }
 
@@ -130,7 +127,7 @@ export interface ConstraintCompiler<TQueryFragment> {
 /**
  * Application-supplied authorization bundle.
  *
- * Aevum registers this with the platform at startup. It contains:
+ * The application registers this with the platform at startup. It contains:
  *   - The semantic policy (decide)
  *   - The query intent builder (bulk read constraints)
  *   - Per-backend compilers (PostgreSQL, Orama, memory predicate)

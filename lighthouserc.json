@@ -1,8 +1,8 @@
 {
   "collect": {
-    "startServerCommand": "cd packages/web && bun run start",
+    "startServerCommand": "cd examples/northstar && bun run start",
     "startServerReadyPattern": "Ready in|started server on|Local:",
-    "url": ["http://localhost:3000", "http://localhost:3000/lattice"],
+    "url": ["http://localhost:3000"],
     "numberOfRuns": 3
   },
   "assert": {

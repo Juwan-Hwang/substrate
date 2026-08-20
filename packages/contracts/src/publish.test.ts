@@ -9,29 +9,28 @@
  *  - Commit failure (generic) → commit_failed, orphan CAS tracked
  */
 import { describe, expect, it, vi } from 'vitest';
+import type { AuthorizationBundle, Principal } from './authorization';
 import {
   type ChangeSet,
   type CommitResult,
-  type Transaction,
-  type TransactionalCommitEngine,
   commitFail,
   commitOk,
   createChangeSet,
+  type Transaction,
+  type TransactionalCommitEngine,
 } from './changeset';
-import type { AuthorizationBundle, AuthorizationContext, Principal } from './authorization';
-import { entityRef } from './entity-resolver';
 import type { EntitySnapshot } from './entity-resolver';
+import { entityRef } from './entity-resolver';
 import {
-  type PreviewState,
-  type PublicImpactAssessment,
-  type PublishDeps,
-  type PublishResult,
   buildImpact,
   buildPreview,
   confirmPreview,
   executePublish,
   hashPreviewState,
   hashPublicImpact,
+  type PreviewState,
+  type PublicImpactAssessment,
+  type PublishDeps,
 } from './publish';
 
 // ── Fixtures ─────────────────────────────────────────────────────
@@ -57,6 +56,9 @@ const changeset = createChangeSet(
   'user-1',
 );
 
+const [publishOp] = changeset.operations;
+if (!publishOp) throw new Error('fixture: changeset must have ≥1 operation');
+
 // ── Fake commit engine ───────────────────────────────────────────
 
 function makeEngine(
@@ -69,7 +71,10 @@ function makeEngine(
   };
 
   return {
-    async commit<T>(cs: ChangeSet, work: (tx: Transaction) => Promise<T>): Promise<CommitResult<T>> {
+    async commit<T>(
+      _cs: ChangeSet,
+      work: (tx: Transaction) => Promise<T>,
+    ): Promise<CommitResult<T>> {
       try {
         const value = await work(tx);
         if (workResult === 'success') return commitOk(value);
@@ -135,9 +140,12 @@ describe('executePublish', () => {
         throw new Error('R2 put failed');
       }),
       commitEngine: {
-        async commit() {
+        async commit<T>(
+          _cs: ChangeSet,
+          _work: (tx: Transaction) => Promise<T>,
+        ): Promise<CommitResult<T>> {
           commitCalled = true;
-          return commitOk('never');
+          return commitOk('never' as unknown as T);
         },
       },
     });
@@ -146,8 +154,11 @@ describe('executePublish', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.type).toBe('cas_prewrite_failed');
-      expect(result.error.reason).toContain('R2 put failed');
+      if (result.error.type === 'cas_prewrite_failed') {
+        expect(result.error.reason).toContain('R2 put failed');
+      } else {
+        expect.unreachable('expected cas_prewrite_failed');
+      }
     }
     expect(commitCalled).toBe(false);
   });
@@ -195,7 +206,7 @@ describe('executePublish', () => {
   it('returns value on successful commit', async () => {
     const deps = makeDeps();
     const result = await executePublish(deps, changeset, owner, confirmation, async (tx) => {
-      await tx.write(changeset.operations[0]!);
+      await tx.write(publishOp);
       return 'committed';
     });
 
@@ -209,8 +220,11 @@ describe('executePublish', () => {
     const deps = makeDeps({
       casPreWrite: vi.fn(async () => ['cas-hash-1', 'cas-hash-2']),
       commitEngine: {
-        async commit() {
-          return commitFail<string>('DB write failed');
+        async commit<T>(
+          _cs: ChangeSet,
+          _work: (tx: Transaction) => Promise<T>,
+        ): Promise<CommitResult<T>> {
+          return commitFail<T>('DB write failed');
         },
       },
     });

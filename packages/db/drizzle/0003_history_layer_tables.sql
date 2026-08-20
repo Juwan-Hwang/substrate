@@ -1,8 +1,8 @@
 -- Migration 0003: History Layer Tables — Platform Primitives Only
 --
 -- snapshots + cas_objects ONLY.
--- NO revisions table — Revision is an Aevum application entity.
--- Aevum creates aevum_revisions in its own migration.
+-- NO revisions table — Revision is an application entity.
+-- The application creates revisions in its own migration.
 --
 -- See: architecture-contract-v1.3.md §2.5 + §14.3
 
@@ -28,5 +28,5 @@ CREATE TABLE IF NOT EXISTS "cas_objects" (
 );
 
 -- *** NO revisions table in Substrate ***
--- *** Revision is an Aevum application entity (see §2.5 Layer Ownership) ***
--- *** Aevum creates aevum_revisions in its own migration ***
+-- *** Revision is an application entity (see §2.5 Layer Ownership) ***
+-- *** The application creates revisions in its own migration ***

@@ -16,6 +16,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ANONYMOUS,
   type AuthorizationBundle,
+  type AuthQueryIntent,
   principal,
 } from './authorization';
 import {
@@ -58,18 +59,12 @@ describe('assertStaticIndexIsPublic', () => {
   const isPublic = (v: string) => v === 'public';
 
   it('passes when all items are public', () => {
-    const items = [
-      { visibility: 'public' },
-      { visibility: 'public' },
-    ];
+    const items = [{ visibility: 'public' }, { visibility: 'public' }];
     expect(() => assertStaticIndexIsPublic(items, isPublic)).not.toThrow();
   });
 
   it('throws SearchPrivacyViolation when a private item is in the index', () => {
-    const items = [
-      { visibility: 'public' },
-      { visibility: 'private' },
-    ];
+    const items = [{ visibility: 'public' }, { visibility: 'private' }];
     expect(() => assertStaticIndexIsPublic(items, isPublic)).toThrow(SearchPrivacyViolation);
   });
 
@@ -97,7 +92,7 @@ describe('assertStaticIndexIsPublic', () => {
 // ── authorizedSearch ─────────────────────────────────────────────
 
 describe('authorizedSearch', () => {
-  function makeBundle(intent: unknown): AuthorizationBundle {
+  function makeBundle(intent: AuthQueryIntent | null): AuthorizationBundle {
     return {
       policy: { decide: vi.fn(async () => ({ allow: true })) },
       buildQueryIntent: vi.fn(async () => intent),
@@ -136,10 +131,7 @@ describe('authorizedSearch', () => {
       executor,
     );
 
-    expect(executor).toHaveBeenCalledWith(
-      expect.objectContaining({ query: 'hello' }),
-      intent,
-    );
+    expect(executor).toHaveBeenCalledWith(expect.objectContaining({ query: 'hello' }), intent);
     expect(result.total).toBe(1);
     expect(result.results).toHaveLength(1);
   });

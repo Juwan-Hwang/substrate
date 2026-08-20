@@ -15,9 +15,10 @@
  * invocation, which is the intended behaviour.
  */
 
-import { createDb, ftsWeightedSearchSQL } from '@substrate/db';
+import { createDb } from '@substrate/db';
 import postgres from 'postgres';
 import { databaseUrl } from './env';
+import { ftsWeightedSearchSQL } from './fts';
 import type { SearchResult } from './types';
 
 type PgClient = ReturnType<typeof postgres>;

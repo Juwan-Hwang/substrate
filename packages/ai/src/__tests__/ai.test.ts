@@ -135,6 +135,15 @@ describe('createWorkersAIProvider', () => {
 // ── hybridRetrieval ──────────────────────────────────────────────────
 
 describe('hybridRetrieval', () => {
+  // Shared search-table config — mimics an application's `articles` table.
+  const searchTable = {
+    name: 'articles',
+    bodyColumn: 'body',
+    statusColumn: 'status',
+    publishedValue: 'published',
+    embeddingColumn: 'embedding',
+  } as const;
+
   it('returns results sorted by score descending', async () => {
     const ftsResults = [
       { id: 'a', score: 0.9 },
@@ -153,7 +162,7 @@ describe('hybridRetrieval', () => {
 
     const results = await hybridRetrieval(
       { query: 'test', queryEmbedding: [0.1, 0.2], limit: 10 },
-      { db },
+      { db, searchTable },
     );
 
     expect(results).toHaveLength(3);
@@ -166,7 +175,7 @@ describe('hybridRetrieval', () => {
     // Every result is tagged as hybrid with a citation.
     for (const r of results) {
       expect(r.source).toBe('hybrid');
-      expect(r.citation).toEqual({ type: 'article', ref: r.id });
+      expect(r.citation).toEqual({ type: 'search-result', ref: r.id });
     }
   });
 
@@ -174,13 +183,16 @@ describe('hybridRetrieval', () => {
     const db = {
       query: vi.fn().mockResolvedValue([{ id: 'a', score: 0.5 }]),
     };
-    await hybridRetrieval({ query: 'test', queryEmbedding: [0.1, 0.2], limit: 5 }, { db });
+    await hybridRetrieval(
+      { query: 'test', queryEmbedding: [0.1, 0.2], limit: 5 },
+      { db, searchTable },
+    );
     expect(db.query).toHaveBeenCalledTimes(2);
   });
 
   it('skips the vector channel when no embedding and no embed fn are provided', async () => {
     const db = { query: vi.fn().mockResolvedValue([{ id: 'a', score: 0.5 }]) };
-    await hybridRetrieval({ query: 'test', limit: 5 }, { db });
+    await hybridRetrieval({ query: 'test', limit: 5 }, { db, searchTable });
     expect(db.query).toHaveBeenCalledTimes(1);
   });
 
@@ -188,7 +200,7 @@ describe('hybridRetrieval', () => {
     const db = { query: vi.fn().mockResolvedValue([]) };
     const results = await hybridRetrieval(
       { query: 'nothing', queryEmbedding: [0.1], limit: 5 },
-      { db },
+      { db, searchTable },
     );
     expect(results).toEqual([]);
   });
@@ -198,7 +210,7 @@ describe('hybridRetrieval', () => {
     const db = { query: vi.fn().mockResolvedValue(many) };
     const results = await hybridRetrieval(
       { query: 'test', queryEmbedding: [0.1], limit: 4 },
-      { db },
+      { db, searchTable },
     );
     expect(results).toHaveLength(4);
   });
@@ -211,7 +223,10 @@ describe('hybridRetrieval', () => {
     };
     const embed = vi.fn().mockResolvedValue([0.4, 0.5, 0.6]);
 
-    const results = await hybridRetrieval({ query: 'semantic', limit: 5 }, { db, embed });
+    const results = await hybridRetrieval(
+      { query: 'semantic', limit: 5 },
+      { db, embed, searchTable },
+    );
 
     expect(embed).toHaveBeenCalledWith('semantic');
     expect(db.query).toHaveBeenCalledTimes(2);
@@ -224,8 +239,8 @@ describe('hybridRetrieval', () => {
 
 describe('rerank', () => {
   const sampleResults: RetrievalResult[] = [
-    { id: 'a', score: 0.9, source: 'hybrid', citation: { type: 'article', ref: 'a' } },
-    { id: 'b', score: 0.5, source: 'hybrid', citation: { type: 'article', ref: 'b' } },
+    { id: 'a', score: 0.9, source: 'hybrid', citation: { type: 'search-result', ref: 'a' } },
+    { id: 'b', score: 0.5, source: 'hybrid', citation: { type: 'search-result', ref: 'b' } },
   ];
 
   it('returns the original results unchanged when no reranker is provided', async () => {

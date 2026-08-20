@@ -8,8 +8,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles.css",
-    "./tokens.css": "./src/tokens.css",
-    "./theme.css": "./src/theme.css",
     "./3d-effect": "./src/3d-effect.ts",
     "./status-ring": "./src/status-ring.ts",
     "./paint-worklets": "./src/paint-worklets.ts"
@@ -20,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "build-storybook": "bun --filter @substrate/tokens build && storybook build",
     "test-storybook": "test-storybook",
     "clean": "rm -rf dist .turbo storybook-static"
   },

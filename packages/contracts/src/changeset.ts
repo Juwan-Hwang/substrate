@@ -129,7 +129,7 @@ export interface CommitResult<T> {
  *  11. Verify user's confirmed preview matches recomputed state
  *  12. Revalidate Authorization (Phase B — binding)
  *  13. Write Current State (tx.write)
- *  14. Write Snapshot Reference + Aevum Revision row
+ *  14. Write Snapshot Reference + application revision row
  *  15. COMMIT
  */
 export interface TransactionalCommitEngine {
@@ -143,10 +143,7 @@ export interface TransactionalCommitEngine {
    *   - Atomic commit or rollback
    *   - Orphan CAS tracking on failure
    */
-  commit<T>(
-    changeset: ChangeSet,
-    work: (tx: Transaction) => Promise<T>,
-  ): Promise<CommitResult<T>>;
+  commit<T>(changeset: ChangeSet, work: (tx: Transaction) => Promise<T>): Promise<CommitResult<T>>;
 }
 
 // ── Result helpers ─────────────────────────────────────────────────
@@ -155,6 +152,11 @@ export function commitOk<T>(value: T): CommitResult<T> {
   return { ok: true, value };
 }
 
-export function commitFail<T>(error: string, orphanCasObjects?: readonly string[]): CommitResult<T> {
-  return { ok: false, error, orphanCasObjects };
+export function commitFail<T>(
+  error: string,
+  orphanCasObjects?: readonly string[],
+): CommitResult<T> {
+  return orphanCasObjects !== undefined
+    ? { ok: false, error, orphanCasObjects }
+    : { ok: false, error };
 }

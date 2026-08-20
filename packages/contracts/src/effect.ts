@@ -8,7 +8,7 @@
  *
  * Effects are run via `Effect.runPromise` in Server Actions / edge handlers.
  */
-import { Context, Effect, Layer, pipe } from 'effect';
+import { Context, Effect, Layer } from 'effect';
 
 // ── Service Tags ────────────────────────────────────────────────────
 
@@ -75,54 +75,6 @@ export class NotFoundError {
 }
 
 // ── Effect programs ─────────────────────────────────────────────────
-
-/**
- * Fetch an article by slug — Effect-based with structured error handling.
- *
- * The caller decides how to run it (Promise, Callback, etc.) via
- * `Effect.runPromise` or `Effect.runFork`.
- */
-export const fetchArticleBySlug = (slug: string) =>
-  pipe(
-    Effect.gen(function* () {
-      const db = yield* DatabaseService;
-      const logger = yield* LoggerService;
-      logger.info('Fetching article', { slug });
-      const rows = yield* Effect.tryPromise({
-        try: () =>
-          db.query('SELECT * FROM articles WHERE slug = $1 AND status = $2', [slug, 'published']),
-        catch: (e) => new DatabaseError(e, 'SELECT articles'),
-      });
-      if (!rows.length) {
-        yield* Effect.fail(new NotFoundError('article', slug));
-      }
-      return rows[0];
-    }),
-  );
-
-/**
- * Submit an experiment — Effect-based with validation + DB insert.
- */
-export const submitExperimentEffect = (input: {
-  name: string;
-  subsystem: string;
-  parameters: Record<string, string>;
-}) =>
-  pipe(
-    Effect.gen(function* () {
-      if (!input.name || input.name.length > 120) {
-        yield* Effect.fail(new ValidationError('name', 'Name is required and must be ≤120 chars'));
-      }
-      const db = yield* DatabaseService;
-      const logger = yield* LoggerService;
-      logger.info('Submitting experiment', { name: input.name, subsystem: input.subsystem });
-      const row = yield* Effect.tryPromise({
-        try: () => db.insert('experiments', input),
-        catch: (e) => new DatabaseError(e, 'INSERT experiments'),
-      });
-      return row;
-    }),
-  );
 
 // ── Layers ──────────────────────────────────────────────────────────
 
@@ -196,6 +148,7 @@ export async function runEffect<A, E>(
     layers.ai ?? ConsoleLoggerLayer,
   );
   const provided = program.pipe(Effect.provide(allLayers));
-  // biome-ignore lint/suspicious/noExplicitAny: mergeAll can't infer union when fallbacks differ
-  return Effect.runPromise(provided as any) as Promise<A>;
+  // Effect.runPromise requires a clean Effect type; mergeAll produces a union that
+  // the compiler cannot narrow. We assert the program type rather than using `any`.
+  return Effect.runPromise(provided as unknown as Effect.Effect<A, never, never>) as Promise<A>;
 }

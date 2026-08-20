@@ -57,20 +57,53 @@ type SearchPrivacyViolation = {
 // ── Excluded paths ──────────────────────────────────────────────────
 
 const EXCLUDED_DIRS = new Set([
-  'node_modules', '.next', '.turbo', '.git', 'dist', 'target', 'storybook-static', '.cache',
+  'node_modules',
+  '.next',
+  '.turbo',
+  '.git',
+  'dist',
+  'target',
+  'storybook-static',
+  '.cache',
 ]);
 
 const EXCLUDED_FILES = new Set([
-  'PLATFORM_BOUNDARY.md', 'check-boundary.ts', 'bun.lock', 'bun.lockb', '.gitignore', '.editorconfig',
+  'PLATFORM_BOUNDARY.md',
+  'check-boundary.ts',
+  'bun.lock',
+  'bun.lockb',
+  '.gitignore',
+  '.editorconfig',
 ]);
 
 const EXCLUDED_PATH_PREFIXES = ['crates/wasm/pkg'];
 
 const SCANNABLE_EXTENSIONS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
-  '.json', '.jsonc', '.css', '.scss', '.md', '.mdx',
-  '.html', '.htm', '.yaml', '.yml', '.toml', '.rs',
-  '.env', '.env.example', '.env.local', '.sh', '.bash', '.sql', '.txt',
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.json',
+  '.jsonc',
+  '.css',
+  '.scss',
+  '.md',
+  '.mdx',
+  '.html',
+  '.htm',
+  '.yaml',
+  '.yml',
+  '.toml',
+  '.rs',
+  '.env',
+  '.env.example',
+  '.env.local',
+  '.sh',
+  '.bash',
+  '.sql',
+  '.txt',
   '.wit',
 ]);
 
@@ -99,9 +132,7 @@ function shouldExclude(filePath: string): boolean {
 
 // ── Import extraction ───────────────────────────────────────────────
 
-function extractImports(
-  content: string,
-): Array<{ path: string; line: number }> {
+function extractImports(content: string): Array<{ path: string; line: number }> {
   const imports: Array<{ path: string; line: number }> = [];
   const lines = content.split('\n');
 
@@ -111,7 +142,9 @@ function extractImports(
   for (let i = 0; i < lines.length; i++) {
     let match: RegExpExecArray | null;
     importRegex.lastIndex = 0;
-    while ((match = importRegex.exec(lines[i])) !== null) {
+    while (true) {
+      match = importRegex.exec(lines[i]);
+      if (match === null) break;
       const importPath = match[1] || match[2] || match[3];
       if (importPath) {
         imports.push({ path: importPath, line: i + 1 });
@@ -269,9 +302,7 @@ function checkSearchPrivacy(filePath: string): SearchPrivacyViolation[] {
   const hasSearchImport = imports.some(({ path }) =>
     CLIENT_SEARCH_IMPORT_PATTERNS.some((p) => p.test(path)),
   );
-  const hasAuthImport = imports.some(({ path }) =>
-    AUTH_IMPORT_PATTERNS.some((p) => p.test(path)),
-  );
+  const hasAuthImport = imports.some(({ path }) => AUTH_IMPORT_PATTERNS.some((p) => p.test(path)));
 
   if (hasSearchImport && hasAuthImport) {
     const searchImport = imports.find(({ path }) =>
@@ -337,16 +368,28 @@ const PATTERNS: Array<{ regex: RegExp; message: string }> = [
   { regex: /aevum\.dev/g, message: 'Application-specific URL "aevum.dev"' },
   { regex: /api\.aevum\.dev/g, message: 'Application-specific API URL "api.aevum.dev"' },
   { regex: /aevum-edge/g, message: 'Application-specific infrastructure resource "aevum-edge"' },
-  { regex: /aevum-assets/g, message: 'Application-specific infrastructure resource "aevum-assets"' },
+  {
+    regex: /aevum-assets/g,
+    message: 'Application-specific infrastructure resource "aevum-assets"',
+  },
   { regex: /aevum-tasks/g, message: 'Application-specific infrastructure resource "aevum-tasks"' },
   { regex: /aevum-web/g, message: 'Application-specific service name "aevum-web"' },
-  { regex: /\bSITE_BRAND\b/g, message: 'Hardcoded brand constant "SITE_BRAND" — replaced by SiteIdentity' },
-  { regex: /\bSUBSYSTEMS\b/g, message: 'Hardcoded subsystem list "SUBSYSTEMS" — application-specific' },
+  {
+    regex: /\bSITE_BRAND\b/g,
+    message: 'Hardcoded brand constant "SITE_BRAND" — replaced by SiteIdentity',
+  },
+  {
+    regex: /\bSUBSYSTEMS\b/g,
+    message: 'Hardcoded subsystem list "SUBSYSTEMS" — application-specific',
+  },
   { regex: /\bJuwan\b/g, message: 'Person identifier "Juwan" in platform code' },
   { regex: /\bjuwanh\b/gi, message: 'Person identifier "juwanh" in platform code' },
   { regex: /--aevum-/g, message: 'Application-specific CSS variable prefix "--aevum-"' },
   { regex: /\.aevum-/g, message: 'Application-specific CSS class prefix ".aevum-"' },
-  { regex: /\b(sk-|pk-|key_)[A-Za-z0-9]{20,}\b/g, message: 'Possible API key or secret — credential in platform code' },
+  {
+    regex: /\b(sk-|pk-|key_)[A-Za-z0-9]{20,}\b/g,
+    message: 'Possible API key or secret — credential in platform code',
+  },
   {
     regex: /\b(AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}\b/g,
     message: 'Possible AWS access key ID',
@@ -381,7 +424,9 @@ function scanFilePatterns(filePath: string): PatternViolation[] {
       regex.lastIndex = 0;
       let match: RegExpExecArray | null;
 
-      while ((match = regex.exec(line)) !== null) {
+      while (true) {
+        match = regex.exec(line);
+        if (match === null) break;
         const context = line.trim().slice(0, 120);
         violations.push({
           file: relative(cwd(), filePath).replace(/\\/g, '/'),
@@ -480,7 +525,9 @@ Exits with code 1 if any violations are found.
   if (searchViolations.length === 0) {
     console.log('  \x1b[32m\u2713 No search privacy violations found.\x1b[0m\n');
   } else {
-    console.log(`  \x1b[31m\u2717 ${searchViolations.length} search privacy violation(s) found:\x1b[0m\n`);
+    console.log(
+      `  \x1b[31m\u2717 ${searchViolations.length} search privacy violation(s) found:\x1b[0m\n`,
+    );
     for (const v of searchViolations) {
       console.log(`  \x1b[31m${v.file}:${v.line}\x1b[0m`);
       console.log(`    Import:  ${v.importPath}`);
@@ -496,7 +543,9 @@ Exits with code 1 if any violations are found.
   if (patternViolations.length === 0) {
     console.log('  \x1b[32m\u2713 No pattern violations found.\x1b[0m\n');
   } else {
-    console.log(`  \x1b[31m\u2717 ${patternViolations.length} pattern violation(s) found:\x1b[0m\n`);
+    console.log(
+      `  \x1b[31m\u2717 ${patternViolations.length} pattern violation(s) found:\x1b[0m\n`,
+    );
     for (const v of patternViolations) {
       console.log(`  \x1b[31m${v.file}:${v.line}:${v.col}\x1b[0m`);
       console.log(`    Pattern: ${v.pattern}`);

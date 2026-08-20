@@ -31,10 +31,7 @@
  * };
  * ```
  */
-export interface LifecycleDefinition<
-  State extends string = string,
-  Event extends string = string,
-> {
+export interface LifecycleDefinition<State extends string = string, Event extends string = string> {
   /** The initial state a new entity occupies. */
   readonly initial: State;
   /** Every state this lifecycle can occupy. */
@@ -81,7 +78,7 @@ export function validateLifecycle<S extends string, E extends string>(
     errors.push(`Initial state "${def.initial}" is not in states.`);
   }
 
-  const entries = Object.entries(def.transitions) as ReadonlyArray<
+  const entries = Object.entries(def.transitions) as unknown as ReadonlyArray<
     readonly [E, readonly [S, S]]
   >;
   for (const [event, [from, to]] of entries) {
@@ -124,10 +121,8 @@ export function availableTransitions<S extends string, E extends string>(
   def: LifecycleDefinition<S, E>,
   current: S,
 ): readonly E[] {
-  const entries = Object.entries(def.transitions) as ReadonlyArray<
+  const entries = Object.entries(def.transitions) as unknown as ReadonlyArray<
     readonly [E, readonly [S, S]]
   >;
-  return entries
-    .filter(([, [from]]) => from === current)
-    .map(([event]) => event);
+  return entries.filter(([, [from]]) => from === current).map(([event]) => event);
 }

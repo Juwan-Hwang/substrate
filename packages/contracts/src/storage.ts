@@ -13,7 +13,7 @@
  *      Supports variants and representations.
  *
  * Default implementations: PostgreSQL, R2, In-memory (test).
- * Aevum selects the adapter via configuration; the platform does not
+ * The application selects the adapter via configuration; the platform does not
  * hardcode a backend.
  *
  * See: architecture-contract-v1.3.md §8.
@@ -174,10 +174,7 @@ export interface AssetStore {
    * Store original asset content.
    * Returns the created asset record.
    */
-  storeOriginal(
-    content: Uint8Array,
-    metadata?: AssetMetadata,
-  ): Promise<Asset>;
+  storeOriginal(content: Uint8Array, metadata?: AssetMetadata): Promise<Asset>;
 
   /**
    * Store a derived representation of an asset.
@@ -200,10 +197,7 @@ export interface AssetStore {
    * Retrieve a specific representation of an asset.
    * Returns `null` if not found.
    */
-  retrieveRepresentation(
-    assetId: string,
-    variant: string,
-  ): Promise<Uint8Array | null>;
+  retrieveRepresentation(assetId: string, variant: string): Promise<Uint8Array | null>;
 
   /**
    * Get asset metadata.
@@ -216,7 +210,7 @@ export interface AssetStore {
 
 /**
  * Bundle of storage adapters selected at application startup.
- * Aevum configures which adapters to use (PostgreSQL, R2, in-memory).
+ * The application configures which adapters to use (PostgreSQL, R2, in-memory).
  */
 export interface StoreAdapter {
   readonly snapshots: SnapshotStore;

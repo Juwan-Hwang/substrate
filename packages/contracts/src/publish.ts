@@ -19,31 +19,34 @@
  *    11. Verify user's confirmed preview matches recomputed state
  *    12. Revalidate Authorization (binding)
  *    13. Write Current State
- *    14. Write Snapshot Reference + Aevum Revision row
+ *    14. Write Snapshot Reference + application revision row
  *    15. COMMIT
  *
  * The user's confirmed preview is a snapshot of the preview content +
  * public impact result — NOT a permanent authorization ticket.
  *
+ * The platform executes the two-phase publish protocol and calls
+ * `commitWork(tx)` inside the transaction. The **application** decides
+ * what to write — the platform does not mandate any specific table
+ * name, revision model, or history structure.
+ *
  * See: architecture-contract-v1.3.md §4.
  */
 
-import type {
-  AuthorizationBundle,
-  AuthorizationContext,
-  Principal,
-} from './authorization';
+import type { AuthorizationBundle, AuthorizationContext, Principal } from './authorization';
 import type {
   ChangeSet,
-  CommitResult,
   SnapshotReference,
   Transaction,
   TransactionalCommitEngine,
 } from './changeset';
-import type { EntityRef } from './entity-resolver';
-import type { EntitySnapshot } from './entity-resolver';
-import type { EntityResolver } from './entity-resolver';
+import type { EntityRef, EntityResolver, EntitySnapshot } from './entity-resolver';
 
+export type {
+  AuthorizationBundle,
+  AuthorizationContext,
+  Principal,
+} from './authorization';
 // Re-export types consumers need.
 export type {
   ChangeSet,
@@ -52,11 +55,6 @@ export type {
   Transaction,
   TransactionalCommitEngine,
 } from './changeset';
-export type {
-  AuthorizationBundle,
-  AuthorizationContext,
-  Principal,
-} from './authorization';
 export type { EntityRef, EntityResolver, EntitySnapshot } from './entity-resolver';
 
 // ── Preview Types ───────────────────────────────────────────────────
@@ -148,10 +146,7 @@ export interface PublishDeps {
    * Re-project the state after locking (inside transaction).
    * Must reflect any concurrent changes that happened before lock acquisition.
    */
-  readonly reprojectAfterLock: (
-    changeset: ChangeSet,
-    tx: Transaction,
-  ) => Promise<PreviewState>;
+  readonly reprojectAfterLock: (changeset: ChangeSet, tx: Transaction) => Promise<PreviewState>;
   /**
    * Optional CAS pre-write. If contentAddressedStorage is enabled,
    * this writes CAS objects to external storage before the transaction.
@@ -268,10 +263,7 @@ export async function executePublish<T>(
       recomputedPreviewHash !== confirmation.previewHash ||
       recomputedImpactHash !== confirmation.impactHash
     ) {
-      throw new PreviewMismatchError(
-        recomputedPreviewHash,
-        confirmation.previewHash,
-      );
+      throw new PreviewMismatchError(recomputedPreviewHash, confirmation.previewHash);
     }
 
     // Step 12: Revalidate Authorization (binding, inside transaction)
@@ -292,36 +284,37 @@ export async function executePublish<T>(
   });
 
   // Step 15: Result handling
-  if (commitResult.ok) {
-    return { ok: true, value: commitResult.value! };
+  if (commitResult.ok && commitResult.value !== undefined) {
+    return { ok: true, value: commitResult.value };
   }
 
   // Determine error type from the thrown exception
   if (commitResult.error?.startsWith('PREVIEW_MISMATCH')) {
-    return {
-      ok: false,
-      error: {
-        type: 'preview_mismatch',
-        expected: confirmation.previewHash,
-        actual: '',
-      },
-      orphanCasObjects: casHashes.length > 0 ? casHashes : undefined,
-    };
+    return casHashes.length > 0
+      ? {
+          ok: false,
+          error: { type: 'preview_mismatch', expected: confirmation.previewHash, actual: '' },
+          orphanCasObjects: casHashes,
+        }
+      : {
+          ok: false,
+          error: { type: 'preview_mismatch', expected: confirmation.previewHash, actual: '' },
+        };
   }
 
   if (commitResult.error?.startsWith('AUTH_REVALIDATION')) {
-    return {
-      ok: false,
-      error: { type: 'auth_revalidation_denied' },
-      orphanCasObjects: casHashes.length > 0 ? casHashes : undefined,
-    };
+    return casHashes.length > 0
+      ? { ok: false, error: { type: 'auth_revalidation_denied' }, orphanCasObjects: casHashes }
+      : { ok: false, error: { type: 'auth_revalidation_denied' } };
   }
 
-  return {
-    ok: false,
-    error: { type: 'commit_failed', reason: commitResult.error ?? 'Unknown' },
-    orphanCasObjects: casHashes.length > 0 ? casHashes : undefined,
-  };
+  return casHashes.length > 0
+    ? {
+        ok: false,
+        error: { type: 'commit_failed', reason: commitResult.error ?? 'Unknown' },
+        orphanCasObjects: casHashes,
+      }
+    : { ok: false, error: { type: 'commit_failed', reason: commitResult.error ?? 'Unknown' } };
 }
 
 // ── Preview Builder ────────────────────────────────────────────────
@@ -370,12 +363,13 @@ export function confirmPreview(
 // ── Internal helpers ───────────────────────────────────────────────
 
 class PreviewMismatchError extends Error {
-  constructor(
-    readonly actual: string,
-    readonly expected: string,
-  ) {
+  readonly actual: string;
+  readonly expected: string;
+  constructor(actual: string, expected: string) {
     super(`PREVIEW_MISMATCH: expected ${expected}, got ${actual}`);
     this.name = 'PreviewMismatchError';
+    this.actual = actual;
+    this.expected = expected;
   }
 }
 

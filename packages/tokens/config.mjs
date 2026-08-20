@@ -21,7 +21,7 @@ StyleDictionary.registerFormat({
     const lightVars = [];
 
     dictionary.allTokens.forEach((token) => {
-      const name = `--aevum-${token.path.join('-')}`;
+      const name = `--substrate-${token.path.join('-')}`;
       const darkVal = token.value;
       const lightVal = token.lightValue ?? token.value;
 
@@ -62,12 +62,12 @@ StyleDictionary.registerFormat({
 });
 
 export default {
-  source: ['packages/tokens/src/**/*.json'],
+  source: ['src/**/*.json'],
   platforms: {
     css: {
       transformGroup: 'css',
       transforms: ['semantic/dark-light'],
-      buildPath: 'packages/tokens/build/css/',
+      buildPath: 'build/css/',
       files: [
         { destination: 'variables.css', format: 'css/variables-themed' },
         { destination: 'theme.css', format: 'css/theme-vars' },

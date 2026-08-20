@@ -21,7 +21,7 @@ export type RetrievalResult = {
   /** Which retrieval channel produced this result. */
   source: 'hybrid' | 'fts' | 'vector';
   /** Provenance for transparent citations in RAG answers. */
-  citation: { type: 'article'; ref: string };
+  citation: { type: string; ref: string };
   /** Set when a cross-encoder reranker has reordered the result. */
   reranked?: boolean;
 };
@@ -39,6 +39,17 @@ export type HybridSearchConfig = {
   db?: { query: (sql: string, params: unknown[]) => Promise<unknown[]> };
   /** Pre-computed embedding for the query (e.g., from Transformers.js). */
   embed?: (text: string) => Promise<number[]>;
+  /**
+   * Table + column configuration for SQL-based search.
+   * The application defines its own table/column names.
+   */
+  searchTable?: {
+    name: string;
+    bodyColumn: string;
+    statusColumn?: string;
+    publishedValue?: string;
+    embeddingColumn?: string;
+  };
 };
 
 /** Reciprocal Rank Fusion — merges multiple ranked lists into one. */
@@ -64,11 +75,15 @@ export async function hybridRetrieval(
   const lists: { id: string; score: number }[][] = [];
 
   // 1. Keyword search via PostgreSQL FTS.
-  if (config.db) {
+  const tbl = config.searchTable;
+  if (config.db && tbl) {
+    const statusCond = tbl.statusColumn
+      ? `${tbl.statusColumn} = '${tbl.publishedValue ?? 'published'}' AND `
+      : '';
     const ftsResults = (await config.db.query(
-      `SELECT id, ts_rank_cd(to_tsvector('english', body), plainto_tsquery('english', $1)) AS score
-       FROM articles WHERE status = 'published'
-       AND to_tsvector('english', body) @@ plainto_tsquery('english', $1)
+      `SELECT id, ts_rank_cd(to_tsvector('english', ${tbl.bodyColumn}), plainto_tsquery('english', $1)) AS score
+       FROM ${tbl.name}
+       WHERE ${statusCond}to_tsvector('english', ${tbl.bodyColumn}) @@ plainto_tsquery('english', $1)
        ORDER BY score DESC LIMIT $2`,
       [query, limit * 2],
     )) as { id: string; score: number }[];
@@ -80,12 +95,15 @@ export async function hybridRetrieval(
   if (!embedding && config.embed) {
     embedding = await config.embed(query);
   }
-  if (config.db && embedding) {
+  if (config.db && embedding && tbl?.embeddingColumn) {
     const vecStr = `[${embedding.join(',')}]`;
+    const statusCond = tbl.statusColumn
+      ? `WHERE ${tbl.statusColumn} = '${tbl.publishedValue ?? 'published'}'`
+      : 'WHERE TRUE';
     const vecResults = (await config.db.query(
-      `SELECT id, 1 - (embedding <=> $1::vector) AS score
-       FROM articles WHERE status = 'published'
-       ORDER BY embedding <=> $1::vector LIMIT $2`,
+      `SELECT id, 1 - (${tbl.embeddingColumn} <=> $1::vector) AS score
+       FROM ${tbl.name} ${statusCond}
+       ORDER BY ${tbl.embeddingColumn} <=> $1::vector LIMIT $2`,
       [vecStr, limit * 2],
     )) as { id: string; score: number }[];
     lists.push(vecResults.map((r) => ({ id: r.id, score: r.score * vectorWeight })));
@@ -102,7 +120,7 @@ export async function hybridRetrieval(
     id: r.id,
     score: r.score,
     source: 'hybrid' as const,
-    citation: { type: 'article' as const, ref: r.id },
+    citation: { type: 'search-result', ref: r.id },
   }));
 }
 

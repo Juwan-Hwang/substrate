@@ -9,9 +9,8 @@
  *  - GC is idempotent (running twice returns 0 on second sweep)
  */
 import { describe, expect, it, vi } from 'vitest';
-import type { GarbageCollector, GarbageCollectionResult, PurgeContract } from './purge';
-import type { ContentAddressedStore, SnapshotStore } from './storage';
 import { entityRef } from './entity-resolver';
+import type { GarbageCollectionResult, GarbageCollector, PurgeContract } from './purge';
 
 // ── PurgeContract ────────────────────────────────────────────────
 
@@ -35,8 +34,12 @@ describe('purgeCurrent behavior', () => {
     const ref = entityRef('writing', 'w-1');
 
     // In-memory state
-    const entities = new Map([['writing:w-1', { ref, lifecycleState: 'trashed', visibility: 'private' }]]);
-    const snapshots = new Map([['snap-1', { id: 'snap-1', stateRef: 'cas-1', metadata: {}, createdAt: 1 }]]);
+    const entities = new Map([
+      ['writing:w-1', { ref, lifecycleState: 'trashed', visibility: 'private' }],
+    ]);
+    const snapshots = new Map([
+      ['snap-1', { id: 'snap-1', stateRef: 'cas-1', metadata: {}, createdAt: 1 }],
+    ]);
     const casStore = new Map([['cas-1', new Uint8Array([1, 2, 3])]]);
     const revisions = new Map([['rev-1', { id: 'rev-1', snapshotId: 'snap-1' }]]);
 
@@ -106,9 +109,7 @@ describe('GarbageCollector', () => {
   });
 
   it('sweep() is idempotent — second run returns 0 deleted', async () => {
-    const casObjects = new Map<string, Uint8Array>([
-      ['hash-orphan', new Uint8Array([9])],
-    ]);
+    const casObjects = new Map<string, Uint8Array>([['hash-orphan', new Uint8Array([9])]]);
     const reachable = new Set<string>();
 
     const gc: GarbageCollector = {

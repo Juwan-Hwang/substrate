@@ -15,10 +15,10 @@ import {
   type AuthorizationContext,
   type ConstraintCompiler,
   type MemoryPredicate,
-  type SqlFragment,
   preflight,
   principal,
   revalidate,
+  type SqlFragment,
 } from './authorization';
 import { entityRef } from './entity-resolver';
 

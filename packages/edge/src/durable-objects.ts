@@ -1,5 +1,5 @@
 /**
- * Durable Object — real-time collaboration & presence for Crucible experiments.
+ * Durable Object — generic real-time collaboration & presence via WebSocket.
  *
  * Security:
  *  - WebSocket connections require a valid session token in the query string.

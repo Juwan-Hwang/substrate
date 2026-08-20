@@ -28,7 +28,7 @@ export type { EntityRef } from './entity-resolver';
  * Does NOT delete:
  *   - CAS objects (immutable, content-addressed)
  *   - Snapshots (historical record)
- *   - Revisions (Aevum-owned, historical reachability)
+ *   - Revisions (application-owned, historical reachability)
  *   - Associations (unless explicitly requested and they don't
  *     break historical reachability)
  *
@@ -69,11 +69,11 @@ export interface PurgeContract {
  * harmless (immutable, content-addressed) and can persist indefinitely
  * until GC runs.
  *
- * The platform MAY provide a GC implementation. Aevum MAY configure
+ * The platform MAY provide a GC implementation. The application MAY configure
  * its scheduling (cron interval, on-demand trigger, etc.).
  *
  * The GC must:
- *   1. Scan all committed Revisions (Aevum application table).
+ *   1. Scan all committed revisions (application table).
  *   2. Build a reachability set of CAS objects.
  *   3. Delete CAS objects NOT in the reachability set.
  *

@@ -12,12 +12,12 @@
  */
 
 import { createOpenAI } from '@ai-sdk/openai';
-import { articles } from '@substrate/db';
 import { embed } from 'ai';
 import { NextResponse } from 'next/server';
 import { drizzleDb, rawQuery } from '@/lib/db';
 import { hasAI, hasDatabase, openaiApiKey } from '@/lib/env';
 import { createArchiveLogger } from '@/lib/logger';
+import { articles } from '@/lib/schema';
 import type { IngestPayload, IngestResponse } from '@/lib/types';
 
 const logger = createArchiveLogger('ingest');

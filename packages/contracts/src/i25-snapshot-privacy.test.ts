@@ -21,14 +21,8 @@
  *   Archive read (anonymous) → A returned, B not returned, C not returned.
  */
 import { describe, expect, it } from 'vitest';
-import {
-  type EntityRef,
-  type EntityResolver,
-  type EntitySnapshot,
-  entityRef,
-  entityRefKey,
-} from './entity-resolver';
-import { ANONYMOUS, type AuthorizationBundle, type Principal } from './authorization';
+import { ANONYMOUS, type Principal } from './authorization';
+import { type EntityRef, entityRef } from './entity-resolver';
 import { mustUseServer, type SearchMode } from './search-privacy';
 
 // ── Simulated Snapshot content ───────────────────────────────────
@@ -63,7 +57,7 @@ const snapshotEntries: readonly SnapshotEntry[] = [
  * Reads a snapshot's archive entries, applying visibility filtering.
  *
  * This simulates the platform's snapshot read path:
- *   1. Look up the Revision (Aevum application table).
+ *   1. Look up the Revision (application table).
  *   2. Resolve Revision → Snapshot.
  *   3. For each entity in the snapshot, check its visibility.
  *   4. Only return entities the principal is authorized to see.
@@ -93,8 +87,8 @@ describe('I25: Public Revision ≠ Public entities', () => {
 
     // Only the public entity is returned.
     expect(results).toHaveLength(1);
-    expect(results[0]!.ref.id).toBe('w-public');
-    expect(results[0]!.visibility).toBe('public');
+    expect(results[0]?.ref.id).toBe('w-public');
+    expect(results[0]?.visibility).toBe('public');
   });
 
   it('private entity in a public Snapshot is NOT returned to anonymous readers', () => {

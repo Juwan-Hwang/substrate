@@ -1,7 +1,7 @@
 /**
- * Unit tests for @substrate/edge — Zod input schemas, Turnstile verification,
- * and the Redis rate-limiter. No real Redis or Cloudflare connections are
- * made; fetch and the Redis client are mocked.
+ * Unit tests for @substrate/edge — Turnstile verification and the Redis
+ * rate-limiter. No real Redis or Cloudflare connections are made; fetch
+ * and the Redis client are mocked.
  */
 import type { Redis } from '@upstash/redis';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,157 +12,8 @@ vi.mock('../durable-objects', () => ({
   ExperimentDO: class MockExperimentDO {},
 }));
 
-import {
-  embedInputSchema,
-  experimentInputSchema,
-  searchInputSchema,
-  summarizeInputSchema,
-} from '../index';
 import { type RateLimitResult, rateLimit } from '../redis';
 import { verifyTurnstile } from '../turnstile';
-
-// ── experimentInputSchema ────────────────────────────────────────────
-
-describe('experimentInputSchema', () => {
-  it('validates a correct experiment input', () => {
-    const result = experimentInputSchema.safeParse({
-      name: 'Particle Sim',
-      subsystem: 'lattice',
-      parameters: { iterations: '500', dt: '0.1' },
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.name).toBe('Particle Sim');
-      expect(result.data.subsystem).toBe('lattice');
-    }
-  });
-
-  it('defaults parameters to an empty object when omitted', () => {
-    const result = experimentInputSchema.safeParse({ name: 'Test', subsystem: 'crucible' });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.parameters).toEqual({});
-    }
-  });
-
-  it('accepts any non-empty string as subsystem', () => {
-    const result = experimentInputSchema.safeParse({
-      name: 'Test',
-      subsystem: 'custom',
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects an empty name', () => {
-    const result = experimentInputSchema.safeParse({ name: '', subsystem: 'lattice' });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects a name longer than 120 characters', () => {
-    const result = experimentInputSchema.safeParse({
-      name: 'x'.repeat(121),
-      subsystem: 'lattice',
-    });
-    expect(result.success).toBe(false);
-  });
-});
-
-// ── searchInputSchema ────────────────────────────────────────────────
-
-describe('searchInputSchema', () => {
-  it('validates a correct search input', () => {
-    const result = searchInputSchema.safeParse({ query: 'webgpu graph layout' });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.limit).toBe(10); // default
-    }
-  });
-
-  it('accepts a custom limit within bounds', () => {
-    const result = searchInputSchema.safeParse({ query: 'test', limit: 50 });
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects an empty query', () => {
-    const result = searchInputSchema.safeParse({ query: '' });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects a query exceeding 200 characters', () => {
-    const result = searchInputSchema.safeParse({ query: 'x'.repeat(201) });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects a limit above 50', () => {
-    const result = searchInputSchema.safeParse({ query: 'test', limit: 51 });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects a limit below 1', () => {
-    const result = searchInputSchema.safeParse({ query: 'test', limit: 0 });
-    expect(result.success).toBe(false);
-  });
-});
-
-// ── embedInputSchema ─────────────────────────────────────────────────
-
-describe('embedInputSchema', () => {
-  it('validates correct input and applies the default model', () => {
-    const result = embedInputSchema.safeParse({ text: 'hello world' });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.model).toBe('@cf/baai/bge-base-en-v1.5');
-    }
-  });
-
-  it('accepts a custom model', () => {
-    const result = embedInputSchema.safeParse({ text: 'hello', model: '@cf/custom-model' });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.model).toBe('@cf/custom-model');
-    }
-  });
-
-  it('rejects empty text', () => {
-    const result = embedInputSchema.safeParse({ text: '' });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects text exceeding 10000 characters', () => {
-    const result = embedInputSchema.safeParse({ text: 'x'.repeat(10001) });
-    expect(result.success).toBe(false);
-  });
-});
-
-// ── summarizeInputSchema ─────────────────────────────────────────────
-
-describe('summarizeInputSchema', () => {
-  it('validates correct input and applies the default model', () => {
-    const result = summarizeInputSchema.safeParse({ text: 'A long article body.' });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.model).toBe('@cf/meta/llama-3.1-8b-instruct');
-    }
-  });
-
-  it('accepts a custom model', () => {
-    const result = summarizeInputSchema.safeParse({ text: 'hello', model: '@cf/other-model' });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.model).toBe('@cf/other-model');
-    }
-  });
-
-  it('rejects empty text', () => {
-    const result = summarizeInputSchema.safeParse({ text: '' });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects text exceeding 50000 characters', () => {
-    const result = summarizeInputSchema.safeParse({ text: 'x'.repeat(50001) });
-    expect(result.success).toBe(false);
-  });
-});
 
 // ── verifyTurnstile ──────────────────────────────────────────────────
 

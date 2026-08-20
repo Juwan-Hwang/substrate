@@ -4,14 +4,15 @@
  */
 import { create, insert, search } from '@orama/orama';
 
-export type SearchableDoc = {
+export type SearchableDoc<TType extends string = string> = {
   id: string;
   title: string;
   excerpt: string;
   body: string;
   slug: string;
   tags: string[];
-  type: 'article' | 'project' | 'note';
+  /** Application-defined content type ('article', 'project', 'note', 'log', etc.). */
+  type: TType;
 };
 
 export async function createSearchIndex(docs: SearchableDoc[]) {

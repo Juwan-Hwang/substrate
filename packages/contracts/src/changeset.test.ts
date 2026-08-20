@@ -11,12 +11,12 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   type ChangeSet,
   type CommitResult,
-  type DomainOperation,
-  type Transaction,
-  type TransactionalCommitEngine,
   commitFail,
   commitOk,
   createChangeSet,
+  type DomainOperation,
+  type Transaction,
+  type TransactionalCommitEngine,
 } from './changeset';
 import { entityRef } from './entity-resolver';
 
@@ -52,7 +52,10 @@ function makeEngine(): { engine: TransactionalCommitEngine; state: FakeState } {
   };
 
   const engine: TransactionalCommitEngine = {
-    async commit<T>(changeset: ChangeSet, work: (tx: Transaction) => Promise<T>): Promise<CommitResult<T>> {
+    async commit<T>(
+      _changeset: ChangeSet,
+      work: (tx: Transaction) => Promise<T>,
+    ): Promise<CommitResult<T>> {
       try {
         const value = await work(tx);
         state.committed = true;
@@ -81,6 +84,9 @@ const multiOpChangeset = createChangeSet(
   'user-1',
 );
 
+const [op0, op1] = multiOpChangeset.operations;
+if (!op0 || !op1) throw new Error('fixture: multiOpChangeset must have ≥2 operations');
+
 // ── Tests ────────────────────────────────────────────────────────
 
 describe('TransactionalCommitEngine', () => {
@@ -103,8 +109,8 @@ describe('TransactionalCommitEngine', () => {
   it('rolls back all operations when any single operation fails', async () => {
     const { engine, state } = makeEngine();
     const result = await engine.commit(multiOpChangeset, async (tx) => {
-      await tx.write(multiOpChangeset.operations[0]!);
-      await tx.write(multiOpChangeset.operations[1]!);
+      await tx.write(op0);
+      await tx.write(op1);
       // Third operation fails
       throw new Error('operation 3 failed');
     });
@@ -123,7 +129,7 @@ describe('TransactionalCommitEngine', () => {
       // Lock before write — simulating the protocol
       await tx.lockEntity(refA);
       await tx.lockEntity(refB);
-      await tx.write(multiOpChangeset.operations[0]!);
+      await tx.write(op0);
       return 'locked';
     });
 

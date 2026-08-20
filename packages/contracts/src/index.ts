@@ -1,11 +1,17 @@
 /**
- * @substrate/contracts — Shared type contracts, schemas, tRPC, auth.
+ * @substrate/contracts — Core type contracts and platform primitives.
  *
- * The single source of truth for cross-package types, Zod schemas,
- * tRPC router definitions, Better Auth config, and Effect services.
+ * The single source of truth for cross-package types and Zod schemas.
+ *
+ * This entrypoint has **zero heavyweight runtime dependencies**. Optional
+ * integration capabilities (tRPC, Effect, Zustand, OpenAPI) are available
+ * via subpath exports:
+ *
+ *   @substrate/contracts/trpc    — tRPC router builder
+ *   @substrate/contracts/effect  — Effect service composition
+ *   @substrate/contracts/store   — Zustand UI store
+ *   @substrate/contracts/openapi — OpenAPI document factory
  */
-import { initTRPC } from '@trpc/server';
-import { z } from 'zod';
 
 // ── Brand types ──────────────────────────────────────────────────────
 
@@ -27,205 +33,118 @@ export interface SiteIdentity {
   url: string;
 }
 
-// ── Zod schemas ──────────────────────────────────────────────────────
-
-export const articleSchema = z.object({
-  id: z.string().uuid(),
-  slug: z.string(),
-  title: z.string().max(120),
-  excerpt: z.string().optional(),
-  tags: z.array(z.string()).default([]),
-  date: z.string().datetime(),
-});
-
-export const experimentSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  subsystem: z.string(),
-  parameters: z.record(z.string()),
-  result: z.record(z.unknown()).optional(),
-  durationMs: z.number().int().positive().optional(),
-});
-
-// ── tRPC ─────────────────────────────────────────────────────────────
-
-const t = initTRPC.create();
-export const router = t.router;
-export const publicProcedure = t.procedure;
-
-export const appRouter = t.router({
-  health: publicProcedure.query(() => ({ status: 'ok' as const })),
-  articles: publicProcedure.input(z.object({ slug: z.string() })).query(({ input }) => {
-    // Article data is fetched via application Server Actions.
-    // and the edge API (/api/archive/search). This procedure provides the
-    // type contract for tRPC clients. Override in the web app's tRPC
-    // server handler to inject database access via the context.
-    return { slug: input.slug, title: '', body: '' };
-  }),
-});
-
-export type AppRouter = typeof appRouter;
-
-// ── Effect ──────────────────────────────────────────────────────────
-
-export type {
-  AIService as AIServiceT,
-  DatabaseService as DatabaseServiceT,
-  LoggerService as LoggerServiceT,
-} from './effect';
-export {
-  AIService,
-  ConsoleLoggerLayer,
-  createAILayer,
-  createDatabaseLayer,
-  DatabaseError,
-  DatabaseService,
-  fetchArticleBySlug,
-  LoggerService,
-  NotFoundError,
-  runEffect,
-  submitExperimentEffect,
-  ValidationError,
-} from './effect';
-
-// ── XState ──────────────────────────────────────────────────────────
-
-export type {
-  ExperimentContext,
-  ExperimentEvent,
-  ExperimentStatus,
-  RendererContext,
-  RendererEvent,
-  RendererStatus,
-} from './state-machine';
-export {
-  createExperimentActor,
-  createRendererActor,
-  experimentMachine,
-  rendererMachine,
-} from './state-machine';
-
 // ── v1.3 Core Primitives ─────────────────────────────────────────────
-
-// Lifecycle primitive — pure types, no deps.
-export type { LifecycleDefinition, LifecycleValidationResult } from './lifecycle';
-export {
-  validateLifecycle,
-  resolveTransition,
-  availableTransitions,
-} from './lifecycle';
-
-// Entity resolver — pure types, no deps.
-export type { EntityRef, EntitySnapshot, EntityResolver } from './entity-resolver';
-export { entityRef, entityRefKey } from './entity-resolver';
-
-// Authorization engine — depends on entity-resolver for EntityRef.
-export type {
-  Principal,
-  AuthOperation,
-  AuthorizationContext,
-  AuthorizationDecision,
-  AuthorizationPolicy,
-  AuthQueryIntent,
-  SqlFragment,
-  OramaFilter,
-  MemoryPredicate,
-  ConstraintCompiler,
-  AuthorizationBundle,
-  PreflightResult,
-} from './authorization';
-export {
-  principal,
-  ANONYMOUS,
-  preflight,
-  revalidate,
-} from './authorization';
-
-// ChangeSet + TransactionalCommitEngine — depends on entity-resolver + authorization.
-export type {
-  DomainOperation,
-  ChangeSet,
-  SnapshotReference,
-  Transaction,
-  CommitResult,
-  TransactionalCommitEngine,
-} from './changeset';
-export {
-  createChangeSet,
-  commitOk,
-  commitFail,
-} from './changeset';
-
-// Publish protocol — depends on all above.
-export type {
-  PreviewState,
-  PublicImpactAssessment,
-  PreviewConfirmation,
-  PublishDeps,
-  PublishError,
-  PublishSuccess,
-  PublishFailure,
-  PublishResult,
-} from './publish';
-export {
-  executePublish,
-  buildPreview,
-  buildImpact,
-  confirmPreview,
-  hashPreviewState,
-  hashPublicImpact,
-} from './publish';
-
-// Search privacy — depends on authorization.
-export type {
-  SearchMode,
-  SearchRequest,
-  SearchResult,
-  SearchResponse,
-  ServerSearchParams,
-} from './search-privacy';
-export {
-  mustUseServer,
-  assertStaticIndexIsPublic,
-  authorizedSearch,
-  SearchPrivacyViolation,
-} from './search-privacy';
 
 // Association primitive — depends on entity-resolver for EntityRef.
 export type { Association } from './association';
 export { association, isSameAssociation } from './association';
-
+// Authorization engine — depends on entity-resolver for EntityRef.
+export type {
+  AuthOperation,
+  AuthorizationBundle,
+  AuthorizationContext,
+  AuthorizationDecision,
+  AuthorizationPolicy,
+  AuthQueryIntent,
+  ConstraintCompiler,
+  MemoryPredicate,
+  OramaFilter,
+  PreflightResult,
+  Principal,
+  SqlFragment,
+} from './authorization';
+export {
+  ANONYMOUS,
+  preflight,
+  principal,
+  revalidate,
+} from './authorization';
+// ChangeSet + TransactionalCommitEngine — depends on entity-resolver + authorization.
+export type {
+  ChangeSet,
+  CommitResult,
+  DomainOperation,
+  SnapshotReference,
+  Transaction,
+  TransactionalCommitEngine,
+} from './changeset';
+export {
+  commitFail,
+  commitOk,
+  createChangeSet,
+} from './changeset';
+// Entity resolver — pure types, no deps.
+export type { EntityRef, EntityResolver, EntitySnapshot } from './entity-resolver';
+export { entityRef, entityRefKey } from './entity-resolver';
+// Lifecycle primitive — pure types, no deps.
+export type { LifecycleDefinition, LifecycleValidationResult } from './lifecycle';
+export {
+  availableTransitions,
+  resolveTransition,
+  validateLifecycle,
+} from './lifecycle';
+// Publish protocol — depends on all above.
+export type {
+  PreviewConfirmation,
+  PreviewState,
+  PublicImpactAssessment,
+  PublishDeps,
+  PublishError,
+  PublishFailure,
+  PublishResult,
+  PublishSuccess,
+} from './publish';
+export {
+  buildImpact,
+  buildPreview,
+  confirmPreview,
+  executePublish,
+  hashPreviewState,
+  hashPublicImpact,
+} from './publish';
 // Purge safety — depends on entity-resolver for EntityRef.
 export type {
-  PurgeContract,
-  GarbageCollector,
   GarbageCollectionResult,
+  GarbageCollector,
+  PurgeContract,
 } from './purge';
+// Search privacy — depends on authorization.
+export type {
+  SearchMode,
+  SearchRequest,
+  SearchResponse,
+  SearchResult,
+  ServerSearchParams,
+} from './search-privacy';
+export {
+  assertStaticIndexIsPublic,
+  authorizedSearch,
+  mustUseServer,
+  SearchPrivacyViolation,
+} from './search-privacy';
 
 // Storage abstraction — pure interfaces, no deps.
 export type {
-  Hash,
-  SerializedState,
-  AssetMetadata,
   Asset,
-  Representation,
-  SnapshotStore,
-  StoredSnapshot,
-  SnapshotListFilter,
-  ContentAddressedStore,
+  AssetMetadata,
   AssetStore,
+  ContentAddressedStore,
+  Hash,
+  Representation,
+  SerializedState,
+  SnapshotListFilter,
+  SnapshotStore,
   StoreAdapter,
+  StoredSnapshot,
 } from './storage';
 
-// ── Zustand stores ──────────────────────────────────────────────────
-
-export type { CrucibleState, LatticeState, Toast, UIState } from './store';
-export { crucibleStore, latticeStore, uiStore } from './store';
-
-// ── OpenAPI ──────────────────────────────────────────────────────────
+// ── Optional integration subpaths ───────────────────────────────────
 //
-// openApiDocument is intentionally NOT re-exported here. The platform
-// provides a factory (`createOpenApiDocument`) and reusable schemas in
-// `./openapi`. The application calls the factory with its own config.
+// The following capabilities are NOT re-exported from this root entry.
+// Import them directly from their subpath to avoid pulling in heavyweight
+// runtime dependencies:
 //
-// Import directly from '@substrate/contracts/openapi' instead.
+//   @substrate/contracts/trpc    — tRPC router builder + appRouter
+//   @substrate/contracts/effect  — Effect service composition (Context, Layer)
+//   @substrate/contracts/store   — Zustand vanilla UI store
+//   @substrate/contracts/openapi — OpenAPI 3.1 document factory

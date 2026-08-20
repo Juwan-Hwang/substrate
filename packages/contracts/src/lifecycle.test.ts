@@ -13,9 +13,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   availableTransitions,
+  type LifecycleDefinition,
   resolveTransition,
   validateLifecycle,
-  type LifecycleDefinition,
 } from './lifecycle';
 
 // ── Fixture ──────────────────────────────────────────────────────

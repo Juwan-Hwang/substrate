@@ -7,8 +7,8 @@
  *  - Association has no kind/relationType/source/target fields
  */
 import { describe, expect, it } from 'vitest';
-import { association, isSameAssociation, type Association } from './association';
-import { entityRef, type EntityRef } from './entity-resolver';
+import { association, isSameAssociation } from './association';
+import { type EntityRef, entityRef } from './entity-resolver';
 
 // ── Fixtures ─────────────────────────────────────────────────────
 
@@ -68,14 +68,20 @@ describe('deduplication (duplicate A-B)', () => {
     const assoc1 = association('assoc-1', writingRef, projectRef);
 
     // Build a normalized key (sorted pair) to simulate DB UNIQUE constraint.
-    const key1 = [`${assoc1.entityA.type}:${assoc1.entityA.id}`, `${assoc1.entityB.type}:${assoc1.entityB.id}`]
+    const key1 = [
+      `${assoc1.entityA.type}:${assoc1.entityA.id}`,
+      `${assoc1.entityB.type}:${assoc1.entityB.id}`,
+    ]
       .sort()
       .join('|');
     existing.add(key1);
 
     // Attempt to store the same pair in reverse order.
     const assoc2 = { entityA: projectRef, entityB: writingRef };
-    const key2 = [`${assoc2.entityA.type}:${assoc2.entityA.id}`, `${assoc2.entityB.type}:${assoc2.entityB.id}`]
+    const key2 = [
+      `${assoc2.entityA.type}:${assoc2.entityA.id}`,
+      `${assoc2.entityB.type}:${assoc2.entityB.id}`,
+    ]
       .sort()
       .join('|');
 
@@ -87,13 +93,19 @@ describe('deduplication (duplicate A-B)', () => {
   it('a different pair is NOT a duplicate', () => {
     const existing = new Set<string>();
     const assoc1 = association('assoc-1', writingRef, projectRef);
-    const key1 = [`${assoc1.entityA.type}:${assoc1.entityA.id}`, `${assoc1.entityB.type}:${assoc1.entityB.id}`]
+    const key1 = [
+      `${assoc1.entityA.type}:${assoc1.entityA.id}`,
+      `${assoc1.entityB.type}:${assoc1.entityB.id}`,
+    ]
       .sort()
       .join('|');
     existing.add(key1);
 
     const assoc2 = association('assoc-2', writingRef, otherWritingRef);
-    const key2 = [`${assoc2.entityA.type}:${assoc2.entityA.id}`, `${assoc2.entityB.type}:${assoc2.entityB.id}`]
+    const key2 = [
+      `${assoc2.entityA.type}:${assoc2.entityA.id}`,
+      `${assoc2.entityB.type}:${assoc2.entityB.id}`,
+    ]
       .sort()
       .join('|');
 

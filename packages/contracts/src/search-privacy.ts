@@ -14,8 +14,7 @@
  * See: architecture-contract-v1.3.md §6.
  */
 
-import type { AuthorizationBundle, Principal } from './authorization';
-import type { AuthQueryIntent } from './authorization';
+import type { AuthorizationBundle, AuthQueryIntent, Principal } from './authorization';
 
 // ── Search Backend Types ───────────────────────────────────────────
 
@@ -65,10 +64,7 @@ export interface SearchResponse {
  * Only 'static' mode with an anonymous principal may use a
  * pre-built public-only client-side index.
  */
-export function mustUseServer(
-  mode: SearchMode,
-  principal: Principal,
-): boolean {
+export function mustUseServer(mode: SearchMode, principal: Principal): boolean {
   if (mode === 'off') return false;
   if (mode === 'server') return true;
   if (mode === 'hybrid') return true;
@@ -134,10 +130,7 @@ export interface ServerSearchParams extends SearchRequest {
  */
 export async function authorizedSearch(
   params: ServerSearchParams,
-  executeQuery: (
-    request: SearchRequest,
-    intent: AuthQueryIntent | null,
-  ) => Promise<SearchResponse>,
+  executeQuery: (request: SearchRequest, intent: AuthQueryIntent | null) => Promise<SearchResponse>,
 ): Promise<SearchResponse> {
   const intent = await params.authBundle.buildQueryIntent(params.principal);
 
@@ -146,8 +139,10 @@ export async function authorizedSearch(
     return { results: [], total: 0 };
   }
 
-  return executeQuery(
-    { query: params.query, limit: params.limit, offset: params.offset },
-    intent,
-  );
+  const base: SearchRequest = { query: params.query };
+  const request: SearchRequest =
+    params.limit !== undefined ? { ...base, limit: params.limit } : base;
+  const finalRequest: SearchRequest =
+    params.offset !== undefined ? { ...request, offset: params.offset } : request;
+  return executeQuery(finalRequest, intent);
 }

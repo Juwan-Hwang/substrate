@@ -73,20 +73,29 @@ bun install
 bun dev --filter my-site
 ```
 
+See [`docs/CONSUMER_GUIDE.md`](./docs/CONSUMER_GUIDE.md) for a complete
+walkthrough — every file, every platform primitive, every customisation
+point.
+
 Customise:
 
 | File | What to change |
 |------|---------------|
 | `src/app/layout.tsx` | Site name, metadata, fonts |
 | `src/app/globals.css` | Theme tokens (colors, spacing, radius) |
-| `src/lib/articles.ts` | Your content |
+| `src/lib/<content>.ts` | Your content |
 | `src/instrumentation.ts` | Feature preset (or define your own manifest) |
 
-### Standalone Mode
+### Standalone Mode (not yet available)
 
-If you're outside the Substrate monorepo (for example, creating a site in a
-separate repository), pass `--standalone` to generate a project with published
-package versions instead of `workspace:*` dependencies. From a source checkout:
+> **Not yet available.** Standalone mode generates versioned npm dependencies,
+> but Substrate packages are not yet published to npm. Standalone-generated
+> sites **cannot install dependencies today** — `bun install` will fail.
+> Use monorepo (workspace) mode, which is fully functional and is the primary
+> supported workflow.
+
+When the npm publishing pipeline is in place, standalone mode will work as
+follows:
 
 ```bash
 bun run ./scripts/create-substrate-site.ts my-site --standalone
@@ -254,10 +263,12 @@ selected feature profile.
 
 **Deployment** — Vercel (web), Cloudflare Workers (edge), GitHub Actions (CI/CD)
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for architectural boundaries and
+See [`docs/CONSUMER_GUIDE.md`](./docs/CONSUMER_GUIDE.md) for a complete
+walkthrough on building a site with Substrate. See
+[`CONTRIBUTING.md`](./CONTRIBUTING.md) for architectural boundaries and
 rules on state management, observability, and database usage. See
-[`PLATFORM_BOUNDARY.md`](./PLATFORM_BOUNDARY.md) for the full platform
-boundary contract.
+[`docs/architecture/PLATFORM_BOUNDARY.md`](./docs/architecture/PLATFORM_BOUNDARY.md)
+for the full platform boundary contract.
 
 ## License
 

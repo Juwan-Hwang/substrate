@@ -3,7 +3,7 @@
  *
  * The platform defines the EntityRef and EntitySnapshot interfaces.
  * The application implements the resolver that fetches entity metadata
- * from its typed tables (writings, projects, etc.).
+ * from its typed tables (application-defined).
  *
  * Key design: EntityRef is polymorphic (type + id). Batch resolution
  * must match by (type, id), not id alone — different entity types may
@@ -73,7 +73,7 @@ export interface EntitySnapshot {
  *  - Authorization revalidation (resolve current state after lock)
  *
  * The platform provides the calling interface; it does not know about
- * specific typed tables (writings, projects, etc.).
+ * specific typed tables (application-defined).
  */
 export interface EntityResolver {
   /**

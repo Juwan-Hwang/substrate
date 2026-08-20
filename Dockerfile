@@ -1,9 +1,13 @@
 # ────────────────────────────────────────────────────────────────────────
-#  Aevum Web — Next.js 16 on Bun
+#  Substrate — Next.js 16 on Bun
 #  Multi-stage build:  deps → builder → runner
 # ────────────────────────────────────────────────────────────────────────
 # Bun 1.4.0 (Rust rewrite) — canary 通道。oven/bun:canary 镜像即 1.4.0 Rust 版。
 # 等 1.4.0 正式发布后改为 oven/bun:1.4.0。
+#
+# This Dockerfile builds the primary web application from the Substrate
+# monorepo. Set APP_DIR to choose which site to build (default:
+# examples/minimal-site).
 FROM oven/bun:canary AS base
 
 # ── Stage 1 · Dependencies ──────────────────────────────────────────────
@@ -25,11 +29,11 @@ COPY packages/graphics/package.json      packages/graphics/
 COPY packages/observability/package.json packages/observability/
 COPY packages/tokens/package.json        packages/tokens/
 COPY packages/ui/package.json            packages/ui/
-COPY packages/web/package.json           packages/web/
-COPY apps/aevum/package.json             apps/aevum/
+COPY packages/site/package.json          packages/site/
 COPY examples/ai-archive/package.json    examples/ai-archive/
 COPY examples/graphics-lab/package.json  examples/graphics-lab/
 COPY examples/minimal-site/package.json  examples/minimal-site/
+COPY examples/northstar/package.json      examples/northstar/
 COPY examples/realtime-room/package.json examples/realtime-room/
 COPY crates/wasm/pkg/package.json        crates/wasm/pkg/
 
@@ -39,10 +43,13 @@ RUN bun install --frozen-lockfile
 FROM base AS builder
 WORKDIR /app
 
+# The site to build — override with --build-arg APP_DIR=examples/my-site
+ARG APP_DIR=examples/minimal-site
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN cd packages/web && bun run build
+RUN cd "$APP_DIR" && bun run build
 
 # ── Stage 3 · Runner ────────────────────────────────────────────────────
 FROM base AS runner
@@ -50,9 +57,10 @@ FROM base AS runner
 ARG APP_VERSION=0.1.0
 ARG REVISION
 ARG CREATED
+ARG APP_DIR=examples/minimal-site
 
-LABEL org.opencontainers.image.title="Substrate Web" \
-      org.opencontainers.image.description="Aevum — Next.js 16 web application on Bun" \
+LABEL org.opencontainers.image.title="Substrate Site" \
+      org.opencontainers.image.description="Substrate — Next.js 16 web application on Bun" \
       org.opencontainers.image.source="https://github.com/Juwan-Hwang/substrate" \
       org.opencontainers.image.documentation="https://github.com/Juwan-Hwang/substrate" \
       org.opencontainers.image.licenses="Apache-2.0" \
@@ -84,5 +92,5 @@ USER bunjs
 EXPOSE 3000
 
 # `next start` honours $PORT and $HOSTNAME.
-WORKDIR /app/packages/web
+WORKDIR /app/$APP_DIR
 CMD ["bun", "run", "start"]

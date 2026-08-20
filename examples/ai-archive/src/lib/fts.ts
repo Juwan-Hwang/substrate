@@ -28,16 +28,6 @@ export type FTSQuery = {
  *
  * Uses `plainto_tsquery` for user-friendly query parsing (handles
  * multi-word queries without special syntax).
- *
- * ```sql
- * SELECT id, slug, title, excerpt,
- *        ts_rank_cd(to_tsvector('english', body), plainto_tsquery('english', $1)) AS rank
- * FROM articles
- * WHERE status = 'published'
- *   AND to_tsvector('english', body) @@ plainto_tsquery('english', $1)
- * ORDER BY rank DESC
- * LIMIT $2 OFFSET $3
- * ```
  */
 export function ftsSearchSQL(query: FTSQuery): { sql: string; params: unknown[] } {
   const { query: term, limit = 10, offset = 0 } = query;
@@ -60,16 +50,6 @@ export function ftsSearchSQL(query: FTSQuery): { sql: string; params: unknown[] 
 
 /**
  * Search with weighted ranking (title > excerpt > body).
- *
- * ```sql
- * SELECT id, slug, title, excerpt,
- *   ts_rank_cd(
- *     setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
- *     setweight(to_tsvector('english', coalesce(excerpt, '')), 'B') ||
- *     setweight(to_tsvector('english', coalesce(body, '')), 'C'),
- *     plainto_tsquery('english', $1)
- *   ) AS rank
- * ```
  */
 export function ftsWeightedSearchSQL(query: FTSQuery): { sql: string; params: unknown[] } {
   const { query: term, limit = 10, offset = 0 } = query;

@@ -14,6 +14,9 @@
  * From any directory (standalone mode — versioned npm deps):
  *   bun run ./scripts/create-substrate-site.ts my-site --preset minimal
  *
+ *   NOTE: Standalone mode is not yet functional — Substrate packages
+ *   are not published to npm. Use monorepo (workspace) mode for now.
+ *
  * ## Interactive mode
  *
  * When run without enough flags, the CLI prompts for:
@@ -41,11 +44,14 @@ import { argv, cwd, exit, platform } from 'node:process';
 
 type Preset = 'minimal' | 'graphics' | 'ai-archive' | 'realtime' | 'reference';
 
+type ContentModel = 'generic' | 'article' | 'none';
+
 type Answers = {
   name: string;
   preset: Preset;
   author: string;
   siteUrl: string;
+  contentModel: ContentModel;
 };
 
 // ── Constants ───────────────────────────────────────────────────────
@@ -65,6 +71,44 @@ const PRESET_DESCRIPTIONS: Record<Preset, string> = {
   realtime: 'Realtime collaboration via Cloudflare Durable Objects',
   reference: 'All features enabled — platform reference surface',
 };
+
+const CONTENT_MODEL_DESCRIPTIONS: Record<ContentModel, string> = {
+  generic: 'Neutral content model — no assumed content type (default)',
+  article: 'Article/blog model — content named "articles"',
+  none: 'No content model — blank slate',
+};
+
+/**
+ * The plural noun used in routes, imports, and variable names.
+ */
+function contentNoun(model: ContentModel): string {
+  if (model === 'article') return 'articles';
+  return 'content';
+}
+
+/**
+ * The type name in PascalCase (e.g. for type definitions).
+ */
+function contentTypeName(model: ContentModel): string {
+  if (model === 'article') return 'Article';
+  return 'ContentEntry';
+}
+
+/**
+ * The singular variable name used in loops and destructuring.
+ */
+function contentSingular(model: ContentModel): string {
+  if (model === 'article') return 'article';
+  return 'entry';
+}
+
+/**
+ * The display heading shown on the home page (e.g. "Articles", "Content").
+ */
+function contentHeading(model: ContentModel): string {
+  if (model === 'article') return 'Articles';
+  return 'Content';
+}
 
 /**
  * The base template is always `northstar` — it exercises the full platform
@@ -158,6 +202,31 @@ function askPreset(defaultPreset?: Preset): Preset {
   return defaultPreset ?? 'minimal';
 }
 
+/**
+ * Interactive content model selector — displays a numbered menu and returns
+ * the chosen content model. Falls back to text input if the number is invalid.
+ */
+function askContentModel(defaultModel?: ContentModel): ContentModel {
+  const entries = Object.entries(CONTENT_MODEL_DESCRIPTIONS) as [ContentModel, string][];
+  console.log('\n  Content model:\n');
+  for (let i = 0; i < entries.length; i++) {
+    const [key, desc] = entries[i];
+    const marker = key === (defaultModel ?? 'generic') ? ' (default)' : '';
+    console.log(`    \x1b[36m${i + 1}\x1b[0m. ${key.padEnd(12)} ${desc}${marker}`);
+  }
+  console.log('');
+
+  const input = ask('Choose content model (1-3)', defaultModel ?? 'generic');
+  const num = Number(input);
+  if (Number.isInteger(num) && num >= 1 && num <= entries.length) {
+    return entries[num - 1][0];
+  }
+  if (CONTENT_MODEL_DESCRIPTIONS[input as ContentModel]) {
+    return input as ContentModel;
+  }
+  return 'generic';
+}
+
 function copyDir(src: string, dest: string): void {
   mkdirSync(dest, { recursive: true });
   for (const entry of readdirSync(src)) {
@@ -199,6 +268,15 @@ function parseArgs(args: string[]): Partial<Answers> & { help?: boolean; standal
         exit(1);
       }
       result.preset = val;
+    } else if (arg === '--content-model') {
+      const val = args[++i] as ContentModel;
+      if (!CONTENT_MODEL_DESCRIPTIONS[val]) {
+        console.error(
+          `Error: unknown content model "${val}". Valid: ${Object.keys(CONTENT_MODEL_DESCRIPTIONS).join(', ')}`,
+        );
+        exit(1);
+      }
+      result.contentModel = val;
     } else if (arg === '--author') {
       result.author = args[++i];
     } else if (arg === '--url') {
@@ -229,18 +307,25 @@ Usage:
   bun run scripts/create-substrate-site.ts <name> [options]
 
 Options:
-  --preset <name>    Feature preset (see below). Default: minimal
-  --author <name>    Site author name
-  --url <url>        Site URL (e.g. https://mysite.com)
-  --standalone       Generate with npm version deps instead of workspace:*
-  --help, -h         Show this help message
+  --preset <name>          Feature preset (see below). Default: minimal
+  --content-model <name>    Content model template (see below). Default: generic
+  --author <name>           Site author name
+  --url <url>               Site URL (e.g. https://mysite.com)
+  --standalone              Generate with npm version deps instead of workspace:*
+  --help, -h                Show this help message
 
 Presets:
 ${presets}
 
+Content Models:
+${Object.entries(CONTENT_MODEL_DESCRIPTIONS)
+  .map(([key, desc]) => `  ${key.padEnd(12)} ${desc}`)
+  .join('\n')}
+
 Examples:
   bun create-site my-site
   bun create-site my-site --preset minimal --author Alice
+  bun create-site my-site --content-model article
   bun create-site my-site --preset ai-archive --url https://alice.dev
   bun create-site my-site --standalone
 `);
@@ -328,11 +413,11 @@ function rewritePackageJson(
  *   - "#d4a052" (amber)       → neutral accent (#7c8ba0)
  *   - Monogram 'N'            → first letter of display name
  *
- * Also renames the "logs" content model to "articles":
- *   - src/app/logs/    → src/app/articles/
- *   - src/lib/logs.ts  → src/lib/articles.ts
- *   - MissionLog       → Article
- *   - getLog           → getArticle
+ * Also renames the "logs" content model to the chosen content noun:
+ *   - src/app/logs/    → src/app/<content>/
+ *   - src/lib/logs.ts  → src/lib/<content>.ts
+ *   - MissionLog       → <ContentTypeName>
+ *   - getLog           → get<ContentTypeName>
  */
 function rewriteBranding(destDir: string, answers: Answers): void {
   const slug = slugify(answers.name);
@@ -372,15 +457,17 @@ function rewriteBranding(destDir: string, answers: Answers): void {
   ]);
 
   // ── page.tsx ────────────────────────────────────────────────────
+  const noun = contentNoun(answers.contentModel);
+  const singular = contentSingular(answers.contentModel);
   rewriteFile(join(destDir, 'src/app/page.tsx'), [
     [/Northstar/g, displayName],
     [/Field reports from the edge of human reach\./g, 'A personal site built on Substrate.'],
-    [/Mission Logs/g, 'Articles'],
-    [/\/logs\//g, '/articles/'],
-    [/import \{ logs \} from '@\/lib\/logs'/g, "import { articles } from '@/lib/articles'"],
-    [/logs\.map/g, 'articles.map'],
-    // Replace variable name `log` → `article` using word boundaries.
-    [/\blog\b/g, 'article'],
+    [/Mission Logs/g, contentHeading(answers.contentModel)],
+    [/\/logs\//g, `/${noun}/`],
+    [/import \{ logs \} from '@\/lib\/logs'/g, `import { ${noun} } from '@/lib/${noun}'`],
+    [/logs\.map/g, `${noun}.map`],
+    // Replace variable name `log` → singular content term using word boundaries.
+    [/\blog\b/g, singular],
   ]);
 
   // ── instrumentation.ts ──────────────────────────────────────────
@@ -428,73 +515,76 @@ function rewriteBranding(destDir: string, answers: Answers): void {
     [/#8a6a2e/g, '#4a5568'],
   ]);
 
-  // ── logs/[slug]/page.tsx → articles/[slug]/page.tsx ─────────────
+  // ── logs/[slug]/page.tsx → <content>/[slug]/page.tsx ─────────────
   const logsDir = join(destDir, 'src/app/logs');
-  const articlesDir = join(destDir, 'src/app/articles');
+  const contentDirName = contentNoun(answers.contentModel);
+  const contentDir = join(destDir, 'src/app', contentDirName);
   if (existsSync(logsDir)) {
-    mkdirSync(articlesDir, { recursive: true });
+    mkdirSync(contentDir, { recursive: true });
     const slugDir = join(logsDir, '[slug]');
-    const targetSlugDir = join(articlesDir, '[slug]');
+    const targetSlugDir = join(contentDir, '[slug]');
     if (existsSync(slugDir)) {
       mkdirSync(targetSlugDir, { recursive: true });
       const pageFile = join(slugDir, 'page.tsx');
       if (existsSync(pageFile)) {
+        const typeName = contentTypeName(answers.contentModel);
         const content = readFileSync(pageFile, 'utf-8')
-          .replace(/MissionLog/g, 'Article')
-          .replace(/mission log/g, 'article')
-          .replace(/Mission Log/g, 'Article')
-          .replace(/Mission Logs/g, 'Articles')
-          .replace(/getLog/g, 'getArticle')
+          .replace(/MissionLog/g, typeName)
+          .replace(/mission log/g, singular)
+          .replace(/Mission Log/g, typeName)
+          .replace(/Mission Logs/g, contentHeading(answers.contentModel))
+          .replace(/getLog/g, `get${typeName}`)
           .replace(/getAllSlugs/g, 'getAllSlugs')
-          .replace(/logs/g, 'articles')
-          .replace(/@\/lib\/logs/g, '@/lib/articles')
-          .replace(/LogPage/g, 'ArticlePage')
-          .replace(/Search mission logs/g, 'Search articles')
-          // Replace variable name `log` → `article` using word boundaries.
-          // Must come AFTER HTML tag replacements to avoid touching <article>.
-          .replace(/\blog\b/g, 'article');
+          .replace(/logs/g, contentDirName)
+          .replace(/@\/lib\/logs/g, `@/lib/${contentDirName}`)
+          .replace(/LogPage/g, `${typeName}Page`)
+          .replace(/Search mission logs/g, `Search ${contentDirName}`)
+          // Replace variable name `log` → singular content term using word boundaries.
+          // Must come AFTER HTML tag replacements to avoid touching HTML tags.
+          .replace(/\blog\b/g, singular);
         writeFileSync(join(targetSlugDir, 'page.tsx'), content);
       }
     }
     rmSync(logsDir, { recursive: true, force: true });
   }
 
-  // ── lib/logs.ts → lib/articles.ts ──────────────────────────────
+  // ── lib/logs.ts → lib/<content>.ts ──────────────────────────────
   const logsLib = join(destDir, 'src/lib/logs.ts');
   if (existsSync(logsLib)) {
+    const typeName = contentTypeName(answers.contentModel);
     const content = readFileSync(logsLib, 'utf-8')
-      .replace(/MissionLog/g, 'Article')
-      .replace(/mission log/g, 'article')
-      .replace(/Mission Log/g, 'Article')
-      .replace(/getLog/g, 'getArticle')
+      .replace(/MissionLog/g, typeName)
+      .replace(/mission log/g, singular)
+      .replace(/Mission Log/g, typeName)
+      .replace(/getLog/g, `get${typeName}`)
       .replace(/Northstar/g, displayName)
-      .replace(/logs/g, 'articles')
-      .replace(/\blog\b/g, 'article')
+      .replace(/logs/g, contentDirName)
+      .replace(/\blog\b/g, singular)
       .replace(
         /Static mission log corpus for the Northstar example site[\s\S]*?\*\/\n*/g,
-        `/** Static article corpus for ${displayName}. */\n\n`,
+        `/** Static ${contentDirName} corpus for ${displayName}. */\n\n`,
       );
-    writeFileSync(join(destDir, 'src/lib/articles.ts'), content);
+    writeFileSync(join(destDir, 'src/lib', `${contentDirName}.ts`), content);
     rmSync(logsLib, { force: true });
   }
 
   // ── archive/page.tsx ────────────────────────────────────────────
   rewriteFile(join(destDir, 'src/app/archive/page.tsx'), [
-    [/mission log/g, 'article'],
-    [/Mission Log/g, 'Article'],
-    [/logs/g, 'articles'],
-    [/@\/lib\/logs/g, '@/lib/articles'],
-    [/Search every mission log/g, 'Search every article'],
-    [/\blog\b/g, 'article'],
+    [/mission log/g, singular],
+    [/Mission Log/g, contentTypeName(answers.contentModel)],
+    [/logs/g, contentDirName],
+    [/@\/lib\/logs/g, `@/lib/${contentDirName}`],
+    [/Search every mission log/g, `Search every ${contentDirName}`],
+    [/\blog\b/g, singular],
   ]);
 
   // ── archive/search.tsx ──────────────────────────────────────────
   rewriteFile(join(destDir, 'src/app/archive/search.tsx'), [
-    [/mission log/g, 'article'],
-    [/Mission log/g, 'Article'],
-    [/Search mission logs/g, 'Search articles'],
-    [/\/logs\//g, '/articles/'],
-    [/\blog\b/g, 'article'],
+    [/mission log/g, singular],
+    [/Mission log/g, contentTypeName(answers.contentModel)],
+    [/Search mission logs/g, `Search ${contentDirName}`],
+    [/\/logs\//g, `/${contentDirName}/`],
+    [/\blog\b/g, singular],
   ]);
 
   // ── next.config.ts ──────────────────────────────────────────────
@@ -508,7 +598,7 @@ function rewriteBranding(destDir: string, answers: Answers): void {
   // ── __tests__/search.test.ts ────────────────────────────────────
   rewriteFile(join(destDir, 'src/__tests__/search.test.ts'), [
     [/Northstar/g, displayName],
-    [/mission log/g, 'article'],
+    [/mission log/g, singular],
     [/Northstar corpus/g, `${displayName} corpus`],
   ]);
 }
@@ -598,7 +688,7 @@ function generateReadme(
     '| `src/app/layout.tsx` | Metadata, fonts, global layout |',
     '| `src/app/globals.css` | Theme tokens (colours, spacing) |',
     '| `src/app/page.tsx` | Homepage |',
-    '| `src/lib/articles.ts` | Your content corpus |',
+    `| \`src/lib/${contentNoun(answers.contentModel)}.ts\` | Your content corpus |`,
     '| `src/instrumentation.ts` | Feature preset, service name |',
     '| `.env.example` | Environment variables contract |',
     '',
@@ -674,6 +764,7 @@ async function main(): Promise<void> {
       preset: cliArgs.preset,
       author: cliArgs.author ?? 'Anonymous',
       siteUrl: cliArgs.siteUrl ?? `https://${slugify(cliArgs.name)}.com`,
+      contentModel: cliArgs.contentModel ?? 'generic',
     };
   } else {
     // Interactive mode — prompt for each field.
@@ -681,6 +772,7 @@ async function main(): Promise<void> {
 
     const name = ask('Site name (kebab-case)', cliArgs.name ?? 'my-site');
     const preset = askPreset(cliArgs.preset);
+    const contentModel = askContentModel(cliArgs.contentModel);
     const author = ask('Author name', cliArgs.author ?? 'Anonymous');
     const defaultUrl = `https://${slugify(name)}.com`;
     const siteUrl = ask('Site URL', cliArgs.siteUrl ?? defaultUrl);
@@ -690,6 +782,7 @@ async function main(): Promise<void> {
       preset,
       author: author || 'Anonymous',
       siteUrl: siteUrl || `https://${slugify(name)}.com`,
+      contentModel,
     };
   }
 
@@ -709,10 +802,13 @@ async function main(): Promise<void> {
 
   console.log('');
   console.log(`  \x1b[1m${titleCase(slug)}\x1b[0m`);
-  console.log(`  Preset:    ${answers.preset}`);
-  console.log(`  Template:  examples/${TEMPLATE_DIR}/`);
-  console.log(`  Target:    ${relative(cwd(), targetDir) || targetDir}`);
-  console.log(`  Mode:      ${standalone ? 'standalone (npm deps)' : 'monorepo (workspace:*)'}`);
+  console.log(`  Preset:        ${answers.preset}`);
+  console.log(`  Content model: ${answers.contentModel}`);
+  console.log(`  Template:      examples/${TEMPLATE_DIR}/`);
+  console.log(`  Target:         ${relative(cwd(), targetDir) || targetDir}`);
+  console.log(
+    `  Mode:          ${standalone ? 'standalone (npm deps)' : 'monorepo (workspace:*)'}`,
+  );
   if (standalone) {
     console.log(`  Substrate: ^${substrateVersion}`);
   }
@@ -755,7 +851,7 @@ async function main(): Promise<void> {
   const basePath = standalone ? slug : `examples/${slug}`;
   console.log(`    ${basePath}/src/app/layout.tsx      — metadata, fonts`);
   console.log(`    ${basePath}/src/app/globals.css     — theme tokens`);
-  console.log(`    ${basePath}/src/lib/articles.ts     — your content`);
+  console.log(`    ${basePath}/src/lib/${contentNoun(answers.contentModel)}.ts     — your content`);
   console.log(`    ${basePath}/src/instrumentation.ts  — feature preset`);
   console.log(`    ${basePath}/.env.example            — environment vars\n`);
 

@@ -1,44 +1,23 @@
 /**
  * @substrate/contracts/openapi — OpenAPI 3.1 document factory.
  *
- * The platform provides reusable Zod schemas and a factory function.
- * The application calls `createOpenApiDocument` with its own title,
- * server URL, tags, and path registrations.
+ * The platform provides a factory function and a few reusable Zod schemas
+ * for common API patterns (search, health, newsletter). The application
+ * calls `createOpenApiDocument` with its own title, server URL, tags, and
+ * path registrations.
  *
- * The platform does NOT define a fixed set of HTTP API routes.
- * Each application decides which endpoints exist and how they are
- * documented.
+ * The platform does NOT define a fixed set of HTTP API routes or
+ * application-specific schemas (articles, projects, etc.). Each
+ * application decides which endpoints exist and how they are documented.
  */
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi';
 import type { OpenAPIObject } from 'openapi3-ts/oas30';
 import { z } from 'zod';
-import { articleSchema, experimentSchema } from './index';
 
-// Re-export schemas so applications can import everything from one module.
-export { articleSchema, experimentSchema };
-
-// ── Reusable component schemas ───────────────────────────────────────
+// ── Reusable generic schemas ─────────────────────────────────────────
 //
-// These schemas are available as OpenAPI components. Applications
-// register them (or their own schemas) when defining paths.
-
-export const createArticleSchema = articleSchema.omit({ id: true, date: true });
-export const articleResponseSchema = articleSchema.extend({
-  url: z.string().url().optional(),
-});
-
-export const submitExperimentSchema = experimentSchema.omit({
-  id: true,
-  result: true,
-  durationMs: true,
-});
-
-export const experimentResultSchema = z.object({
-  id: z.string().uuid(),
-  status: z.enum(['queued', 'running', 'completed', 'failed']),
-  result: z.record(z.string(), z.unknown()).optional(),
-  durationMs: z.number().int().positive().optional(),
-});
+// These schemas cover common API patterns. Applications can use them or
+// define their own.
 
 export const searchRequestSchema = z.object({
   query: z.string().min(1).max(200),
@@ -48,11 +27,9 @@ export const searchRequestSchema = z.object({
 export const searchResponseSchema = z.object({
   results: z.array(
     z.object({
-      id: z.string().uuid(),
-      slug: z.string(),
+      id: z.string(),
       title: z.string(),
-      excerpt: z.string(),
-      type: z.enum(['article', 'project', 'note']),
+      excerpt: z.string().optional(),
       score: z.number(),
     }),
   ),
@@ -94,7 +71,7 @@ export function createOpenApiDocument(config: OpenApiConfig): OpenAPIObject {
     type: 'http',
     scheme: 'bearer',
     bearerFormat: 'JWT',
-    description: 'Better Auth bearer token',
+    description: 'Bearer token authentication',
   });
 
   // Let the application register its own paths and schemas.

@@ -18,7 +18,7 @@ import { z } from 'zod';
 export const featureManifestSchema = z.object({
   /** Better Auth + Passkeys — admin/draft preview login. */
   auth: z.boolean().default(false),
-  /** User comments on articles. */
+  /** User comments on content. */
   comments: z.boolean().default(false),
   /** Privacy-friendly analytics (Plausible/PostHog). */
   analytics: z.boolean().default(true),

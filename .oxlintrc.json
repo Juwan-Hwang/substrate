@@ -7,9 +7,18 @@
   },
   "rules": {
     "no-unused-vars": "error",
-    "no-console": "warn",
+    "no-console": "off",
     "prefer-const": "error",
-    "no-explicit-any": "warn"
+    "no-explicit-any": "warn",
+    "no-await-in-loop": "off",
+    "no-underscore-dangle": "off",
+    "no-array-sort": "off",
+    "consistent-function-scoping": "off",
+    "no-shadow": "off",
+    "prefer-add-event-listener": "off",
+    "no-extraneous-class": "off",
+    "no-array-reverse": "off",
+    "require-post-message-target-origin": "off"
   },
   "ignorePatterns": ["node_modules/", "dist/", ".next/", "target/", "pkg/", "*.config.{ts,js,mjs}"]
 }

@@ -1,10 +1,10 @@
-name = "aevum-edge"
+name = "substrate-edge"
 main = "src/index.ts"
 compatibility_date = "2026-07-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-SITE_BRAND = "Aevum"
+SITE_BRAND = "Substrate"
 
 # Upstash Redis (REST API — no TCP socket needed in Workers)
 # Set via: wrangler secret put UPSTASH_REDIS_URL / UPSTASH_REDIS_TOKEN
@@ -15,14 +15,14 @@ SITE_BRAND = "Aevum"
 
 [[r2_buckets]]
 binding = "R2"
-bucket_name = "aevum-assets"
+bucket_name = "substrate-assets"
 
 [[queues.producers]]
-queue = "aevum-tasks"
+queue = "substrate-tasks"
 binding = "QUEUE"
 
 [[queues.consumers]]
-queue = "aevum-tasks"
+queue = "substrate-tasks"
 max_batch_size = 10
 max_batch_timeout = 5
 
@@ -36,7 +36,7 @@ new_sqlite_classes = ["ExperimentDO"]
 
 [[hyperdrive.configurations]]
 binding = "HYPERDRIVE"
-localConnectionString = "postgresql://localhost:5432/aevum"
+localConnectionString = "postgresql://localhost:5432/substrate"
 
 # Cloudflare Workers AI — edge inference binding
 [ai]
@@ -44,21 +44,22 @@ binding = "AI"
 
 # Turso / libSQL (edge read replica)
 # Set via environment variables:
-# TURSO_DATABASE_URL=libsql://aevum.turso.io
+# TURSO_DATABASE_URL=libsql://substrate.turso.io
 # TURSO_AUTH_TOKEN=...
 
 # ── Production environment ────────────────────────────────────────────
 # Deploy with: wrangler deploy --env production
+# Override name, SITE_BRAND, ALLOWED_ORIGINS, and routes for your site.
 [env.production]
 
 [env.production.vars]
-SITE_BRAND = "Aevum"
-ALLOWED_ORIGINS = "https://aevum.dev"
+SITE_BRAND = "Substrate"
+ALLOWED_ORIGINS = "https://example.com"
 
-# Route the edge API through api.aevum.dev
-[[env.production.routes]]
-pattern = "api.aevum.dev/*"
-zone_name = "aevum.dev"
+# Route the edge API through your own domain
+# [[env.production.routes]]
+# pattern = "api.example.com/*"
+# zone_name = "example.com"
 
 # Production secrets — set with `wrangler secret put --env production`:
 #   UPSTASH_REDIS_URL

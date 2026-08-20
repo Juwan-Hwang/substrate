@@ -3,7 +3,7 @@
  *
  * Runs LLMs entirely in the browser using WebGPU acceleration.
  * No server round-trip — the model is downloaded once and cached.
- * Used for generative edge experiments (Crucible subsystem).
+ * Used for generative on-device AI experiences.
  *
  * @mlc-ai/web-llm provides an OpenAI-compatible API surface.
  */
