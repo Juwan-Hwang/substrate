@@ -15,6 +15,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
@@ -140,6 +141,10 @@ export const associations = pgTable(
 
 /**
  * Entity indexes — query optimization for the entities table.
+ *
+ * Composite primary key on (entity_type, entity_id) prevents duplicate
+ * rows for the same entity. Each (type, id) pair has exactly one index
+ * row reflecting its current lifecycle state and visibility.
  */
 export const entityIndexes = pgTable(
   'entity_indexes',
@@ -150,7 +155,7 @@ export const entityIndexes = pgTable(
     visibility: text('visibility').notNull(),
   },
   (table) => [
-    index('entity_indexes_type_id_idx').on(table.entityType, table.entityId),
+    primaryKey({ columns: [table.entityType, table.entityId] }),
     index('entity_indexes_lifecycle_visibility_idx').on(
       table.lifecycleState,
       table.visibility,

@@ -71,6 +71,7 @@ const SCANNABLE_EXTENSIONS = new Set([
   '.json', '.jsonc', '.css', '.scss', '.md', '.mdx',
   '.html', '.htm', '.yaml', '.yml', '.toml', '.rs',
   '.env', '.env.example', '.env.local', '.sh', '.bash', '.sql', '.txt',
+  '.wit',
 ]);
 
 function shouldExclude(filePath: string): boolean {

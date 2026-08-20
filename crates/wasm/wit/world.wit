@@ -1,4 +1,4 @@
-package aevum:substrate;
+package substrate;
 
 /// Graph layout interface — exposed by the WASM component.
 interface graph-layout {
