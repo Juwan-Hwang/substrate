@@ -1,5 +1,5 @@
 /**
- * @substrate/site — site shell primitives for Substrate-based Next.js sites.
+ * @substrate-platform/site — site shell primitives for Substrate-based Next.js sites.
  *
  * This package provides the minimal set of components, hooks, and
  * utilities that every Substrate site needs. It does NOT include
@@ -17,17 +17,17 @@
  *   ThemeScript,
  *   SmoothScroll,
  *   PaintRegistrar,
- * } from '@substrate/site';
- * import '@substrate/site/globals.css';
+ * } from '@substrate-platform/site';
+ * import '@substrate-platform/site/globals.css';
  * ```
  *
  * ## Dependency invariant
  *
- * `@substrate/site` only depends on platform packages:
- *   @substrate/ui, @substrate/contracts, @substrate/config, @substrate/observability
+ * `@substrate-platform/site` only depends on platform packages:
+ *   @substrate-platform/ui, @substrate-platform/contracts, @substrate-platform/config, @substrate-platform/observability
  *
  * It MUST NOT depend on any application package. Applications depend
- * on `@substrate/site`, never the reverse.
+ * on `@substrate-platform/site`, never the reverse.
  */
 
 // ── Animation utilities ────────────────────────────────────────────

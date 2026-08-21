@@ -2,7 +2,7 @@
  * Application-level table definitions for the AI Archive example.
  *
  * This file defines the `articles` table and related helpers that are
- * specific to this example site. The platform (@substrate/db) does NOT
+ * specific to this example site. The platform (@substrate-platform/db) does NOT
  * define content tables — each application defines its own.
  *
  * The platform provides the generic `entities` registry for lifecycle,

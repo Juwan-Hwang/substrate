@@ -5,7 +5,7 @@
  * Postgres query fails. The index is built lazily over the static demo
  * corpus and cached for the lifetime of the process.
  */
-import { createSearchIndex, type SearchableDoc } from '@substrate/content/search';
+import { createSearchIndex, type SearchableDoc } from '@substrate-platform/content/search';
 import { demoArticles } from './demo-articles';
 import type { SearchResult } from './types';
 

@@ -1,7 +1,7 @@
 /**
  * ForceGraphScene — interactive force-directed graph with WASM layout.
  *
- * Uses @substrate/graphics createLayout() which tries WebGPU compute
+ * Uses @substrate-platform/graphics createLayout() which tries WebGPU compute
  * first, falls back to WASM CPU, and renders via SVG.
  *
  * 'use client' — requires browser APIs (navigator, canvas, WASM).
@@ -13,7 +13,7 @@ import {
   detectRendererTier,
   type KnowledgeGraph,
   type RendererTier,
-} from '@substrate/graphics';
+} from '@substrate-platform/graphics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { demoGraph } from '../../lib/demo-graph';
 

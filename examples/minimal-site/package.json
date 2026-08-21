@@ -14,9 +14,10 @@
     "clean": "rm -rf .next dist .turbo"
   },
   "dependencies": {
-    "@substrate/ui": "workspace:*",
-    "@substrate/content": "workspace:*",
-    "@substrate/config": "workspace:*",
+    "@substrate-platform/ui": "workspace:*",
+    "@substrate-platform/content": "workspace:*",
+    "@substrate-platform/config": "workspace:*",
+    "@substrate-platform/site": "workspace:*",
     "next": "16.3.0-preview.6",
     "react": "19.3.0-canary-28cd4bb0-20260723",
     "react-dom": "19.3.0-canary-28cd4bb0-20260723",

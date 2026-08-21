@@ -70,7 +70,7 @@ export const uiStore = createStore<UIState>((set) => ({
 // In the web app, use `useStore` from `zustand/react` to subscribe:
 //
 //   import { useStore } from 'zustand/react';
-//   import { uiStore } from '@substrate/contracts';
+//   import { uiStore } from '@substrate-platform/contracts';
 //
 //   const theme = useStore(uiStore, (s) => s.theme);
 //

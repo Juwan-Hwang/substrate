@@ -11,14 +11,14 @@
     "declarationMap": false,
     "paths": {
       "@/*": ["./src/*"],
-      "@substrate/ui": ["../../packages/ui/src"],
-      "@substrate/ui/*": ["../../packages/ui/src/*"],
-      "@substrate/content": ["../../packages/content/src"],
-      "@substrate/content/*": ["../../packages/content/src/*"],
-      "@substrate/config": ["../../packages/config/src"],
-      "@substrate/config/*": ["../../packages/config/src/*"],
-      "@substrate/site": ["../../packages/site/src"],
-      "@substrate/site/*": ["../../packages/site/src/*"]
+      "@substrate-platform/ui": ["../../packages/ui/src"],
+      "@substrate-platform/ui/*": ["../../packages/ui/src/*"],
+      "@substrate-platform/content": ["../../packages/content/src"],
+      "@substrate-platform/content/*": ["../../packages/content/src/*"],
+      "@substrate-platform/config": ["../../packages/config/src"],
+      "@substrate-platform/config/*": ["../../packages/config/src/*"],
+      "@substrate-platform/site": ["../../packages/site/src"],
+      "@substrate-platform/site/*": ["../../packages/site/src/*"]
     }
   },
   "include": ["src", "next.config.ts", "next-env.d.ts"],

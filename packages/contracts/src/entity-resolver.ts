@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/entity-resolver — Entity Resolution Primitive.
+ * @substrate-platform/contracts/entity-resolver — Entity Resolution Primitive.
  *
  * The platform defines the EntityRef and EntitySnapshot interfaces.
  * The application implements the resolver that fetches entity metadata

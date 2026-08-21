@@ -2,7 +2,7 @@
  * @example/reference-app — In-memory reference implementations.
  *
  * This module provides working in-memory implementations of every
- * storage and authorization interface defined in @substrate/contracts.
+ * storage and authorization interface defined in @substrate-platform/contracts.
  *
  * The implementations are deliberately simple — they use Map and
  * crypto.randomUUID(). They are NOT production-ready, but they ARE
@@ -47,7 +47,7 @@ import {
   type StoredSnapshot,
   type Transaction,
   type TransactionalCommitEngine,
-} from '@substrate/contracts';
+} from '@substrate-platform/contracts';
 
 // ────────────────────────────────────────────────────────────────────────
 // 1. InMemoryEntityResolver

@@ -4,18 +4,20 @@
  * Uses SubstrateLayout for the HTML shell and "Powered by Substrate" footer.
  * The Nav component and main content area are passed as children.
  */
-import { aiArchiveFeatures, initFeatures } from '@substrate/config/features';
-import { SubstrateLayout } from '@substrate/site/layout';
-import { createMetadata } from '@substrate/site/metadata';
+
+import { aiArchiveFeatures, initFeatures } from '@substrate-platform/config/features';
+import { SubstrateLayout } from '@substrate-platform/site/layout';
+import { createMetadata } from '@substrate-platform/site/metadata';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Nav } from './nav';
 import './globals.css';
 
 initFeatures(aiArchiveFeatures);
 
-export const metadata = createMetadata({
+export const metadata: Metadata = createMetadata({
   name: 'AI Archive',
   url: 'https://ai-archive.example',
 });

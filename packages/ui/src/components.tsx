@@ -1,5 +1,5 @@
 /**
- * @substrate/ui — React components ported from Zephyr.
+ * @substrate-platform/ui — React components ported from Zephyr.
  * Uses shadcn/ui patterns (cva + Radix Slot) for variant management.
  */
 

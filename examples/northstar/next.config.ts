@@ -2,7 +2,7 @@
  * Next.js 16 configuration for the Northstar example site.
  *
  * Northstar is a fully independent consumer of the Substrate platform.
- * It consumes @substrate/site (the platform shell package) in addition to
+ * It consumes @substrate-platform/site (the platform shell package) in addition to
  * the UI and content packages, proving that a third-party site can be
  * built entirely on platform primitives.
  *
@@ -22,11 +22,11 @@ const nextConfig: NextConfig = {
     useTypeScriptCli: true,
   },
   transpilePackages: [
-    '@substrate/site',
-    '@substrate/ui',
-    '@substrate/content',
-    '@substrate/config',
-    '@substrate/contracts',
+    '@substrate-platform/site',
+    '@substrate-platform/ui',
+    '@substrate-platform/content',
+    '@substrate-platform/config',
+    '@substrate-platform/contracts',
   ],
   // ── Security headers ────────────────────────────────────────────────
   async headers() {

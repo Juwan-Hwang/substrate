@@ -4,7 +4,7 @@
  * Pure server component: the mission log corpus is static, so the entire
  * page is prerendered at build time.
  */
-import { Badge, GlassCard } from '@substrate/ui';
+import { Badge, GlassCard } from '@substrate-platform/ui';
 import Link from 'next/link';
 import { logs } from '@/lib/logs';
 

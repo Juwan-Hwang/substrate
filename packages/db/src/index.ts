@@ -1,5 +1,5 @@
 /**
- * @substrate/db — Database access layer (PostgreSQL 17 + Drizzle ORM).
+ * @substrate-platform/db — Database access layer (PostgreSQL 17 + Drizzle ORM).
  *
  * Provides database primitives and platform-level table definitions:
  *   - entities (generic entity registry)

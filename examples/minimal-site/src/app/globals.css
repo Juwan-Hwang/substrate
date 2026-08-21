@@ -3,15 +3,15 @@
  *
  * Three-tier CSS contract:
  *   1. @import "tailwindcss"            — Tailwind v4 entry (consumer)
- *   2. @import "@substrate/ui/styles.css" — platform design tokens + components
- *   3. @import "@substrate/site/globals.css" — Tailwind theme bridge + utilities
+ *   2. @import "@substrate-platform/ui/styles.css" — platform design tokens + components
+ *   3. @import "@substrate-platform/site/globals.css" — Tailwind theme bridge + utilities
  *
- * The accent token (--accent-primary) is consumed by @substrate/ui, so the
+ * The accent token (--accent-primary) is consumed by @substrate-platform/ui, so the
  * shared component library inherits the site's identity without a fork.
  */
 @import "tailwindcss";
-@import "@substrate/ui/styles.css";
-@import "@substrate/site/globals.css";
+@import "@substrate-platform/ui/styles.css";
+@import "@substrate-platform/site/globals.css";
 
 :root {
   --bg-primary: #0a0a0c;

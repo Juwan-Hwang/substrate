@@ -1,5 +1,5 @@
 /**
- * @substrate/edge — Cloudflare Workers edge infrastructure.
+ * @substrate-platform/edge — Cloudflare Workers edge infrastructure.
  *
  * Provides platform-level building blocks for edge deployment:
  *  - Hono app factory with CORS + rate limiting

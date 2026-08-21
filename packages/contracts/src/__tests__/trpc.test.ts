@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/contracts/trpc — tRPC appRouter.
+ * Unit tests for @substrate-platform/contracts/trpc — tRPC appRouter.
  */
 import { describe, expect, it } from 'vitest';
 import { appRouter } from '../trpc';

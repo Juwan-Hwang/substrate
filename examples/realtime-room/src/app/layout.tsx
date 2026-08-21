@@ -4,16 +4,18 @@
  * Uses SubstrateLayout for the HTML shell and "Powered by Substrate" footer.
  * Realtime Room demonstrates Durable Objects, presence, and real-time collaboration.
  */
-import { initFeatures, realtimeRoomFeatures } from '@substrate/config/features';
-import { SubstrateLayout } from '@substrate/site/layout';
-import { createMetadata } from '@substrate/site/metadata';
+
+import { initFeatures, realtimeRoomFeatures } from '@substrate-platform/config/features';
+import { SubstrateLayout } from '@substrate-platform/site/layout';
+import { createMetadata } from '@substrate-platform/site/metadata';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
+import type { Metadata } from 'next';
 import './globals.css';
 
 initFeatures(realtimeRoomFeatures);
 
-export const metadata = createMetadata({
+export const metadata: Metadata = createMetadata({
   name: 'Realtime Room',
   url: 'https://realtime-room.example.com',
 });

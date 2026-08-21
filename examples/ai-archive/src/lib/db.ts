@@ -15,7 +15,7 @@
  * invocation, which is the intended behaviour.
  */
 
-import { createDb } from '@substrate/db';
+import { createDb } from '@substrate-platform/db';
 import postgres from 'postgres';
 import { databaseUrl } from './env';
 import { ftsWeightedSearchSQL } from './fts';

@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": false,
+    "incremental": false,
+    "verbatimModuleSyntax": false,
+    "jsx": "react-jsx",
+    "exactOptionalPropertyTypes": false,
+    "skipLibCheck": true,
+    "paths": {
+      "three": ["./src/stubs/three.d.ts"],
+      "three/tsl": ["./src/stubs/three-tsl.d.ts"],
+      "three/webgpu": ["./src/stubs/three-webgpu.d.ts"],
+      "@react-three/fiber": ["./src/stubs/r3f.d.ts"],
+      "@react-three/drei": ["./src/stubs/drei.d.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/__tests__/**"]
+}

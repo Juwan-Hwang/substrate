@@ -7,7 +7,7 @@
  *
  * ```tsx
  * // app/error.tsx
- * export { SubstrateError as default } from '@substrate/site/shells';
+ * export { SubstrateError as default } from '@substrate-platform/site/shells';
  * ```
  */
 'use client';

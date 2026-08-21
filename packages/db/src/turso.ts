@@ -2,7 +2,7 @@
  * Turso / libSQL — READ-ONLY edge projection.
  *
  * Architecture:
- *   PostgreSQL (@substrate/db/index.ts) is the single source of truth.
+ *   PostgreSQL (@substrate-platform/db/index.ts) is the single source of truth.
  *   Turso is a read-only replica for edge deployment (Cloudflare Workers)
  *   where Postgres (Hyperdrive) latency is too high.
  *
@@ -75,7 +75,7 @@ export function createTursoReadClient(config: TursoConfig): Client {
           if (WRITE_PATTERN.test(sql)) {
             throw new Error(
               `[Turso] Write operation blocked — Turso is a read-only replica. ` +
-                `Use PostgreSQL (@substrate/db) for all writes. Attempted SQL: ${sql.slice(0, 80)}…`,
+                `Use PostgreSQL (@substrate-platform/db) for all writes. Attempted SQL: ${sql.slice(0, 80)}…`,
             );
           }
           return target.execute(stmt);
@@ -89,7 +89,7 @@ export function createTursoReadClient(config: TursoConfig): Client {
             if (WRITE_PATTERN.test(sql)) {
               throw new Error(
                 `[Turso] Write operation blocked in batch — Turso is a read-only replica. ` +
-                  `Use PostgreSQL (@substrate/db) for all writes. Attempted SQL: ${sql.slice(0, 80)}…`,
+                  `Use PostgreSQL (@substrate-platform/db) for all writes. Attempted SQL: ${sql.slice(0, 80)}…`,
               );
             }
           }

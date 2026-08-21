@@ -4,7 +4,7 @@
  * The application calls this with its own identity:
  *
  * ```ts
- * import { createMetadata } from '@substrate/site/metadata';
+ * import { createMetadata } from '@substrate-platform/site/metadata';
  *
  * export const metadata = createMetadata({
  *   name: 'My Site',
@@ -16,7 +16,7 @@
  * creates a `%s — Site Name` template for per-page titles.
  */
 
-import type { SiteIdentity } from '@substrate/contracts';
+import type { SiteIdentity } from '@substrate-platform/contracts';
 import type { Metadata } from 'next';
 
 export function createMetadata(identity: SiteIdentity): Metadata {

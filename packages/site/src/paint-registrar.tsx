@@ -4,7 +4,7 @@
  */
 'use client';
 
-import { registerPaintWorklets } from '@substrate/ui';
+import { registerPaintWorklets } from '@substrate-platform/ui';
 import { useEffect } from 'react';
 
 export function PaintRegistrar() {

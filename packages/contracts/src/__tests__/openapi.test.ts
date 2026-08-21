@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/contracts/openapi — OpenAPI 3.1 document factory.
+ * Unit tests for @substrate-platform/contracts/openapi — OpenAPI 3.1 document factory.
  */
 import { describe, expect, it } from 'vitest';
 import { createOpenApiDocument } from '../openapi';

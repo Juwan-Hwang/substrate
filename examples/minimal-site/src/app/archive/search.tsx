@@ -8,7 +8,7 @@
  */
 'use client';
 
-import { createSearchIndex, type SearchableDoc } from '@substrate/content/search';
+import { createSearchIndex, type SearchableDoc } from '@substrate-platform/content/search';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 

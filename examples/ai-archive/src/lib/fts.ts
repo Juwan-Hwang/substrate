@@ -2,7 +2,7 @@
  * PostgreSQL Full-Text Search (FTS) — server-side content search.
  *
  * Uses `tsvector` / `tsquery` for efficient keyword search with ranking.
- * Combined with pgvector semantic search in @substrate/ai for hybrid retrieval.
+ * Combined with pgvector semantic search in @substrate-platform/ai for hybrid retrieval.
  *
  * Requires the `articles` table to have:
  *  - A `tsv` column (generated tsvector) OR

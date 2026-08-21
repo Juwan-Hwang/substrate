@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/ai — provider adapter, Workers AI provider
+ * Unit tests for @substrate-platform/ai — provider adapter, Workers AI provider
  * construction, and the hybrid retrieval + rerank pipeline.
  *
  * No external services are called: `fetch` is mocked and the Postgres

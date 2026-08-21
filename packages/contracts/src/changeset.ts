@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/changeset — ChangeSet + Transactional Commit Engine.
+ * @substrate-platform/contracts/changeset — ChangeSet + Transactional Commit Engine.
  *
  * A ChangeSet is a batch of domain-level semantic operations that commit
  * atomically. The TransactionalCommitEngine wraps them in a DB transaction

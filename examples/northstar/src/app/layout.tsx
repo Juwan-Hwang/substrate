@@ -1,7 +1,7 @@
 /**
  * Root layout — server component.
  *
- * Northstar is the first example site that consumes @substrate/site's
+ * Northstar is the first example site that consumes @substrate-platform/site's
  * platform primitives directly:
  *   - SubstrateLayout: the HTML shell with fonts, dark theme, and footer.
  *   - createMetadata: factory for Next.js Metadata from SiteIdentity.
@@ -21,23 +21,25 @@
  * Northstar follows the three-tier CSS package boundary:
  *
  *   1. @import "tailwindcss"               — Tailwind v4 entry (consumer)
- *   2. @import "@substrate/ui/styles.css"  — design tokens + components
- *   3. @import "@substrate/site/globals"   — Tailwind theme bridge + utilities
+ *   2. @import "@substrate-platform/ui/styles.css"  — design tokens + components
+ *   3. @import "@substrate-platform/site/globals"   — Tailwind theme bridge + utilities
  *
  * See globals.css for the full contract documentation.
  */
-import { initFeatures, minimalSiteFeatures } from '@substrate/config/features';
-import { SubstrateLayout } from '@substrate/site/layout';
-import { createMetadata } from '@substrate/site/metadata';
+
+import { initFeatures, minimalSiteFeatures } from '@substrate-platform/config/features';
+import { SubstrateLayout } from '@substrate-platform/site/layout';
+import { createMetadata } from '@substrate-platform/site/metadata';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 
 // Initialise the feature manifest for this deployment.
 initFeatures(minimalSiteFeatures);
 
-export const metadata = createMetadata({
+export const metadata: Metadata = createMetadata({
   name: 'Northstar',
   url: 'https://northstar.example.com',
 });

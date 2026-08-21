@@ -1,7 +1,7 @@
 /**
  * Tests for the in-memory reference implementations.
  *
- * These tests verify that every interface from @substrate/contracts
+ * These tests verify that every interface from @substrate-platform/contracts
  * is correctly implemented by the in-memory adapters. They serve as
  * both validation and documentation — consumers can see exactly how
  * each interface is expected to behave.
@@ -26,7 +26,7 @@ import {
   resolveTransition,
   type SnapshotReference,
   validateLifecycle,
-} from '@substrate/contracts';
+} from '@substrate-platform/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   createDemoData,

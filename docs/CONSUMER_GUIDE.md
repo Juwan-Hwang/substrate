@@ -79,7 +79,7 @@ bootstraps the Feature Manifest and (optionally) OpenTelemetry.
 
 ```ts
 export const register = (
-  await import('@substrate/site/instrumentation')
+  await import('@substrate-platform/site/instrumentation')
 ).registerInstrumentation({
   featurePreset: 'minimal',     // or: graphics, ai-archive, realtime, reference
   serviceName: 'my-site',       // OTel service name — use your own
@@ -99,7 +99,7 @@ Available presets:
 To go beyond a preset, pass a custom manifest instead:
 
 ```ts
-import { registerInstrumentation } from '@substrate/site/instrumentation';
+import { registerInstrumentation } from '@substrate-platform/site/instrumentation';
 
 export const register = registerInstrumentation({
   featureManifest: {
@@ -107,7 +107,7 @@ export const register = registerInstrumentation({
     analytics: true,
     graphics: false,
     search: 'server',
-    // ... see @substrate/config for the full schema
+    // ... see @substrate-platform/config for the full schema
   },
   serviceName: 'my-site',
 });
@@ -119,9 +119,9 @@ Root server component. Declares the site's identity, initialises the
 feature manifest, and wraps children in the platform's layout shell.
 
 ```tsx
-import { initFeatures, minimalSiteFeatures } from '@substrate/config/features';
-import { SubstrateLayout } from '@substrate/site/layout';
-import { createMetadata } from '@substrate/site/metadata';
+import { initFeatures, minimalSiteFeatures } from '@substrate-platform/config/features';
+import { SubstrateLayout } from '@substrate-platform/site/layout';
+import { createMetadata } from '@substrate-platform/site/metadata';
 import { GeistSans } from 'geist/font/sans';
 import type { ReactNode } from 'react';
 import './globals.css';
@@ -162,10 +162,10 @@ Three-tier CSS contract:
 @import "tailwindcss";
 
 /* Tier 2 — Platform design tokens + component styles. */
-@import "@substrate/ui/styles.css";
+@import "@substrate-platform/ui/styles.css";
 
 /* Tier 3 — Tailwind theme bridge + platform utilities. */
-@import "@substrate/site/globals.css";
+@import "@substrate-platform/site/globals.css";
 
 /* Your tokens */
 :root {
@@ -176,7 +176,7 @@ Three-tier CSS contract:
 }
 ```
 
-The platform's `--substrate-*` tokens are consumed by `@substrate/ui`
+The platform's `--substrate-*` tokens are consumed by `@substrate-platform/ui`
 components. Your `--accent-primary` flows into those components, so the
 shared library inherits your brand without a fork.
 
@@ -208,7 +208,7 @@ export function getAllSlugs(): string[] {
 }
 ```
 
-The shape mirrors `SearchableDoc` from `@substrate/content/search`, so
+The shape mirrors `SearchableDoc` from `@substrate-platform/content/search`, so
 the same records feed both your routes and the search index without
 transformation. You can rename the type, the file, and the variable —
 the platform does not hardcode any content type name.
@@ -216,7 +216,7 @@ the platform does not hardcode any content type name.
 ### `src/app/page.tsx` — Homepage
 
 Server component that renders your content index. Uses `GlassCard` and
-`Badge` from `@substrate/ui`. Fully prerendered at build time for static
+`Badge` from `@substrate-platform/ui`. Fully prerendered at build time for static
 presets.
 
 ### `src/app/<content>/[slug]/page.tsx` — Detail route
@@ -239,17 +239,17 @@ Four files that re-export platform shells — you don't write any UI:
 ```ts
 // src/app/error.tsx
 'use client';
-export { SubstrateError as default } from '@substrate/site/shells';
+export { SubstrateError as default } from '@substrate-platform/site/shells';
 
 // src/app/global-error.tsx
 'use client';
-export { SubstrateGlobalError as default } from '@substrate/site/shells';
+export { SubstrateGlobalError as default } from '@substrate-platform/site/shells';
 
 // src/app/loading.tsx
-export { SubstrateLoading as default } from '@substrate/site/shells';
+export { SubstrateLoading as default } from '@substrate-platform/site/shells';
 
 // src/app/not-found.tsx
-export { SubstrateNotFound as default } from '@substrate/site/shells';
+export { SubstrateNotFound as default } from '@substrate-platform/site/shells';
 ```
 
 ### `src/app/api/og/route.tsx` — OG image endpoint
@@ -270,11 +270,11 @@ const nextConfig: NextConfig = {
     viewTransition: true,         // View Transitions API
   },
   transpilePackages: [
-    '@substrate/site',
-    '@substrate/ui',
-    '@substrate/content',
-    '@substrate/config',
-    '@substrate/contracts',
+    '@substrate-platform/site',
+    '@substrate-platform/ui',
+    '@substrate-platform/content',
+    '@substrate-platform/config',
+    '@substrate-platform/contracts',
   ],
 };
 ```
@@ -284,15 +284,15 @@ workspace packages — no separate build step needed.
 
 ### `tsconfig.json` — Path aliases
 
-The scaffold maps `@substrate/*` package names to workspace `src/`
+The scaffold maps `@substrate-platform/*` package names to workspace `src/`
 directories, and `@/*` to your `src/`:
 
 ```json
 {
   "paths": {
     "@/*": ["./src/*"],
-    "@substrate/site": ["../../packages/site/src"],
-    "@substrate/site/*": ["../../packages/site/src/*"],
+    "@substrate-platform/site": ["../../packages/site/src"],
+    "@substrate-platform/site/*": ["../../packages/site/src/*"],
     // ... etc for each platform package
   }
 }
@@ -318,7 +318,7 @@ out — uncomment the ones your preset needs.
 
 The full set of primitives available to consumers:
 
-### `@substrate/site` — Site shell
+### `@substrate-platform/site` — Site shell
 
 | Export | What it does |
 |--------|-------------|
@@ -335,7 +335,7 @@ The full set of primitives available to consumers:
 | `PaintRegistrar` | CSS Paint API worklet registration |
 | `cardFlip`, `fadeInUp`, `magneticHover`, `scaleEntrance`, `staggerReveal`, `scrollTo` | GSAP animation utilities |
 
-### `@substrate/ui` — Components
+### `@substrate-platform/ui` — Components
 
 | Export | What it does |
 |--------|-------------|
@@ -345,7 +345,7 @@ The full set of primitives available to consumers:
 | `Switch` | Toggle switch |
 | `styles.css` | `--substrate-*` tokens + `.substrate-*` classes |
 
-### `@substrate/content` — Content layer
+### `@substrate-platform/content` — Content layer
 
 | Export | What it does |
 |--------|-------------|
@@ -353,7 +353,7 @@ The full set of primitives available to consumers:
 | `SearchableDoc<TType>` | Generic content type for search indexing |
 | Fumadocs MDX config | MDX content source configuration |
 
-### `@substrate/config` — Feature manifest
+### `@substrate-platform/config` — Feature manifest
 
 | Export | What it does |
 |--------|-------------|
@@ -366,10 +366,10 @@ The full set of primitives available to consumers:
 | `strictValidateEnv(manifest)` | Throw if env vars are missing |
 | Preset constants | `minimalSiteFeatures`, `graphicsLabFeatures`, `aiArchiveFeatures`, `realtimeRoomFeatures`, `referenceFeatures` |
 
-### `@substrate/contracts` — Type contracts
+### `@substrate-platform/contracts` — Type contracts
 
 The root entrypoint has **zero heavyweight runtime dependencies** — only `zod`.
-Import core types and primitives from `@substrate/contracts`:
+Import core types and primitives from `@substrate-platform/contracts`:
 
 - `SiteIdentity`, `EntityId`, `Result`/`ok`/`err`
 - `EntityRef`, `EntityResolver`, `EntitySnapshot`
@@ -385,21 +385,21 @@ pulls in its own runtime dependencies only when imported):
 
 | Subpath | What it provides | Runtime dep |
 |---------|-----------------|------------|
-| `@substrate/contracts/trpc` | tRPC router builder, `appRouter` | `@trpc/server` |
-| `@substrate/contracts/effect` | Effect service composition (Database, Logger, AI) | `effect` |
-| `@substrate/contracts/store` | Zustand vanilla UI store (theme, toasts) | `zustand` |
-| `@substrate/contracts/openapi` | OpenAPI 3.1 document factory | `@asteasolutions/zod-to-openapi` |
+| `@substrate-platform/contracts/trpc` | tRPC router builder, `appRouter` | `@trpc/server` |
+| `@substrate-platform/contracts/effect` | Effect service composition (Database, Logger, AI) | `effect` |
+| `@substrate-platform/contracts/store` | Zustand vanilla UI store (theme, toasts) | `zustand` |
+| `@substrate-platform/contracts/openapi` | OpenAPI 3.1 document factory | `@asteasolutions/zod-to-openapi` |
 
 ### Other packages (opt-in)
 
 | Package | When you need it |
 |---------|------------------|
-| `@substrate/db` | `snapshot`, `contentAddressedStorage`, or `assets` features |
-| `@substrate/edge` | `edge` feature (Cloudflare Workers) |
-| `@substrate/ai` | `ai` feature (RAG, chat, embeddings) |
-| `@substrate/graphics` | `graphics` feature (Three.js, R3F, WebGPU) |
-| `@substrate/observability` | `observability` feature (OTel, Sentry, PostHog) |
-| `@substrate/tokens` | Design token source files (Style Dictionary) |
+| `@substrate-platform/db` | `snapshot`, `contentAddressedStorage`, or `assets` features |
+| `@substrate-platform/edge` | `edge` feature (Cloudflare Workers) |
+| `@substrate-platform/ai` | `ai` feature (RAG, chat, embeddings) |
+| `@substrate-platform/graphics` | `graphics` feature (Three.js, R3F, WebGPU) |
+| `@substrate-platform/observability` | `observability` feature (OTel, Sentry, PostHog) |
+| `@substrate-platform/tokens` | Design token source files (Style Dictionary) |
 
 ---
 
@@ -415,13 +415,13 @@ pulls in its own runtime dependencies only when imported):
 }
 ```
 
-`@substrate/ui` components consume `--accent-primary` — the entire
+`@substrate-platform/ui` components consume `--accent-primary` — the entire
 component library inherits your brand.
 
 ### Add a new route
 
 Create any file under `src/app/`. The platform does not constrain your
-routing. Import from `@substrate/ui` for components, from `@/lib/<content>`
+routing. Import from `@substrate-platform/ui` for components, from `@/lib/<content>`
 for data.
 
 ### Enable a new feature
@@ -445,7 +445,7 @@ for data.
 
 ### Replace the search engine
 
-The scaffold uses Orama via `@substrate/content/search`. You are not
+The scaffold uses Orama via `@substrate-platform/content/search`. You are not
 locked in — `createSearchIndex` is the only integration point. Replace
 it with any search library by implementing the same interface:
 
@@ -529,7 +529,7 @@ is the primary supported workflow.
 | If you want to see... | Look at |
 |----------------------|---------|
 | The simplest possible site | `examples/minimal-site/` |
-| A site that consumes `@substrate/site` shell primitives | `examples/northstar/` |
+| A site that consumes `@substrate-platform/site` shell primitives | `examples/northstar/` |
 | Graphics / WebGPU / WASM capability | `examples/graphics-lab/` |
 | AI / RAG / hybrid search capability | `examples/ai-archive/` |
 | Realtime / Durable Objects capability | `examples/realtime-room/` |

@@ -1,19 +1,34 @@
 {
-  "name": "@substrate/contracts",
+  "name": "@substrate-platform/contracts",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./trpc": "./src/trpc.ts",
-    "./openapi": "./src/openapi.ts",
-    "./effect": "./src/effect.ts",
-    "./store": "./src/store.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./trpc": {
+      "import": "./dist/trpc.js",
+      "types": "./dist/trpc.d.ts"
+    },
+    "./openapi": {
+      "import": "./dist/openapi.js",
+      "types": "./dist/openapi.d.ts"
+    },
+    "./effect": {
+      "import": "./dist/effect.js",
+      "types": "./dist/effect.d.ts"
+    },
+    "./store": {
+      "import": "./dist/store.js",
+      "types": "./dist/store.d.ts"
+    }
   },
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc --project tsconfig.build.json && bun run ../../scripts/fix-import-extensions.ts dist",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -22,14 +37,41 @@
   "dependencies": {
     "zod": "^3.24.0"
   },
-  "optionalDependencies": {
+  "devDependencies": {
+    "@types/node": "^22.0.0",
     "@trpc/server": "^11.0.0",
     "effect": "^3.12.0",
     "zustand": "^5.0.0",
     "@asteasolutions/zod-to-openapi": "^7.3.0",
     "openapi3-ts": "^4.6.0"
   },
-  "devDependencies": {
-    "@types/node": "^22.0.0"
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@trpc/server": "^11.0.0",
+    "effect": "^3.12.0",
+    "zustand": "^5.0.0",
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "openapi3-ts": "^4.6.0"
+  },
+  "peerDependenciesMeta": {
+    "@trpc/server": {
+      "optional": true
+    },
+    "effect": {
+      "optional": true
+    },
+    "zustand": {
+      "optional": true
+    },
+    "@asteasolutions/zod-to-openapi": {
+      "optional": true
+    },
+    "openapi3-ts": {
+      "optional": true
+    }
   }
 }

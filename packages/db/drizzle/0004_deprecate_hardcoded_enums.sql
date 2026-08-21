@@ -1,7 +1,7 @@
 -- Migration 0004: Platform Neutrality Marker
 --
 -- In pre-v1.3 code, the platform defined a `content_status` enum and
--- example content tables in the platform-level @substrate/db package.
+-- example content tables in the platform-level @substrate-platform/db package.
 -- v1.3 established that the platform must NOT define application-specific
 -- lifecycle values or content tables.
 --

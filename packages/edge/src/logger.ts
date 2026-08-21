@@ -1,7 +1,7 @@
 /**
  * Minimal structured logger for the edge runtime.
  *
- * `@substrate/observability` targets the Node OpenTelemetry SDK and
+ * `@substrate-platform/observability` targets the Node OpenTelemetry SDK and
  * cannot run inside the Cloudflare Workers runtime, so this lightweight
  * logger tags every line with `[edge:<component>]` and forwards
  * structured context to the console — a drop-in replacement for raw

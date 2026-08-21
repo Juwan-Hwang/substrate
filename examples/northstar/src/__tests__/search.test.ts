@@ -1,11 +1,11 @@
 /**
- * Unit tests for the Orama search index helper exported by @substrate/content.
+ * Unit tests for the Orama search index helper exported by @substrate-platform/content.
  *
  * Verifies that Northstar's mission log corpus is indexed, that term queries
  * match the right records, and that queries with no matches return an empty
  * hit set.
  */
-import { createSearchIndex, type SearchableDoc } from '@substrate/content/search';
+import { createSearchIndex, type SearchableDoc } from '@substrate-platform/content/search';
 import { describe, expect, it } from 'vitest';
 
 const docs: SearchableDoc[] = [

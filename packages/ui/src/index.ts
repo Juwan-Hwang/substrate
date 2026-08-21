@@ -1,5 +1,5 @@
 /**
- * @substrate/ui — Component library for Substrate.
+ * @substrate-platform/ui — Component library for Substrate.
  *
  * Ported from Zephyr's design system, adapted for React 19 + Tailwind v4.
  * Primitives shared across all Substrate-based sites.

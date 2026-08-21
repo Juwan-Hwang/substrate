@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/publish — Publish Atomicity Protocol.
+ * @substrate-platform/contracts/publish — Publish Atomicity Protocol.
  *
  * Implements the two-phase publish protocol from §4.1:
  *

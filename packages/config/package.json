@@ -1,18 +1,23 @@
 {
-  "name": "@substrate/config",
+  "name": "@substrate-platform/config",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./features": "./src/features.ts",
-    "./tsconfig": "./tsconfig.json",
-    "./biome": "./biome.json"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./features": {
+      "import": "./dist/features.js",
+      "types": "./dist/features.d.ts"
+    },
+    "./tsconfig": "./tsconfig.json"
   },
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc --project tsconfig.build.json && bun run ../../scripts/fix-import-extensions.ts dist",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -23,5 +28,11 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0"
-  }
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE",
+    "tsconfig.json"
+  ]
 }

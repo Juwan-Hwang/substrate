@@ -7,7 +7,7 @@
  */
 'use client';
 
-import { detectRendererTier } from '@substrate/graphics';
+import { detectRendererTier } from '@substrate-platform/graphics';
 import { useEffect, useRef, useState } from 'react';
 
 const PARTICLE_COUNT = 500;

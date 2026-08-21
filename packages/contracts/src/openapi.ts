@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/openapi — OpenAPI 3.1 document factory.
+ * @substrate-platform/contracts/openapi — OpenAPI 3.1 document factory.
  *
  * The platform provides a factory function and a few reusable Zod schemas
  * for common API patterns (search, health, newsletter). The application

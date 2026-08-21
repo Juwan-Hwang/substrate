@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [],
+  "linked": [
+    [
+      "@substrate-platform/contracts",
+      "@substrate-platform/config",
+      "@substrate-platform/tokens",
+      "@substrate-platform/wasm",
+      "@substrate-platform/ui",
+      "@substrate-platform/content",
+      "@substrate-platform/db",
+      "@substrate-platform/observability",
+      "@substrate-platform/edge",
+      "@substrate-platform/ai",
+      "@substrate-platform/site",
+      "@substrate-platform/graphics"
+    ]
+  ],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

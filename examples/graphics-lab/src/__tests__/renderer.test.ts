@@ -2,7 +2,7 @@
  * Tests for graphics-lab: renderer tier detection and demo graph validity.
  */
 
-import { detectRendererTier } from '@substrate/graphics';
+import { detectRendererTier } from '@substrate-platform/graphics';
 import { describe, expect, it } from 'vitest';
 import { demoGraph } from '../lib/demo-graph';
 

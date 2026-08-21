@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/db — platform table Zod schemas.
+ * Unit tests for @substrate-platform/db — platform table Zod schemas.
  * No database connection required.
  */
 import { describe, expect, it } from 'vitest';

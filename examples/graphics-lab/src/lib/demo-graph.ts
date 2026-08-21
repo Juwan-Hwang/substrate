@@ -2,7 +2,7 @@
  * Demo knowledge graph — 28 nodes representing tech concepts.
  * Used by the force-directed layout experiment.
  */
-import type { KnowledgeGraph } from '@substrate/graphics';
+import type { KnowledgeGraph } from '@substrate-platform/graphics';
 
 export const demoGraph: KnowledgeGraph = {
   nodes: [

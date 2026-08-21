@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/observability — createLogger, LogEntry, Metric.
+ * Unit tests for @substrate-platform/observability — createLogger, LogEntry, Metric.
  */
 
 import { describe, expect, it, vi } from 'vitest';

@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/storage — Storage Abstraction Interfaces.
+ * @substrate-platform/contracts/storage — Storage Abstraction Interfaces.
  *
  * The platform provides three storage interfaces:
  *

@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "@substrate/ui/styles.css";
-@import "@substrate/site/globals.css";
+@import "@substrate-platform/ui/styles.css";
+@import "@substrate-platform/site/globals.css";
 
 /* ═══════════════════════════════════════════════════════════════════
    AI Archive — dark "knowledge base" theme.

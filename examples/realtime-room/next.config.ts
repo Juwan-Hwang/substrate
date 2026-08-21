@@ -5,7 +5,11 @@ const nextConfig = {
   experimental: {
     useTypeScriptCli: true,
   },
-  transpilePackages: ['@substrate/config', '@substrate/site', '@substrate/ui'],
+  transpilePackages: [
+    '@substrate-platform/config',
+    '@substrate-platform/site',
+    '@substrate-platform/ui',
+  ],
   // ── Security headers ────────────────────────────────────────────────
   async headers() {
     return [

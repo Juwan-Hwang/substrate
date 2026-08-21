@@ -1,10 +1,10 @@
 /**
- * @substrate/observability — Telemetry, metrics, and tracing.
+ * @substrate-platform/observability — Telemetry, metrics, and tracing.
  *
  * OpenTelemetry → Grafana Cloud (Tempo for traces, Loki for logs,
  * Prometheus for metrics). Sentry for error tracking, PostHog for
  * product analytics. Langfuse for AI-specific tracing (bridged via
- * OTel in @substrate/ai).
+ * OTel in @substrate-platform/ai).
  *
  * Captures render performance, experiment metrics, and content
  * engagement signals.

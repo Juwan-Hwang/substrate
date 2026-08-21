@@ -1,5 +1,5 @@
 /**
- * @substrate/ai — AI capabilities for Substrate-based sites.
+ * @substrate-platform/ai — AI capabilities for Substrate-based sites.
  *
  * Vercel AI SDK as the core, with a provider adapter pattern that
  * routes to OpenAI / Anthropic / Google / Cloudflare Workers AI.

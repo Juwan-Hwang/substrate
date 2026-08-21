@@ -2,9 +2,9 @@
  * Effect — functional service composition, error handling, and runtime.
  *
  * Defines service interfaces (Context tags) and Layers for:
- *  - Database access (delegates to @substrate/db)
- *  - Logger (delegates to @substrate/observability)
- *  - AI provider (delegates to @substrate/ai)
+ *  - Database access (delegates to @substrate-platform/db)
+ *  - Logger (delegates to @substrate-platform/observability)
+ *  - AI provider (delegates to @substrate-platform/ai)
  *
  * Effects are run via `Effect.runPromise` in Server Actions / edge handlers.
  */
@@ -19,7 +19,7 @@ export interface DatabaseService {
 }
 
 export const DatabaseService = Context.GenericTag<DatabaseService>(
-  '@substrate/contracts/DatabaseService',
+  '@substrate-platform/contracts/DatabaseService',
 );
 
 export interface LoggerService {
@@ -31,7 +31,7 @@ export interface LoggerService {
 }
 
 export const LoggerService = Context.GenericTag<LoggerService>(
-  '@substrate/contracts/LoggerService',
+  '@substrate-platform/contracts/LoggerService',
 );
 
 export interface AIService {
@@ -40,7 +40,7 @@ export interface AIService {
   streamText(model: string, prompt: string, system?: string): AsyncIterable<string>;
 }
 
-export const AIService = Context.GenericTag<AIService>('@substrate/contracts/AIService');
+export const AIService = Context.GenericTag<AIService>('@substrate-platform/contracts/AIService');
 
 // ── Error types ─────────────────────────────────────────────────────
 

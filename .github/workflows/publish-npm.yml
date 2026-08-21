@@ -1,0 +1,262 @@
+name: Publish npm
+
+on:
+  # Canary releases: manual dispatch only.
+  # Publishes to npm under the "canary" dist-tag.
+  # Consumers install via: npm install @substrate-platform/site@canary
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Release channel (canary or latest)'
+        required: true
+        default: 'canary'
+        type: choice
+        options:
+          - canary
+          - latest
+
+# ── Trusted Publishing (OIDC) ───────────────────────────────────────
+#
+# npm Trusted Publishing uses GitHub Actions OIDC tokens to authenticate
+# without long-lived npm tokens. No NPM_TOKEN secret is needed.
+#
+# ── Prerequisites (one-time setup, per package) ─────────────────────
+#
+# Trusted Publishing is configured PER PACKAGE on npmjs.com.
+# You must configure ALL 12 packages listed below:
+#
+#   1.  @substrate-platform/contracts
+#   2.  @substrate-platform/config
+#   3.  @substrate-platform/tokens
+#   4.  @substrate-platform/wasm
+#   5.  @substrate-platform/ui
+#   6.  @substrate-platform/site
+#   7.  @substrate-platform/content
+#   8.  @substrate-platform/db
+#   9.  @substrate-platform/edge
+#  10.  @substrate-platform/ai
+#  11.  @substrate-platform/graphics
+#  12.  @substrate-platform/observability
+#
+# For EACH package, on npmjs.com:
+#
+#   1. Go to the package page → "Settings" → "Trusted Publishing"
+#   2. Add a trusted publisher with EXACTLY these values:
+#        Repository:  Juwan-Hwang/substrate
+#        Workflow:    .github/workflows/publish-npm.yml
+#        Environment: (leave blank — we don't use GitHub Environments)
+#   3. Enable "Publish provenance" for automatic SLSA provenance.
+#
+# If ANY of these don't match exactly, OIDC exchange will fail on first publish.
+# The workflow's verify-config job prints the exact values at runtime.
+#
+# Reference: https://docs.npmjs.com/trusted-publishers
+#
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  # ── Step 0: Verify Trusted Publisher configuration ──────────────────
+  verify-config:
+    name: Verify Trusted Publisher Config
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.parse.outputs.channel }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify OIDC is available
+        run: |
+          # GitHub Actions sets ACTIONS_ID_TOKEN_REQUEST_URL when id-token: write is granted.
+          if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then
+            echo "::error::OIDC token request URL not found."
+            echo "Ensure 'id-token: write' is in the permissions block of this workflow."
+            exit 1
+          fi
+          echo "✓ OIDC token available (id-token: write permission confirmed)"
+
+      - name: Parse channel
+        id: parse
+        run: |
+          CHANNEL="${{ github.event.inputs.channel || 'canary' }}"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "Release channel: $CHANNEL"
+
+      - name: Verify workflow file path
+        run: |
+          # The workflow file path must EXACTLY match the Trusted Publisher
+          # config on npmjs.com. If renamed/moved, OIDC exchange will fail.
+          WORKFLOW_PATH=".github/workflows/publish-npm.yml"
+          if [ ! -f "$WORKFLOW_PATH" ]; then
+            echo "::error::Workflow file not found at $WORKFLOW_PATH"
+            exit 1
+          fi
+          echo "✓ Workflow file exists at $WORKFLOW_PATH"
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════╗"
+          echo "║  TRUSTED PUBLISHER CONFIGURATION CHECKLIST                 ║"
+          echo "╠════════════════════════════════════════════════════════════╣"
+          echo "║  On npmjs.com, for EACH @substrate-platform/* package, verify:     ║"
+          echo "║                                                            ║"
+          echo "║  Repository:  ${{ github.repository }}"
+          echo "║  Workflow:    $WORKFLOW_PATH"
+          echo "║  Environment: (none)                                       ║"
+          echo "║                                                            ║"
+          echo "║  Packages to configure (12 total):                        ║"
+          echo "║    @substrate-platform/contracts                                    ║"
+          echo "║    @substrate-platform/config                                       ║"
+          echo "║    @substrate-platform/tokens                                       ║"
+          echo "║    @substrate-platform/wasm                                         ║"
+          echo "║    @substrate-platform/ui                                           ║"
+          echo "║    @substrate-platform/site                                         ║"
+          echo "║    @substrate-platform/content                                      ║"
+          echo "║    @substrate-platform/db                                           ║"
+          echo "║    @substrate-platform/edge                                         ║"
+          echo "║    @substrate-platform/ai                                           ║"
+          echo "║    @substrate-platform/graphics                                     ║"
+          echo "║    @substrate-platform/observability                                ║"
+          echo "║                                                            ║"
+          echo "║  If this is the first publish, go to each package on      ║"
+          echo "║  npmjs.com → Settings → Trusted Publishing and add a      ║"
+          echo "║  trusted publisher with these EXACT values.               ║"
+          echo "╚════════════════════════════════════════════════════════════╝"
+
+  # ── Build + Publish ────────────────────────────────────────────────
+  publish:
+    name: Publish to npm (${{ needs.verify-config.outputs.channel }})
+    needs: verify-config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build all packages
+        run: bun run build --filter "@substrate-platform/*"
+
+      - name: Configure npm registry
+        run: |
+          # Trusted Publishing: npm CLI automatically exchanges the GitHub
+          # OIDC JWT for a short-lived publish token when --provenance is used.
+          # Do NOT set _authToken in .npmrc — let OIDC handle it.
+          echo "registry=https://registry.npmjs.org" > ~/.npmrc
+
+      - name: Enter prerelease mode (canary only)
+        if: needs.verify-config.outputs.channel == 'canary'
+        run: |
+          # Changesets prerelease mode appends a prerelease suffix (e.g. 0.1.1-canary.0)
+          # so each canary publish gets a unique version number.
+          bunx changeset pre enter canary
+
+      - name: Version packages (Changesets)
+        run: |
+          bunx changeset version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore: version packages (${{ needs.verify-config.outputs.channel }})" || echo "No changes to commit"
+
+      - name: Replace workspace:* with semver ranges
+        run: |
+          # Changesets v3 does not replace workspace:* during `changeset version`.
+          # It only does so during `changeset publish`. Since we publish manually
+          # (npm publish --provenance), we need to handle this step ourselves.
+          bun run scripts/replace-workspace-deps.ts
+
+      - name: Publish to npm
+        env:
+          CHANNEL: ${{ needs.verify-config.outputs.channel }}
+        run: |
+          TAG="$CHANNEL"
+          echo "Publishing with dist-tag: $TAG"
+          if [ "$CHANNEL" = "canary" ]; then
+            echo "Consumers install via: npm install @substrate-platform/*@canary"
+          else
+            echo "Consumers install via: npm install @substrate-platform/* (latest)"
+          fi
+
+          # Publish in topological order: Layer 0 → 1 → 2 → 3.
+          # @substrate-platform/wasm is published before graphics (which
+          # depends on it at runtime via dynamic import).
+          PUBLISH_DIRS="
+            packages/contracts
+            packages/config
+            packages/tokens
+            crates/wasm/pkg
+            packages/ui
+            packages/content
+            packages/db
+            packages/observability
+            packages/edge
+            packages/ai
+            packages/site
+            packages/graphics
+          "
+          for pkg in $PUBLISH_DIRS; do
+            if [ -f "$pkg/package.json" ]; then
+              name=$(node -p "require('./$pkg/package.json').name || ''")
+              private=$(node -p "require('./$pkg/package.json').private || false")
+              if [ "$name" != "" ] && [ "$private" != "true" ]; then
+                echo ""
+                echo "Publishing $name with tag $TAG..."
+                (cd "$pkg" && npm publish --access public --provenance --tag "$TAG") || {
+                  echo "  ⚠ Publish failed for $name (may already exist at this version)"
+                }
+              fi
+            fi
+          done
+
+      - name: Exit prerelease mode (canary only)
+        if: needs.verify-config.outputs.channel == 'canary'
+        run: bunx changeset pre exit
+
+      - name: Push version commits
+        run: git push origin HEAD:${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Post-publish verification (canary channel only) ────────────────
+  # Verifies that packages are installable from the real npm registry
+  # with real transitive dependencies — not just local .tgz files.
+  verify-install:
+    name: Verify npm Registry Install
+    needs: publish
+    runs-on: ubuntu-latest
+    if: needs.verify-config.outputs.channel == 'canary'
+    steps:
+      - name: Create clean test directory
+        run: mkdir -p /tmp/registry-test
+
+      - name: Install packages from npm registry (canary tag)
+        working-directory: /tmp/registry-test
+        run: |
+          npm init -y
+          echo "Installing @substrate-platform/contracts@canary from real npm registry..."
+          npm install @substrate-platform/contracts@canary @substrate-platform/config@canary @substrate-platform/wasm@canary @substrate-platform/observability@canary
+
+      - name: Verify Node.js import
+        working-directory: /tmp/registry-test
+        run: |
+          node --input-type=module -e "
+            import * as contracts from '@substrate-platform/contracts';
+            import * as config from '@substrate-platform/config';
+            import * as wasm from '@substrate-platform/wasm';
+            import * as obs from '@substrate-platform/observability';
+            if (Object.keys(contracts).length === 0) throw new Error('contracts: no exports');
+            if (Object.keys(config).length === 0) throw new Error('config: no exports');
+            if (Object.keys(wasm).length === 0) throw new Error('wasm: no exports');
+            if (Object.keys(obs).length === 0) throw new Error('observability: no exports');
+            console.log('contracts:', Object.keys(contracts).length, 'exports');
+            console.log('config:', Object.keys(config).length, 'exports');
+            console.log('wasm:', Object.keys(wasm).length, 'exports');
+            console.log('observability:', Object.keys(obs).length, 'exports');
+            console.log('ALL REGISTRY IMPORTS PASSED');
+          "

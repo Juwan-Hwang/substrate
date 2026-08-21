@@ -1,40 +1,70 @@
 {
-  "name": "@substrate/site",
+  "name": "@substrate-platform/site",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./providers": "./src/providers.tsx",
-    "./layout": "./src/layout.tsx",
-    "./shells": "./src/shells.tsx",
-    "./metadata": "./src/metadata.ts",
-    "./instrumentation": "./src/instrumentation.ts",
-    "./animations": "./src/animations.ts",
-    "./smooth-scroll": "./src/smooth-scroll.tsx",
-    "./paint-registrar": "./src/paint-registrar.tsx",
-    "./theme-script": "./src/theme-script.tsx",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./providers": {
+      "import": "./dist/providers.js",
+      "types": "./dist/providers.d.ts"
+    },
+    "./layout": {
+      "import": "./dist/layout.js",
+      "types": "./dist/layout.d.ts"
+    },
+    "./shells": {
+      "import": "./dist/shells.js",
+      "types": "./dist/shells.d.ts"
+    },
+    "./metadata": {
+      "import": "./dist/metadata.js",
+      "types": "./dist/metadata.d.ts"
+    },
+    "./instrumentation": {
+      "import": "./dist/instrumentation.js",
+      "types": "./dist/instrumentation.d.ts"
+    },
+    "./animations": {
+      "import": "./dist/animations.js",
+      "types": "./dist/animations.d.ts"
+    },
+    "./smooth-scroll": {
+      "import": "./dist/smooth-scroll.js",
+      "types": "./dist/smooth-scroll.d.ts"
+    },
+    "./paint-registrar": {
+      "import": "./dist/paint-registrar.js",
+      "types": "./dist/paint-registrar.d.ts"
+    },
+    "./theme-script": {
+      "import": "./dist/theme-script.js",
+      "types": "./dist/theme-script.d.ts"
+    },
     "./globals.css": "./src/globals.css"
   },
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc --project tsconfig.build.json && bun run ../../scripts/fix-import-extensions.ts dist",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@substrate/ui": "workspace:*",
-    "@substrate/contracts": "workspace:*",
-    "@substrate/config": "workspace:*",
-    "@substrate/observability": "workspace:*"
+    "@substrate-platform/ui": "workspace:*",
+    "@substrate-platform/contracts": "workspace:*",
+    "@substrate-platform/config": "workspace:*",
+    "@substrate-platform/observability": "workspace:*"
   },
   "peerDependencies": {
-    "next": "16.3.0-preview.6",
-    "react": "19.3.0-canary-28cd4bb0-20260723",
-    "react-dom": "19.3.0-canary-28cd4bb0-20260723",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "gsap": "^3.13.0",
     "lenis": "^1.1.18",
     "@tanstack/react-query": "^5.65.0"
@@ -42,5 +72,11 @@
   "devDependencies": {
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3"
-  }
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE",
+    "src/**/*.css"
+  ]
 }

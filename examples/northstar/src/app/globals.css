@@ -8,12 +8,12 @@
  *     in the consumer's PostCSS environment. Must be declared by the
  *     application, not by a platform package.
  *
- *   Tier 2: @import "@substrate/ui/styles.css"
+ *   Tier 2: @import "@substrate-platform/ui/styles.css"
  *     Platform design tokens (--substrate-*) and component styles
  *     (.substrate-glass-card, .substrate-badge, .btn, etc.).
  *     Uses relative @import only — zero external module dependencies.
  *
- *   Tier 3: @import "@substrate/site/globals.css"
+ *   Tier 3: @import "@substrate-platform/site/globals.css"
  *     Tailwind v4 @theme bridge: maps --substrate-* tokens into
  *     Tailwind's --color-* / --font-* / --radius-* namespace.
  *     Platform utility classes (.glass, .text-gradient, paint worklets).
@@ -23,12 +23,12 @@
  * distinct from minimal-site's cool slate palette, proving that the platform's
  * CSS custom property system adapts to any brand identity.
  *
- * The accent token (--accent-primary) is consumed by @substrate/ui, so the
+ * The accent token (--accent-primary) is consumed by @substrate-platform/ui, so the
  * shared component library inherits Northstar's identity without a fork.
  */
 @import "tailwindcss";
-@import "@substrate/ui/styles.css";
-@import "@substrate/site/globals.css";
+@import "@substrate-platform/ui/styles.css";
+@import "@substrate-platform/site/globals.css";
 
 :root {
   --bg-primary: #0b0d14;

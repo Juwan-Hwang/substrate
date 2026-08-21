@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/lifecycle — Lifecycle Primitive.
+ * @substrate-platform/contracts/lifecycle — Lifecycle Primitive.
  *
  * The platform provides the *mechanism*: a generic state-machine
  * definition with transitions keyed by event. The application supplies

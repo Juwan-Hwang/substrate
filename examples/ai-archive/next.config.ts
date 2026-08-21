@@ -15,11 +15,11 @@ const nextConfig: NextConfig = {
     useTypeScriptCli: true,
   },
   transpilePackages: [
-    '@substrate/db',
-    '@substrate/ai',
-    '@substrate/config',
-    '@substrate/content',
-    '@substrate/site',
+    '@substrate-platform/db',
+    '@substrate-platform/ai',
+    '@substrate-platform/config',
+    '@substrate-platform/content',
+    '@substrate-platform/site',
   ],
   // ── Security headers ────────────────────────────────────────────────
   async headers() {

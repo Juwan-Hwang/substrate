@@ -6,7 +6,7 @@
  * OG route, giving every post a bespoke image with no manual asset work.
  */
 
-import { Badge, GlassCard } from '@substrate/ui';
+import { Badge, GlassCard } from '@substrate-platform/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';

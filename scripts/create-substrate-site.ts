@@ -112,7 +112,7 @@ function contentHeading(model: ContentModel): string {
 
 /**
  * The base template is always `northstar` — it exercises the full platform
- * API surface (@substrate/site primitives, @substrate/ui, @substrate/content),
+ * API surface (@substrate-platform/site primitives, @substrate-platform/ui, @substrate-platform/content),
  * so scaffolding from it guarantees the generated site uses every integration
  * point a consumer would need.
  */
@@ -126,11 +126,11 @@ const TEMPLATE_DIR = 'northstar';
  * always pins the version it was shipped from, not a hardcoded constant.
  */
 const PLATFORM_PACKAGE_NAMES = [
-  '@substrate/site',
-  '@substrate/ui',
-  '@substrate/content',
-  '@substrate/config',
-  '@substrate/contracts',
+  '@substrate-platform/site',
+  '@substrate-platform/ui',
+  '@substrate-platform/content',
+  '@substrate-platform/config',
+  '@substrate-platform/contracts',
 ] as const;
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -398,6 +398,25 @@ function rewritePackageJson(
         }
       }
     }
+
+    // Normalise React / Next.js to stable version ranges.
+    // The template pins canary/preview versions; standalone consumers
+    // should get stable ranges that satisfy the platform's peerDeps.
+    const STABLE_VERSIONS: Record<string, string> = {
+      react: '^19.0.0',
+      'react-dom': '^19.0.0',
+      next: '^16.0.0',
+      '@types/react': '^19.0.0',
+      '@types/react-dom': '^19.0.0',
+    };
+    for (const deps of [pkg.dependencies, pkg.devDependencies]) {
+      if (!deps) continue;
+      for (const [name, targetVersion] of Object.entries(STABLE_VERSIONS)) {
+        if (deps[name] && deps[name] !== targetVersion) {
+          deps[name] = targetVersion;
+        }
+      }
+    }
   }
 
   writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
@@ -419,7 +438,7 @@ function rewritePackageJson(
  *   - MissionLog       → <ContentTypeName>
  *   - getLog           → get<ContentTypeName>
  */
-function rewriteBranding(destDir: string, answers: Answers): void {
+function rewriteBranding(destDir: string, answers: Answers, standalone = false): void {
   const slug = slugify(answers.name);
   const displayName = titleCase(slug);
   const firstLetter = displayName.charAt(0).toUpperCase();
@@ -465,7 +484,7 @@ function rewriteBranding(destDir: string, answers: Answers): void {
     [/serviceName: 'northstar'/g, `serviceName: '${slug}'`],
     [
       /Northstar overrides the service name[\s\S]*?platform factory accepts application-specific configuration\.\s*\*\//g,
-      `Uses the @substrate/site instrumentation factory to bootstrap the feature manifest.\n */`,
+      `Uses the @substrate-platform/site instrumentation factory to bootstrap the feature manifest.\n */`,
     ],
   ]);
 
@@ -474,7 +493,7 @@ function rewriteBranding(destDir: string, answers: Answers): void {
     [/Northstar/g, displayName],
     [
       /Northstar uses a warm amber accent[\s\S]*?shared component library inherits Northstar's identity without a fork\./g,
-      `${displayName} uses a custom accent colour on a dark backdrop. The accent token (--accent-primary) is consumed by @substrate/ui, so the shared component library inherits the site's identity without a fork.`,
+      `${displayName} uses a custom accent colour on a dark backdrop. The accent token (--accent-primary) is consumed by @substrate-platform/ui, so the shared component library inherits the site's identity without a fork.`,
     ],
     // Reset accent colour to a neutral default — the user can change it.
     [/#d4a052/g, '#7c8ba0'],
@@ -584,12 +603,130 @@ function rewriteBranding(destDir: string, answers: Answers): void {
     ],
   ]);
 
+  if (standalone) {
+    // Rewrite next.config.ts completely for standalone mode.
+    // The template uses canary-only features (viewTransition) and
+    // workspace-specific config (transpilePackages) that don't apply
+    // to standalone projects consuming published npm packages.
+    const nextConfigContent = `/**
+ * Next.js 16 configuration for ${displayName}.
+ *
+ * ${displayName} is built on the Substrate platform.
+ *
+ * - reactCompiler: opt-in to the React Compiler for automatic memoisation.
+ * - cacheComponents: Partial Prerendering — static shells with streamed holes.
+ */
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+  cacheComponents: true,
+  // ── Security headers ────────────────────────────────────────────────
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+          },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'strict-dynamic'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              "connect-src 'self' https:",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+              'upgrade-insecure-requests',
+            ].join('; '),
+          },
+        ],
+      },
+    ];
+  },
+};
+
+export default nextConfig;
+`;
+    writeFileSync(join(destDir, 'next.config.ts'), nextConfigContent);
+  }
+
   // ── __tests__/search.test.ts ────────────────────────────────────
   rewriteFile(join(destDir, 'src/__tests__/search.test.ts'), [
     [/Northstar/g, displayName],
     [/mission log/g, singular],
     [/Northstar corpus/g, `${displayName} corpus`],
   ]);
+}
+
+// ── Standalone tsconfig rewrite ────────────────────────────────────
+
+/**
+ * Rewrite tsconfig.json for standalone mode.
+ *
+ * The template (northstar) ships with a tsconfig that extends
+ * ../../tsconfig.base.json and uses paths pointing to ../../packages/*.
+ * In standalone mode, these paths don't exist — the project depends on
+ * npm-published @substrate-platform/* packages instead.
+ *
+ * This function writes a self-contained tsconfig.json that:
+ * - Inlines the necessary compiler options (no extends to monorepo)
+ * - Removes workspace path aliases (npm packages resolve via node_modules)
+ * - Keeps @/* alias for the application's own src/
+ */
+function rewriteTsconfigForStandalone(destDir: string): void {
+  const tsconfigPath = join(destDir, 'tsconfig.json');
+  if (!existsSync(tsconfigPath)) return;
+
+  const standaloneTsconfig = {
+    compilerOptions: {
+      target: 'ES2024',
+      module: 'ESNext',
+      moduleResolution: 'Bundler',
+      lib: ['ES2024', 'DOM', 'DOM.Iterable', 'DOM.AsyncIterable'],
+      strict: true,
+      noUncheckedIndexedAccess: true,
+      exactOptionalPropertyTypes: true,
+      noImplicitOverride: true,
+      esModuleInterop: true,
+      skipLibCheck: true,
+      forceConsistentCasingInFileNames: true,
+      declaration: false,
+      declarationMap: false,
+      sourceMap: true,
+      composite: false,
+      incremental: true,
+      isolatedModules: true,
+      verbatimModuleSyntax: true,
+      erasableSyntaxOnly: true,
+      noEmit: true,
+      jsx: 'preserve',
+      types: ['node'],
+      plugins: [{ name: 'next' }],
+      paths: {
+        '@/*': ['./src/*'],
+      },
+    },
+    include: ['src', 'next.config.ts', 'next-env.d.ts'],
+    exclude: ['node_modules', '.next'],
+  };
+
+  writeFileSync(tsconfigPath, `${JSON.stringify(standaloneTsconfig, null, 2)}\n`);
 }
 
 // ── Generated file templates ────────────────────────────────────────
@@ -815,7 +952,12 @@ async function main(): Promise<void> {
 
   // Rewrite branding and package.json.
   rewritePackageJson(targetDir, slug, answers.author, standalone, substrateVersion);
-  rewriteBranding(targetDir, { ...answers, name: slug });
+  rewriteBranding(targetDir, { ...answers, name: slug }, standalone);
+
+  // In standalone mode, rewrite tsconfig.json to be self-contained.
+  if (standalone) {
+    rewriteTsconfigForStandalone(targetDir);
+  }
 
   // Generate .env.example with the platform's environment contract.
   generateEnvExample(targetDir, answers);

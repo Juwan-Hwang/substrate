@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/contracts/store — Zustand uiStore.
+ * Unit tests for @substrate-platform/contracts/store — Zustand uiStore.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { uiStore } from '../store';

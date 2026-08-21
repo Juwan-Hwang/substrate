@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/authorization — Authorization Engine.
+ * @substrate-platform/contracts/authorization — Authorization Engine.
  *
  * Two-layer architecture:
  *   1. Semantic Layer (AuthorizationPolicy): "can this principal

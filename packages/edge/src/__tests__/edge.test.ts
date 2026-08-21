@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/edge — Turnstile verification and the Redis
+ * Unit tests for @substrate-platform/edge — Turnstile verification and the Redis
  * rate-limiter. No real Redis or Cloudflare connections are made; fetch
  * and the Redis client are mocked.
  */

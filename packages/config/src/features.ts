@@ -1,5 +1,5 @@
 /**
- * @substrate/config — Feature manifest and shared configuration.
+ * @substrate-platform/config — Feature manifest and shared configuration.
  *
  * The feature manifest is the single source of truth for which capabilities
  * are enabled in a given deployment. Every module, route, worker binding,

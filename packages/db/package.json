@@ -1,12 +1,12 @@
 {
-  "name": "@substrate/db",
+  "name": "@substrate-platform/db",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc --project tsconfig.build.json && bun run ../../scripts/fix-import-extensions.ts dist",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -16,7 +16,7 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@substrate/contracts": "workspace:*",
+    "@substrate-platform/contracts": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.5",
     "drizzle-zod": "^0.6.0",
@@ -26,5 +26,10 @@
   "devDependencies": {
     "drizzle-kit": "^0.30.0",
     "@types/pg": "^8.11.10"
-  }
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE"
+  ]
 }

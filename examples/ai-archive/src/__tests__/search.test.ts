@@ -8,7 +8,7 @@
  *  3. Structural validity of the static demo corpus.
  */
 
-import { createSearchIndex } from '@substrate/content/search';
+import { createSearchIndex } from '@substrate-platform/content/search';
 import { describe, expect, it } from 'vitest';
 import { demoArticles } from '../lib/demo-articles';
 import { reciprocalRankFusion, sortFused } from '../lib/rag';

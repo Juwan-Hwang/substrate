@@ -11,11 +11,11 @@
     "prefix": ""
   },
   "aliases": {
-    "components": "@substrate/ui",
-    "utils": "@substrate/ui",
-    "ui": "@substrate/ui",
-    "lib": "@substrate/ui",
-    "hooks": "@substrate/ui"
+    "components": "@substrate-platform/ui",
+    "utils": "@substrate-platform/ui",
+    "ui": "@substrate-platform/ui",
+    "lib": "@substrate-platform/ui",
+    "hooks": "@substrate-platform/ui"
   },
   "iconLibrary": "lucide"
 }

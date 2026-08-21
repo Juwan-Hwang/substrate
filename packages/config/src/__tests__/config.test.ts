@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/config — feature manifest, presets, runtime accessor.
+ * Unit tests for @substrate-platform/config — feature manifest, presets, runtime accessor.
  *
  * Updated for v1.3: search enum is now 'off'|'static'|'server'|'hybrid',
  * and new fields snapshot/contentAddressedStorage/assets are tested.

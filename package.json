@@ -17,16 +17,20 @@
     "typecheck": "turbo run typecheck",
     "rust:build": "cargo build --workspace",
     "rust:test": "cargo test --workspace",
-    "wasm:build": "wasm-pack build crates/wasm --target web --release && node -e \"const p=require('./crates/wasm/pkg/package.json');p.name='@substrate/wasm';require('fs').writeFileSync('./crates/wasm/pkg/package.json',JSON.stringify(p,null,2))\"",
+    "wasm:build": "wasm-pack build crates/wasm --target web --release && node -e \"const p=require('./crates/wasm/pkg/package.json');p.name='@substrate-platform/wasm';require('fs').writeFileSync('./crates/wasm/pkg/package.json',JSON.stringify(p,null,2))\"",
     "wasm:component": "cargo build -p substrate-wasm --no-default-features --features component --target wasm32-wasip2 --release",
     "wasm:component-embed": "wasm-tools component new target/wasm32-wasip2/release/substrate_wasm.wasm -o crates/wasm/substrate.component.wasm",
     "wasm:wasip3": "cargo +nightly build -p substrate-wasm --no-default-features --features component --target wasm32-wasip3 --release",
     "devshell": "nix develop --impure",
     "create-site": "bun run scripts/create-substrate-site.ts",
-    "boundary:check": "bun run scripts/check-boundary.ts"
+    "boundary:check": "bun run scripts/check-boundary.ts",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
+    "@changesets/cli": "^3.0.1",
     "@lhci/cli": "^0.15.0",
     "@playwright/test": "^1.54.0",
     "@types/node": "^22.0.0",

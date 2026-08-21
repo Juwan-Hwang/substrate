@@ -20,7 +20,7 @@ auth, search, AI, realtime, and more as you need them.
 ```text
 Substrate (this repo)
 ├─ packages/          reusable platform modules
-│  └─ site/           site shell primitives (@substrate/site)
+│  └─ site/           site shell primitives (@substrate-platform/site)
 ├─ crates/            Rust → WASM core
 └─ examples/          focused demos + consumer validation
 ```
@@ -63,7 +63,7 @@ bun create-site my-site --preset minimal --author Alice --url https://alice.dev
 ```
 
 This scaffolds a new site from Substrate's consumer template —
-a project using `@substrate/site` platform primitives (SubstrateLayout,
+a project using `@substrate-platform/site` platform primitives (SubstrateLayout,
 createMetadata, registerInstrumentation, error/loading shells).
 The script rewrites site identity, package metadata, feature preset, starter
 content, and theme defaults to match your input. Then:
@@ -110,7 +110,7 @@ and the **content**. Everything else is yours to shape.
 ## Feature Presets
 
 Every deployment declares which capabilities are active via a Feature Manifest
-(`@substrate/config`). Five presets are included, ranging from minimal sites
+(`@substrate-platform/config`). Five presets are included, ranging from minimal sites
 to capability-focused and reference configurations; use them as-is or as a
 starting point for your own.
 
@@ -127,8 +127,8 @@ See [`examples/`](./examples) for a working demo of each preset.
 ## CSS Contract
 
 Substrate uses a three-tier CSS contract: consumer-owned Tailwind entry,
-platform UI styles (`@substrate/ui`), and site-level utilities
-(`@substrate/site`). See [`docs/css.md`](./docs/css.md) for the full
+platform UI styles (`@substrate-platform/ui`), and site-level utilities
+(`@substrate-platform/site`). See [`docs/css.md`](./docs/css.md) for the full
 boundary specification and Turbopack resolver details.
 
 ## Structure
@@ -142,16 +142,16 @@ substrate/
 │  ├─ realtime-room/            #   Durable Objects, presence capability demo
 │  └─ northstar/                #   Independent consumer validation (fictional site)
 ├─ packages/                    # Reusable platform modules
-│  ├─ site/                     #   @substrate/site          — Site shell primitives
-│  ├─ ui/                       #   @substrate/ui            — Component library
-│  ├─ content/                  #   @substrate/content       — MDX & content layer
-│  ├─ graphics/                 #   @substrate/graphics      — GPU / WebGL / rendering
-│  ├─ contracts/                #   @substrate/contracts     — Type contracts & schemas
-│  ├─ db/                       #   @substrate/db            — Database access (Drizzle)
-│  ├─ edge/                     #   @substrate/edge          — Cloudflare Workers (Hono)
-│  ├─ config/                   #   @substrate/config        — Feature manifest & presets
-│  ├─ tokens/                   #   @substrate/tokens        — Design tokens (Style Dictionary)
-│  └─ observability/            #   @substrate/observability — OpenTelemetry & telemetry
+│  ├─ site/                     #   @substrate-platform/site          — Site shell primitives
+│  ├─ ui/                       #   @substrate-platform/ui            — Component library
+│  ├─ content/                  #   @substrate-platform/content       — MDX & content layer
+│  ├─ graphics/                 #   @substrate-platform/graphics      — GPU / WebGL / rendering
+│  ├─ contracts/                #   @substrate-platform/contracts     — Type contracts & schemas
+│  ├─ db/                       #   @substrate-platform/db            — Database access (Drizzle)
+│  ├─ edge/                     #   @substrate-platform/edge          — Cloudflare Workers (Hono)
+│  ├─ config/                   #   @substrate-platform/config        — Feature manifest & presets
+│  ├─ tokens/                   #   @substrate-platform/tokens        — Design tokens (Style Dictionary)
+│  └─ observability/            #   @substrate-platform/observability — OpenTelemetry & telemetry
 ├─ crates/                      # Rust core
 │  ├─ core/                     #   substrate-core          — Graph, SIMD, content
 │  └─ wasm/                     #   substrate-wasm          → WASM bindings
@@ -177,9 +177,9 @@ substrate/
 breaking changes, Northstar is the regression test that proves the platform
 remains consumable.
 
-## Platform Primitives (`@substrate/site`)
+## Platform Primitives (`@substrate-platform/site`)
 
-The `@substrate/site` package provides a minimal site shell for
+The `@substrate-platform/site` package provides a minimal site shell for
 Substrate-based sites. It does NOT include any application-specific
 features (newsletter, search, auth, etc.).
 
@@ -187,7 +187,7 @@ features (newsletter, search, auth, etc.).
 import {
   SubstrateLayout,
   createMetadata,
-} from '@substrate/site';
+} from '@substrate-platform/site';
 import { GeistSans } from 'geist/font/sans';
 import type { ReactNode } from 'react';
 

@@ -16,8 +16,8 @@ graph layout and client-side experiment execution without a server round-trip.
 wasm-pack build crates/wasm --target web --release
 ```
 
-Produces `@substrate/wasm` in `crates/wasm/pkg/`, consumed by
-`@substrate/graphics` via `import init from '@substrate/wasm'`.
+Produces `@substrate-platform/wasm` in `crates/wasm/pkg/`, consumed by
+`@substrate-platform/graphics` via `import init from '@substrate-platform/wasm'`.
 
 #### WebGPU
 

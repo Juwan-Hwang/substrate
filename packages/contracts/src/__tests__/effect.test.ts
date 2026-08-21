@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/contracts/effect — Effect service composition.
+ * Unit tests for @substrate-platform/contracts/effect — Effect service composition.
  */
 import { Effect } from 'effect';
 import { describe, expect, it } from 'vitest';

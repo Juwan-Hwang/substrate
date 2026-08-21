@@ -26,7 +26,7 @@ export const articles: Article[] = [
     tags: ['design', 'design-systems', 'css'],
     body: `A design system is not a component library — it is a contract. The tokens are the contract's clauses, the primitives are the boilerplate, and the patterns are the precedent that keeps every team arguing about the same things in the same language.
 
-The substrate stack encodes that contract as CSS custom properties. A single \`--accent-primary\` variable flows from the site theme, through the shared \`@substrate/ui\` stylesheet, into every GlassCard, Button, and Badge. Re-skin the variable and the whole interface follows; no fork, no override cascade, no drift.
+The substrate stack encodes that contract as CSS custom properties. A single \`--accent-primary\` variable flows from the site theme, through the shared \`@substrate-platform/ui\` stylesheet, into every GlassCard, Button, and Badge. Re-skin the variable and the whole interface follows; no fork, no override cascade, no drift.
 
 Radix primitives handle the interaction layer — focus management, keyboard semantics, ARIA wiring — while class-variance-authority keeps variants declarative. The result is a system where "make this look like everything else" is the default behaviour, not a task.`,
   },

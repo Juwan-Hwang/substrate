@@ -8,7 +8,7 @@
  * ## With tRPC
  *
  * ```tsx
- * import { SubstrateProviders } from '@substrate/site/providers';
+ * import { SubstrateProviders } from '@substrate-platform/site/providers';
  * import { trpc, getTrpcLink, createQueryClient } from './lib/trpc';
  *
  * <SubstrateProviders

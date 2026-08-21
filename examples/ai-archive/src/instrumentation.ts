@@ -2,12 +2,12 @@
  * Next.js instrumentation — initialises the AI Archive feature manifest
  * and validates environment variables when the server boots.
  *
- * The manifest (`@substrate/config`) is the single source of truth for
+ * The manifest (`@substrate-platform/config`) is the single source of truth for
  * which capabilities are enabled. Missing OPTIONAL credentials
  * (`DATABASE_URL`, `OPENAI_API_KEY`) are not fatal: the app degrades to
  * Orama client-side search and demo RAG answers, so we only warn.
  */
-import { aiArchiveFeatures, initFeatures, validateEnv } from '@substrate/config/features';
+import { aiArchiveFeatures, initFeatures, validateEnv } from '@substrate-platform/config/features';
 import { createArchiveLogger } from '@/lib/logger';
 
 const logger = createArchiveLogger('instrumentation');

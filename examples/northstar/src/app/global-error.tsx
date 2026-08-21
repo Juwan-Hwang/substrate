@@ -5,4 +5,4 @@
  */
 'use client';
 
-export { SubstrateGlobalError as default } from '@substrate/site/shells';
+export { SubstrateGlobalError as default } from '@substrate-platform/site/shells';

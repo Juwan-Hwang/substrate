@@ -8,7 +8,7 @@ const config: StorybookConfig = {
     options: {},
   },
   viteFinal(config) {
-    // @substrate/ui ships as raw TypeScript — Vite must transpile it.
+    // @substrate-platform/ui ships as raw TypeScript — Vite must transpile it.
     config.optimizeDeps ??= {};
     config.optimizeDeps.include ??= [];
     config.optimizeDeps.include.push('@radix-ui/react-slot', 'class-variance-authority');

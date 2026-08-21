@@ -1,1 +1,1 @@
-export { SubstrateLoading as default } from '@substrate/site/shells';
+export { SubstrateLoading as default } from '@substrate-platform/site/shells';

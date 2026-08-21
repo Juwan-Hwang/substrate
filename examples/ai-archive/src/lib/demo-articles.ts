@@ -5,7 +5,7 @@
  * Every document conforms to {@link SearchableDoc} so the same data can
  * feed both the client-side Orama index and the demo citation pipeline.
  */
-import type { SearchableDoc } from '@substrate/content/search';
+import type { SearchableDoc } from '@substrate-platform/content/search';
 
 export const demoArticles: readonly SearchableDoc[] = [
   {
@@ -82,7 +82,7 @@ export const demoArticles: readonly SearchableDoc[] = [
       'Reciprocal Rank Fusion (RRF) combines several ranked lists into a single ranking.',
       'For each document, sum 1/(k + rank) across every list where it appears, where k is a smoothing constant (typically 60). Higher ranks (earlier positions) contribute more.',
       'RRF is score-agnostic: it uses only positions, so it fuses systems with incomparable score scales — exactly the FTS-vs-vector case in hybrid search.',
-      'It is robust, parameter-light, and the default fusion strategy in most production hybrid retrievers, including the @substrate/ai hybridRetrieval function.',
+      'It is robust, parameter-light, and the default fusion strategy in most production hybrid retrievers, including the @substrate-platform/ai hybridRetrieval function.',
     ].join('\n\n'),
   },
 ];

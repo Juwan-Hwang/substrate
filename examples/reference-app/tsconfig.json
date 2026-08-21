@@ -9,8 +9,8 @@
     "declarationMap": false,
     "types": ["node"],
     "paths": {
-      "@substrate/contracts": ["../../packages/contracts/src"],
-      "@substrate/contracts/*": ["../../packages/contracts/src/*"]
+      "@substrate-platform/contracts": ["../../packages/contracts/src"],
+      "@substrate-platform/contracts/*": ["../../packages/contracts/src/*"]
     }
   },
   "include": ["src"],

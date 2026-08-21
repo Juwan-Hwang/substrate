@@ -1,5 +1,5 @@
 /**
- * Unit tests for @substrate/contracts — Result helpers.
+ * Unit tests for @substrate-platform/contracts — Result helpers.
  *
  * tRPC and Zustand tests are in separate files because those capabilities
  * are available via subpath exports, not the root entrypoint.

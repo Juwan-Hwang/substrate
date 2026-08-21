@@ -11,12 +11,12 @@
     "types": ["node", "@cloudflare/workers-types"],
     "paths": {
       "@/*": ["./src/*"],
-      "@substrate/site": ["../../packages/site/src"],
-      "@substrate/site/*": ["../../packages/site/src/*"],
-      "@substrate/ui": ["../../packages/ui/src"],
-      "@substrate/ui/*": ["../../packages/ui/src/*"],
-      "@substrate/config": ["../../packages/config/src"],
-      "@substrate/config/*": ["../../packages/config/src/*"]
+      "@substrate-platform/site": ["../../packages/site/src"],
+      "@substrate-platform/site/*": ["../../packages/site/src/*"],
+      "@substrate-platform/ui": ["../../packages/ui/src"],
+      "@substrate-platform/ui/*": ["../../packages/ui/src/*"],
+      "@substrate-platform/config": ["../../packages/config/src"],
+      "@substrate-platform/config/*": ["../../packages/config/src/*"]
     }
   },
   "include": ["src", "next.config.ts"]

@@ -10,7 +10,7 @@
     "clean": "rm -rf .turbo"
   },
   "dependencies": {
-    "@substrate/contracts": "workspace:*"
+    "@substrate-platform/contracts": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.2.0",

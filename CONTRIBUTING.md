@@ -83,7 +83,7 @@ OTel is the **standard layer** for all non-AI telemetry:
 - Worker execution time (Cloudflare Workers)
 - Custom business metrics (experiment count, render FPS)
 
-Configured in `@substrate/observability` → exports to Grafana Cloud
+Configured in `@substrate-platform/observability` → exports to Grafana Cloud
 (Tempo for traces, Loki for logs, Prometheus for metrics).
 
 ### Langfuse — AI-specific observability
@@ -98,7 +98,7 @@ Langfuse handles **AI calls only**:
 
 ### Integration contract
 
-The `@substrate/ai/langfuse.ts` module enforces the boundary:
+The `@substrate-platform/ai/langfuse.ts` module enforces the boundary:
 
 1. Every AI generation creates an **OTel span** with `gen_ai.*`
    attributes — this span flows through the **same** OTel pipeline
@@ -126,7 +126,7 @@ edge projection** — never a second write path.
 Write request
     │
     ▼
-PostgreSQL (@substrate/db/index.ts)
+PostgreSQL (@substrate-platform/db/index.ts)
     │
     ├── INSERT / UPDATE / DELETE  ← the ONLY write path
     │
@@ -134,7 +134,7 @@ PostgreSQL (@substrate/db/index.ts)
 CDC / Queue (async projection)
     │
     ▼
-Turso replica (@substrate/db/turso.ts)
+Turso replica (@substrate-platform/db/turso.ts)
     │
     └── SELECT only ← edge read path (Cloudflare Workers)
 ```
@@ -152,7 +152,7 @@ Turso replica (@substrate/db/turso.ts)
 
 **Rule:** Never bypass these wrappers. Never create a raw
 `@libsql/client` instance outside of `turso.ts`. If you need to write
-data, use `@substrate/db` (PostgreSQL) — not Turso.
+data, use `@substrate-platform/db` (PostgreSQL) — not Turso.
 
 ---
 

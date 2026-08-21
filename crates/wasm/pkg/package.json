@@ -1,5 +1,5 @@
 {
-  "name": "@substrate/wasm",
+  "name": "@substrate-platform/wasm",
   "type": "module",
   "description": "Substrate WASM — browser bindings with GPU acceleration",
   "version": "0.1.0",

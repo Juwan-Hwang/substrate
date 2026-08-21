@@ -9,11 +9,11 @@
     "noEmit": true,
     "incremental": true,
     "paths": {
-      "@substrate/ui": ["../ui/src"],
-      "@substrate/ui/*": ["../ui/src/*"],
-      "@substrate/contracts": ["../contracts/src"],
-      "@substrate/config": ["../config/src"],
-      "@substrate/observability": ["../observability/src"]
+      "@substrate-platform/ui": ["../ui/src"],
+      "@substrate-platform/ui/*": ["../ui/src/*"],
+      "@substrate-platform/contracts": ["../contracts/src"],
+      "@substrate-platform/config": ["../config/src"],
+      "@substrate-platform/observability": ["../observability/src"]
     }
   },
   "include": ["src"],

@@ -5,7 +5,7 @@
  *
  * ```ts
  * // instrumentation.ts
- * import { registerInstrumentation } from '@substrate/site/instrumentation';
+ * import { registerInstrumentation } from '@substrate-platform/site/instrumentation';
  *
  * export const register = registerInstrumentation({
  *   featurePreset: 'reference',
@@ -21,11 +21,11 @@
  * The platform does NOT hardcode any application name, service name,
  * or feature preset.
  */
-import type { FeatureManifest } from '@substrate/config/features';
+import type { FeatureManifest } from '@substrate-platform/config/features';
 
 export type InstrumentationConfig = {
   /**
-   * Feature preset name. Maps to presets in @substrate/config.
+   * Feature preset name. Maps to presets in @substrate-platform/config.
    * If omitted, defaults to 'minimal' in production, 'full' otherwise.
    */
   featurePreset?: 'minimal' | 'graphics' | 'ai-archive' | 'realtime' | 'reference';
@@ -54,7 +54,7 @@ export function registerInstrumentation(config?: InstrumentationConfig) {
       realtimeRoomFeatures,
       referenceFeatures,
       validateEnv,
-    } = await import('@substrate/config/features');
+    } = await import('@substrate-platform/config/features');
 
     // Determine the feature manifest.
     const isProduction = process.env.NODE_ENV === 'production';
@@ -85,7 +85,7 @@ export function registerInstrumentation(config?: InstrumentationConfig) {
         return;
       }
 
-      const { startOTEL } = await import('@substrate/observability');
+      const { startOTEL } = await import('@substrate-platform/observability');
 
       // Parse headers from "key1=val1,key2=val2" format.
       const headers: Record<string, string> = {};

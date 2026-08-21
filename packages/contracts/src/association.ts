@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/association — Association Primitive.
+ * @substrate-platform/contracts/association — Association Primitive.
  *
  * v1.3 correction #1: Delete `kind`. Association is purely
  * `(entityA, entityB)` — undirected, untyped.

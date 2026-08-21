@@ -1,5 +1,5 @@
 /**
- * @substrate/graphics — GPU / knowledge graph / visual system (Lattice).
+ * @substrate-platform/graphics — GPU / knowledge graph / visual system (Lattice).
  *
  * Three.js r185 WebGPURenderer + React Three Fiber + TSL shaders.
  * WASM-accelerated force-directed layout via substrate-wasm.
@@ -56,7 +56,7 @@ export function detectRendererTier(): RendererTier {
 export async function loadWasm() {
   // The WASM pkg is built by `wasm-pack build --target web` into crates/wasm/pkg.
   // The workspace includes `crates/wasm/pkg` as a workspace package.
-  const wasm = await import('@substrate/wasm');
+  const wasm = await import('@substrate-platform/wasm');
   return wasm;
 }
 

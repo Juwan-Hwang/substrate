@@ -1,16 +1,16 @@
 /**
- * @substrate/site — platform global styles.
+ * @substrate-platform/site — platform global styles.
  *
  * ## CSS Package Boundary Contract
  *
  * The CSS layering is explicitly defined as three tiers:
  *
- *   1. @substrate/ui/styles.css
+ *   1. @substrate-platform/ui/styles.css
  *      Design tokens (--substrate-*) and component styles (.substrate-*).
  *      Uses relative @import only (./tokens.css, ./theme.css).
  *      Zero external module dependencies.
  *
- *   2. @substrate/site/globals.css  (THIS FILE)
+ *   2. @substrate-platform/site/globals.css  (THIS FILE)
  *      Tailwind v4 @theme bridge: maps --substrate-* tokens into
  *      Tailwind's --color-* / --font-* / --radius-* namespace.
  *      Platform utility classes (.glass, .text-gradient, paint worklets).
@@ -27,8 +27,8 @@
  * A consumer's globals.css should look like:
  *
  *   @import "tailwindcss";
- *   @import "@substrate/ui/styles.css";
- *   @import "@substrate/site/globals.css";   // optional
+ *   @import "@substrate-platform/ui/styles.css";
+ *   @import "@substrate-platform/site/globals.css";   // optional
  *
  *   :root {
  *     --accent-primary: #your-brand-color;
@@ -39,11 +39,11 @@
  * Or, if the consumer does not need the Tailwind theme bridge:
  *
  *   @import "tailwindcss";
- *   @import "@substrate/ui/styles.css";
+ *   @import "@substrate-platform/ui/styles.css";
  *
  *   :root { ... }
  *
- * ## Why @substrate/site/globals.css does NOT @import "tailwindcss"
+ * ## Why @substrate-platform/site/globals.css does NOT @import "tailwindcss"
  *
  * Tailwind v4's `@import "tailwindcss"` is processed by the
  * @tailwindcss/postcss plugin, which runs in the consumer project's

@@ -15,8 +15,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': `${root}src`,
-      '@substrate/content/search': `${pkg('content/src/search.ts')}`,
-      '@substrate/content': `${pkg('content/src/index.ts')}`,
+      '@substrate-platform/content/search': `${pkg('content/src/search.ts')}`,
+      '@substrate-platform/content': `${pkg('content/src/index.ts')}`,
     },
   },
   test: {

@@ -20,7 +20,7 @@ the resolver that fetches from your typed tables.
 ### Interface
 
 ```ts
-// @substrate/contracts
+// @substrate-platform/contracts
 
 interface EntityRef {
   readonly type: string;   // application-defined: 'article', 'project', etc.
@@ -47,9 +47,9 @@ interface EntityResolver {
 ```ts
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { articles } from '@/lib/db/schema';   // your typed table
-import { entities } from '@substrate/db';      // platform's generic table
-import type { EntityResolver, EntitySnapshot, EntityRef } from '@substrate/contracts';
-import { entityRefKey } from '@substrate/contracts';
+import { entities } from '@substrate-platform/db';      // platform's generic table
+import type { EntityResolver, EntitySnapshot, EntityRef } from '@substrate-platform/contracts';
+import { entityRefKey } from '@substrate-platform/contracts';
 
 export function createResolver(db: ReturnType<typeof drizzle>): EntityResolver {
   async function resolve(ref: EntityRef): Promise<EntitySnapshot | null> {
@@ -128,7 +128,7 @@ interface SnapshotStore {
 
 ```ts
 import { r2 } from '@/lib/r2-client';   // your R2 client
-import type { SnapshotStore, StoredSnapshot, SerializedState } from '@substrate/contracts';
+import type { SnapshotStore, StoredSnapshot, SerializedState } from '@substrate-platform/contracts';
 
 export function createR2SnapshotStore(bucket: R2Bucket): SnapshotStore {
   return {
@@ -240,7 +240,7 @@ interface StoreAdapter {
 At application startup, assemble the adapters you need:
 
 ```ts
-import type { StoreAdapter } from '@substrate/contracts';
+import type { StoreAdapter } from '@substrate-platform/contracts';
 
 export function createStoreAdapter(): StoreAdapter {
   const bucket = getR2Bucket();
@@ -259,7 +259,7 @@ export function createStoreAdapter(): StoreAdapter {
   enforces historical immutability.
 - **Idempotent writes** — storing the same content in CAS returns the
   same hash. Re-writes are no-ops.
-- The platform's `@substrate/db` provides PostgreSQL-backed default
+- The platform's `@substrate-platform/db` provides PostgreSQL-backed default
   implementations of all three. You can use them directly, or implement
   your own with any backend (R2, S3, filesystem, in-memory for tests).
 
@@ -318,7 +318,7 @@ interface AuthorizationBundle {
 
 ```ts
 import { and, eq } from 'drizzle-orm';
-import { entities } from '@substrate/db';
+import { entities } from '@substrate-platform/db';
 import {
   ANONYMOUS,
   type AuthorizationBundle,
@@ -327,7 +327,7 @@ import {
   type OramaFilter,
   type Principal,
   type SqlFragment,
-} from '@substrate/contracts';
+} from '@substrate-platform/contracts';
 
 // ── Semantic layer ──────────────────────────────────────────────────
 
@@ -460,7 +460,7 @@ Define which platform capabilities are active:
 
 ```ts
 // src/instrumentation.ts
-import { registerInstrumentation } from '@substrate/site/instrumentation';
+import { registerInstrumentation } from '@substrate-platform/site/instrumentation';
 
 export const register = registerInstrumentation({
   featureManifest: {
@@ -470,7 +470,7 @@ export const register = registerInstrumentation({
     assets: true,
     search: 'hybrid',
     ai: true,
-    // ...see @substrate/config for the full schema
+    // ...see @substrate-platform/config for the full schema
   },
   serviceName: 'my-site',
 });
@@ -491,7 +491,7 @@ Define your entity's state machine. The platform validates transitions
 against this definition at runtime.
 
 ```ts
-import type { LifecycleDefinition } from '@substrate/contracts';
+import type { LifecycleDefinition } from '@substrate-platform/contracts';
 
 const articleLifecycle: LifecycleDefinition<string, string> = {
   initial: 'draft',
@@ -515,8 +515,8 @@ When using the publish protocol, assemble all your implementations
 into a `PublishDeps` bundle:
 
 ```ts
-import type { PublishDeps } from '@substrate/contracts';
-import { createChangeSet } from '@substrate/contracts';
+import type { PublishDeps } from '@substrate-platform/contracts';
+import { createChangeSet } from '@substrate-platform/contracts';
 
 const publishDeps: PublishDeps = {
   authBundle,                           // from §3
@@ -570,17 +570,17 @@ that's a bug.
 
 | Interface | Source | Purpose |
 |-----------|--------|---------|
-| `EntityResolver` | `@substrate/contracts` | Fetch entity metadata from your typed tables |
-| `SnapshotStore` | `@substrate/contracts` | Immutable point-in-time state snapshots |
-| `ContentAddressedStore` | `@substrate/contracts` | Content-addressed immutable blobs |
-| `AssetStore` | `@substrate/contracts` | Binary asset storage with representations |
-| `StoreAdapter` | `@substrate/contracts` | Bundle of storage adapters |
-| `AuthorizationPolicy` | `@substrate/contracts` | Semantic permission decision |
-| `ConstraintCompiler` | `@substrate/contracts` | Per-backend query fragment builder |
-| `AuthorizationBundle` | `@substrate/contracts` | Full authorization bundle |
-| `LifecycleDefinition` | `@substrate/contracts` | Declarative state machine |
-| `TransactionalCommitEngine` | `@substrate/contracts` | Atomic commit with row locking |
-| `PublishDeps` | `@substrate/contracts` | All dependencies for publish protocol |
-| `FeatureManifest` | `@substrate/config` | Which platform capabilities are active |
-| `PurgeContract` | `@substrate/contracts` | Safe deletion respecting snapshot reachability |
-| `GarbageCollector` | `@substrate/contracts` | Optional CAS orphan cleanup |
+| `EntityResolver` | `@substrate-platform/contracts` | Fetch entity metadata from your typed tables |
+| `SnapshotStore` | `@substrate-platform/contracts` | Immutable point-in-time state snapshots |
+| `ContentAddressedStore` | `@substrate-platform/contracts` | Content-addressed immutable blobs |
+| `AssetStore` | `@substrate-platform/contracts` | Binary asset storage with representations |
+| `StoreAdapter` | `@substrate-platform/contracts` | Bundle of storage adapters |
+| `AuthorizationPolicy` | `@substrate-platform/contracts` | Semantic permission decision |
+| `ConstraintCompiler` | `@substrate-platform/contracts` | Per-backend query fragment builder |
+| `AuthorizationBundle` | `@substrate-platform/contracts` | Full authorization bundle |
+| `LifecycleDefinition` | `@substrate-platform/contracts` | Declarative state machine |
+| `TransactionalCommitEngine` | `@substrate-platform/contracts` | Atomic commit with row locking |
+| `PublishDeps` | `@substrate-platform/contracts` | All dependencies for publish protocol |
+| `FeatureManifest` | `@substrate-platform/config` | Which platform capabilities are active |
+| `PurgeContract` | `@substrate-platform/contracts` | Safe deletion respecting snapshot reachability |
+| `GarbageCollector` | `@substrate-platform/contracts` | Optional CAS orphan cleanup |

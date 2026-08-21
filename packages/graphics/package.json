@@ -1,5 +1,5 @@
 {
-  "name": "@substrate/graphics",
+  "name": "@substrate-platform/graphics",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
@@ -13,17 +13,22 @@
     "clean": "rm -rf dist .turbo wasm"
   },
   "dependencies": {
-    "@substrate/contracts": "workspace:*",
-    "@substrate/wasm": "workspace:*",
+    "@substrate-platform/contracts": "workspace:*",
+    "@substrate-platform/wasm": "workspace:*",
     "three": "^0.185.0",
     "@react-three/fiber": "^9.1.0",
     "@react-three/drei": "^10.0.0",
     "@react-three/postprocessing": "^3.0.4"
   },
   "peerDependencies": {
-    "react": "19.3.0-canary-28cd4bb0-20260723"
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.0"
-  }
+  },
+  "files": [
+    "src/**",
+    "README.md",
+    "LICENSE"
+  ]
 }

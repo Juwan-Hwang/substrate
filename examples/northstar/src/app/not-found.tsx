@@ -1,1 +1,1 @@
-export { SubstrateNotFound as default } from '@substrate/site/shells';
+export { SubstrateNotFound as default } from '@substrate-platform/site/shells';

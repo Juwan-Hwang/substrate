@@ -5,7 +5,7 @@
  * The corpus is mapped to the `SearchableDoc` shape here, on the server, so
  * the client component stays free of domain knowledge about mission logs.
  */
-import type { SearchableDoc } from '@substrate/content/search';
+import type { SearchableDoc } from '@substrate-platform/content/search';
 import { logs } from '@/lib/logs';
 import { SearchBox } from './search';
 

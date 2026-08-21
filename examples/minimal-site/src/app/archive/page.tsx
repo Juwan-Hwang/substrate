@@ -5,7 +5,7 @@
  * The corpus is mapped to the `SearchableDoc` shape here, on the server, so
  * the client component stays free of domain knowledge about articles.
  */
-import type { SearchableDoc } from '@substrate/content/search';
+import type { SearchableDoc } from '@substrate-platform/content/search';
 import { articles } from '@/lib/articles';
 import { SearchBox } from './search';
 

@@ -1,5 +1,5 @@
 /**
- * @substrate/config — Shared configuration: feature manifest, tsconfig, biome.
+ * @substrate-platform/config — Shared configuration: feature manifest, tsconfig, biome.
  */
 
 export type { FeatureManifest } from './features';

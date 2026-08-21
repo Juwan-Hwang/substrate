@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/purge — Purge Safety Contract.
+ * @substrate-platform/contracts/purge — Purge Safety Contract.
  *
  * `purge()` must not cascade-delete objects referenced by historical
  * snapshots. Physical deletion of historical objects is governed by

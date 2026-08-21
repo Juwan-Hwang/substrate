@@ -8,7 +8,7 @@
  * Integration:
  *   Each AI generation creates TWO correlated records that share a trace ID:
  *   1. An OTel span with `gen_ai.*` attributes → flows to Grafana via the
- *      shared OTel pipeline (@substrate/observability). This is the SAME
+ *      shared OTel pipeline (@substrate-platform/observability). This is the SAME
  *      pipeline that carries system-level traces, so AI calls appear
  *      inline with the request that triggered them.
  *   2. A Langfuse trace → flows to Langfuse Cloud for the AI-specific
@@ -47,7 +47,7 @@ export type LangfuseClient = {
   shutdown: () => Promise<void>;
 };
 
-const TRACER_NAME = '@substrate/ai/langfuse';
+const TRACER_NAME = '@substrate-platform/ai/langfuse';
 const otelTracer: Tracer = otelTrace.getTracer(TRACER_NAME);
 
 export function createLangfuse(config: LangfuseConfig): LangfuseClient {
@@ -134,7 +134,7 @@ export function traceGeneration(
     const generationId = crypto.randomUUID();
 
     // Start an OTel span as the active context so child spans
-    // (e.g. from @substrate/observability instrumentation) are
+    // (e.g. from @substrate-platform/observability instrumentation) are
     // automatically nested under this AI generation.
     const span = otelTracer.startSpan(`${name} (ai.generation)`, {
       attributes: {

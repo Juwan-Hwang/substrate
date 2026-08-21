@@ -1,20 +1,20 @@
 {
-  "name": "@substrate/ai",
+  "name": "@substrate-platform/ai",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc --project tsconfig.build.json && bun run ../../scripts/fix-import-extensions.ts dist",
     "lint": "biome check src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@substrate/contracts": "workspace:*",
-    "@substrate/db": "workspace:*",
+    "@substrate-platform/contracts": "workspace:*",
+    "@substrate-platform/db": "workspace:*",
     "ai": "^5.0.0",
     "@ai-sdk/react": "^2.0.0",
     "@ai-sdk/openai": "^2.0.0",
@@ -27,6 +27,11 @@
     "zod": "^3.24.0"
   },
   "peerDependencies": {
-    "react": "^19.2.0"
-  }
+    "react": "^19.0.0"
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE"
+  ]
 }

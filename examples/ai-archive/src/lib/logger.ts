@@ -1,7 +1,7 @@
 /**
  * Minimal structured logger for the AI Archive example.
  *
- * This example does not depend on `@substrate/observability`, so we tag
+ * This example does not depend on `@substrate-platform/observability`, so we tag
  * console output with `[ai-archive:<component>]` and pass structured
  * context objects for consistent, greppable logs — a drop-in replacement
  * for raw `console.*` calls.

@@ -10,7 +10,7 @@
  * not by the platform.
  *
  * ```ts
- * import { insertEntitySchema, selectEntitySchema } from '@substrate/db';
+ * import { insertEntitySchema, selectEntitySchema } from '@substrate-platform/db';
  * const parsed = insertEntitySchema.parse(formData);
  * ```
  */

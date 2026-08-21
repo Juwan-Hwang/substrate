@@ -8,10 +8,10 @@ should look like:
 @import "tailwindcss";
 
 /* Tier 2: Platform design tokens + component styles */
-@import "@substrate/ui/styles.css";
+@import "@substrate-platform/ui/styles.css";
 
 /* Tier 3: Tailwind theme bridge + platform utilities (optional) */
-@import "@substrate/site/globals.css";
+@import "@substrate-platform/site/globals.css";
 
 /* Application-specific tokens */
 :root {
@@ -25,10 +25,10 @@ should look like:
 | Tier | Package | What it provides | External deps |
 |------|---------|-----------------|---------------|
 | 1 | Application | `@import "tailwindcss"` | Resolved by consumer's PostCSS |
-| 2 | `@substrate/ui` | `--substrate-*` tokens, `.substrate-*` components | Relative `@import` only |
-| 3 | `@substrate/site` | `@theme` bridge, `.glass`, `.text-gradient`, paint worklets | None (no `@import "tailwindcss"`) |
+| 2 | `@substrate-platform/ui` | `--substrate-*` tokens, `.substrate-*` components | Relative `@import` only |
+| 3 | `@substrate-platform/site` | `@theme` bridge, `.glass`, `.text-gradient`, paint worklets | None (no `@import "tailwindcss"`) |
 
-## Why `@substrate/site/globals.css` does NOT `@import "tailwindcss"`
+## Why `@substrate-platform/site/globals.css` does NOT `@import "tailwindcss"`
 
 Turbopack resolves CSS `@import` from the source file's directory. If a
 platform package contains `@import "tailwindcss"`, the resolver searches

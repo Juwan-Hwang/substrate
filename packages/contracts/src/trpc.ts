@@ -1,12 +1,12 @@
 /**
- * @substrate/contracts/trpc — tRPC router builder and base router.
+ * @substrate-platform/contracts/trpc — tRPC router builder and base router.
  *
  * This is an optional integration capability — importing it pulls in
  * `@trpc/server` as a runtime dependency. The core contracts
- * (`@substrate/contracts`) have zero tRPC dependency.
+ * (`@substrate-platform/contracts`) have zero tRPC dependency.
  *
  * ```ts
- * import { router, publicProcedure, appRouter } from '@substrate/contracts/trpc';
+ * import { router, publicProcedure, appRouter } from '@substrate-platform/contracts/trpc';
  * ```
  */
 import { initTRPC } from '@trpc/server';

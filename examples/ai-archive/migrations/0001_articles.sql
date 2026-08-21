@@ -1,7 +1,7 @@
 -- AI Archive example: Application-level schema
 --
 -- This migration creates the `articles` table for the AI Archive example.
--- The platform (@substrate/db) does NOT define content tables —
+-- The platform (@substrate-platform/db) does NOT define content tables —
 -- each application defines its own.
 
 CREATE TYPE "content_status" AS ENUM('draft', 'published', 'archived');

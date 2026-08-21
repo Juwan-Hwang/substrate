@@ -1,5 +1,5 @@
 /**
- * @substrate/content — Content layer for personal sites.
+ * @substrate-platform/content — Content layer for personal sites.
  *
  * MDX v3 + Velite for content collection, Fumadocs for docs rendering,
  * Zod schemas for validation, Orama for instant static search.

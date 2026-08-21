@@ -5,18 +5,20 @@
  * footer. The feature manifest is initialised from the minimal-site
  * preset so every downstream component reads a consistent capability set.
  */
-import { initFeatures, minimalSiteFeatures } from '@substrate/config/features';
-import { SubstrateLayout } from '@substrate/site/layout';
-import { createMetadata } from '@substrate/site/metadata';
+
+import { initFeatures, minimalSiteFeatures } from '@substrate-platform/config/features';
+import { SubstrateLayout } from '@substrate-platform/site/layout';
+import { createMetadata } from '@substrate-platform/site/metadata';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 
 // Initialise the feature manifest for this deployment.
 initFeatures(minimalSiteFeatures);
 
-export const metadata = createMetadata({
+export const metadata: Metadata = createMetadata({
   name: 'Minimal Site',
   url: 'https://minimal.example.com',
 });

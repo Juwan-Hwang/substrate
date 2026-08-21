@@ -94,7 +94,7 @@ Substrate packages fall into two categories:
   the Feature Manifest and can be replaced.
 - A consumer who wants to use a different database, edge runtime, or AI
   provider should implement the corresponding interfaces from
-  `@substrate/contracts` (e.g. `SnapshotStore`, `EntityResolver`,
+  `@substrate-platform/contracts` (e.g. `SnapshotStore`, `EntityResolver`,
   `AuthorizationBundle`) in their own application code. They do not need to
   fork or modify the concrete packages — they simply don't use them.
 
@@ -178,15 +178,15 @@ The concrete infrastructure packages (`db`, `edge`, `ai`, `graphics`,
 specific technology choices, not abstract interfaces. The platform does
 not claim vendor neutrality for these packages.
 
-- `@substrate/db` uses PostgreSQL + Turso (libSQL) with Drizzle ORM.
-- `@substrate/edge` uses Cloudflare Workers + Hono + Upstash Redis.
-- `@substrate/ai` uses Vercel AI SDK + OpenAI/Anthropic/Google + Langfuse.
-- `@substrate/content` uses Fumadocs MDX + Orama search + `@vercel/og`.
-- `@substrate/graphics` uses Three.js / R3F / WebGPU / WASM.
-- `@substrate/observability` uses OpenTelemetry + Sentry + PostHog.
+- `@substrate-platform/db` uses PostgreSQL + Turso (libSQL) with Drizzle ORM.
+- `@substrate-platform/edge` uses Cloudflare Workers + Hono + Upstash Redis.
+- `@substrate-platform/ai` uses Vercel AI SDK + OpenAI/Anthropic/Google + Langfuse.
+- `@substrate-platform/content` uses Fumadocs MDX + Orama search + `@vercel/og`.
+- `@substrate-platform/graphics` uses Three.js / R3F / WebGPU / WASM.
+- `@substrate-platform/observability` uses OpenTelemetry + Sentry + PostHog.
 
 Consumers who need a different vendor should implement the corresponding
-interfaces from `@substrate/contracts` in their own application code and
+interfaces from `@substrate-platform/contracts` in their own application code and
 simply not import the concrete package. The interface packages (`contracts`,
 `config`) are the vendor-neutral contracts; the infrastructure packages are
 opinionated defaults.
@@ -200,10 +200,10 @@ Substrate defines a three-tier CSS contract:
 | Tier | Owner | What it provides | `@import "tailwindcss"`? |
 |------|-------|-------------------|--------------------------|
 | 1 | Application | Tailwind v4 entry | Yes — resolved by consumer's PostCSS |
-| 2 | `@substrate/ui` | `--substrate-*` tokens, `.substrate-*` components | No — relative `@import` only |
-| 3 | `@substrate/site` | `@theme` bridge, `.glass`, `.text-gradient`, paint worklets | No — would break Turbopack resolver |
+| 2 | `@substrate-platform/ui` | `--substrate-*` tokens, `.substrate-*` components | No — relative `@import` only |
+| 3 | `@substrate-platform/site` | `@theme` bridge, `.glass`, `.text-gradient`, paint worklets | No — would break Turbopack resolver |
 
-**Why `@substrate/site/globals.css` must not `@import "tailwindcss"`:**
+**Why `@substrate-platform/site/globals.css` must not `@import "tailwindcss"`:**
 Turbopack resolves CSS `@import` from the source file's directory. If a
 platform package contains `@import "tailwindcss"`, the resolver searches
 `packages/site/node_modules/` — but `tailwindcss` is installed in the
@@ -323,7 +323,7 @@ Turso is enforced read-only at two levels:
    throwing on `INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE`.
 
 Never bypass these wrappers. Never create a raw `@libsql/client` instance
-outside of `turso.ts`. If you need to write data, use `@substrate/db`
+outside of `turso.ts`. If you need to write data, use `@substrate-platform/db`
 (PostgreSQL).
 
 ---
@@ -331,7 +331,7 @@ outside of `turso.ts`. If you need to write data, use `@substrate/db`
 ## 10. Publish Protocol
 
 The platform defines a two-phase publish protocol for atomic content
-release. The protocol is implemented in `@substrate/contracts/publish.ts`
+release. The protocol is implemented in `@substrate-platform/contracts/publish.ts`
 and is the **only** mechanism for committing changes that may affect the
 public site.
 

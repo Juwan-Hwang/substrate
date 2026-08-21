@@ -42,7 +42,7 @@ export function createAI(config: AIConfig): AI {
     // Workers AI can be used via REST API (provider-adapter.ts) or
     // via the Cloudflare Workers AI binding (env.AI.run()).
     // The REST adapter is registered here; the binding is used
-    // directly in edge routes (@substrate/edge).
+    // directly in edge routes (@substrate-platform/edge).
     providers.set(
       'workers-ai',
       createWorkersAIProvider(config.workersAI.accountId, config.workersAI.apiToken),

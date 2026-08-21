@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts — Core type contracts and platform primitives.
+ * @substrate-platform/contracts — Core type contracts and platform primitives.
  *
  * The single source of truth for cross-package types and Zod schemas.
  *
@@ -7,10 +7,10 @@
  * integration capabilities (tRPC, Effect, Zustand, OpenAPI) are available
  * via subpath exports:
  *
- *   @substrate/contracts/trpc    — tRPC router builder
- *   @substrate/contracts/effect  — Effect service composition
- *   @substrate/contracts/store   — Zustand UI store
- *   @substrate/contracts/openapi — OpenAPI document factory
+ *   @substrate-platform/contracts/trpc    — tRPC router builder
+ *   @substrate-platform/contracts/effect  — Effect service composition
+ *   @substrate-platform/contracts/store   — Zustand UI store
+ *   @substrate-platform/contracts/openapi — OpenAPI document factory
  */
 
 // ── Brand types ──────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ export type {
 // Import them directly from their subpath to avoid pulling in heavyweight
 // runtime dependencies:
 //
-//   @substrate/contracts/trpc    — tRPC router builder + appRouter
-//   @substrate/contracts/effect  — Effect service composition (Context, Layer)
-//   @substrate/contracts/store   — Zustand vanilla UI store
-//   @substrate/contracts/openapi — OpenAPI 3.1 document factory
+//   @substrate-platform/contracts/trpc    — tRPC router builder + appRouter
+//   @substrate-platform/contracts/effect  — Effect service composition (Context, Layer)
+//   @substrate-platform/contracts/store   — Zustand vanilla UI store
+//   @substrate-platform/contracts/openapi — OpenAPI 3.1 document factory

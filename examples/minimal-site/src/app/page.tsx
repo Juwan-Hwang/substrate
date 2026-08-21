@@ -5,7 +5,7 @@
  * prerendered at build time.
  */
 
-import { Badge, GlassCard } from '@substrate/ui';
+import { Badge, GlassCard } from '@substrate-platform/ui';
 import Link from 'next/link';
 import { articles } from '@/lib/articles';
 

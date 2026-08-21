@@ -6,7 +6,7 @@
  */
 'use client';
 
-import { detectRendererTier, type RendererTier } from '@substrate/graphics';
+import { detectRendererTier, type RendererTier } from '@substrate-platform/graphics';
 import { useEffect, useState } from 'react';
 
 type GpuInfo = {

@@ -1,5 +1,5 @@
 /**
- * @substrate/contracts/search-privacy — Search Privacy Enforcement.
+ * @substrate-platform/contracts/search-privacy — Search Privacy Enforcement.
  *
  * Hard rules (§6):
  *   1. Static indexes contain ONLY already-public content.
