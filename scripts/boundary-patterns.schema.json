@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Boundary Patterns Configuration",
+  "description": "Configuration for check-boundary.ts Layer 2 pattern scan and Layer 1 forbidden import namespaces. Forks should replace the brand patterns with their own identifiers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["forbiddenBrandPatterns", "forbiddenImportNamespaces"],
+  "properties": {
+    "forbiddenBrandPatterns": {
+      "type": "array",
+      "description": "String patterns forbidden in platform code (Layer 2). Each entry is compiled into a RegExp.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pattern", "flags", "message"],
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Regular expression pattern string (will be passed to new RegExp())."
+          },
+          "flags": {
+            "type": "string",
+            "description": "RegExp flags (e.g. 'g', 'gi').",
+            "enum": ["g", "gi", "i"]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable violation message shown in CI output."
+          }
+        }
+      }
+    },
+    "forbiddenImportNamespaces": {
+      "type": "array",
+      "description": "Brand namespace identifiers used to build Layer 1 forbidden import patterns. E.g. 'aevum' generates /(^|\\/)aevum\\//, /(^|\\/)aevum-/, /^@aevum\\//.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

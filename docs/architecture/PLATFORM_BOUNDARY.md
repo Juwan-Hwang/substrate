@@ -28,7 +28,7 @@ Substrate is **not a website**. It is the foundation you build one on.
 ```text
 ┌───────────────────────────────────────────────┐
 │                 Application                    │
-│   (examples/*, consumer sites, juwanh.com)    │
+│   (examples/*, consumer sites, your-domain) │
 │                  depends on ↓                 │
 ├───────────────────────────────────────────────┤
 │                  Platform                     │
@@ -50,8 +50,9 @@ Application → Platform → External
 Platform ↛ Application
 ```
 
-The platform may never import from `examples/`, `aevum/`, or any
-application-specific namespace. This is enforced by CI (see §6).
+The platform may never import from `examples/`, any application
+namespace, or a forbidden brand namespace (configured in
+`.boundary-patterns.json`). This is enforced by CI (see §6).
 
 ---
 
@@ -75,6 +76,31 @@ scanned by the boundary CI gate for import violations.
 | `packages/edge/` | Cloudflare Workers (Hono), R2, Queues, Durable Objects, Turnstile |
 | `packages/observability/` | OpenTelemetry, Sentry, PostHog |
 | `packages/tokens/` | Design token source files (Style Dictionary) |
+
+### Package categories: interfaces vs concrete implementations
+
+Substrate packages fall into two categories:
+
+| Category | Packages | Nature |
+----------|----------|--------
+| **Interface packages** | `contracts`, `config` | Define abstract types, Zod schemas, and platform protocols. Zero heavyweight runtime deps at the root. Optional integrations (tRPC, Effect, Zustand, OpenAPI) via subpath exports — each pulls in its own deps only when imported. Consumers implement these interfaces against any backend. |
+| **Concrete implementation packages** | `db`, `edge`, `ai`, `graphics`, `content`, `observability`, `site`, `ui`, `tokens` | Provide working implementations built on specific technology choices (PostgreSQL/Turso, Cloudflare Workers, Vercel AI SDK, Three.js/R3F, Orama, OpenTelemetry/Sentry/PostHog, etc.). These are **default implementations**, not abstract interfaces. |
+
+**What this means for consumers:**
+
+- The interface packages (`contracts`, `config`) define *what* the platform
+  does. They are vendor-neutral and stable.
+- The concrete packages define *how* it does it today. They are opt-in via
+  the Feature Manifest and can be replaced.
+- A consumer who wants to use a different database, edge runtime, or AI
+  provider should implement the corresponding interfaces from
+  `@substrate/contracts` (e.g. `SnapshotStore`, `EntityResolver`,
+  `AuthorizationBundle`) in their own application code. They do not need to
+  fork or modify the concrete packages — they simply don't use them.
+
+This is a deliberate trade-off: Substrate ships working defaults so most
+consumers can start immediately, while remaining architecturally replaceable
+for those who need different infrastructure.
 
 ### Examples (`examples/`)
 
@@ -145,6 +171,26 @@ typed tables (e.g. `writings`, `projects`) are defined by the application
 in its own migration. There is **no `revisions` table** in the platform —
 Revision is an application entity.
 
+### 4.7 Infrastructure packages are concrete implementations, not interfaces
+
+The concrete infrastructure packages (`db`, `edge`, `ai`, `graphics`,
+`content`, `observability`) are **default implementations** built on
+specific technology choices, not abstract interfaces. The platform does
+not claim vendor neutrality for these packages.
+
+- `@substrate/db` uses PostgreSQL + Turso (libSQL) with Drizzle ORM.
+- `@substrate/edge` uses Cloudflare Workers + Hono + Upstash Redis.
+- `@substrate/ai` uses Vercel AI SDK + OpenAI/Anthropic/Google + Langfuse.
+- `@substrate/content` uses Fumadocs MDX + Orama search + `@vercel/og`.
+- `@substrate/graphics` uses Three.js / R3F / WebGPU / WASM.
+- `@substrate/observability` uses OpenTelemetry + Sentry + PostHog.
+
+Consumers who need a different vendor should implement the corresponding
+interfaces from `@substrate/contracts` in their own application code and
+simply not import the concrete package. The interface packages (`contracts`,
+`config`) are the vendor-neutral contracts; the infrastructure packages are
+opinionated defaults.
+
 ---
 
 ## 5. CSS Package Boundary
@@ -177,11 +223,12 @@ CI gate with three layers:
 Scans all files under `packages/*/src/` for imports that reference
 application namespaces:
 
-- `aevum/` or `aevum-*`
-- `@aevum/`
+- Forbidden namespaces configured in `.boundary-patterns.json`
+  (e.g. `yourbrand/`, `yourbrand-*`, `@yourbrand/`)
 - `examples/`
 
 If any platform file imports from these patterns, the gate fails.
+Forks replace the namespace entries with their own identifiers.
 
 ### Layer 1.5: Search Privacy Gate
 
@@ -197,11 +244,14 @@ to the browser and then hiding it client-side.
 
 Scans all files for application-specific identifiers:
 
-- Brand names (`Aevum`, `Juwan`, `juwanh`)
-- Site URLs (`aevum.dev`, `api.aevum.dev`)
-- Infrastructure resource names (`aevum-edge`, `aevum-assets`)
-- CSS variable prefixes (`--aevum-`, `.aevum-`)
-- Possible credentials (API keys, AWS access key IDs)
+- Brand names, person identifiers, site URLs, infrastructure
+  resource names, and CSS variable prefixes — all configured in
+  `.boundary-patterns.json`
+- Possible credentials (API keys, AWS access key IDs) — built-in
+
+The brand patterns are configurable so forks can replace them with
+their own identifiers without editing the script. Credential
+detection is universal and never configurable.
 
 This layer catches contamination that import analysis cannot detect.
 

@@ -1,0 +1,67 @@
+{
+  "$schema": "./scripts/boundary-patterns.schema.json",
+  "$comment": "Application-specific identifiers forbidden in platform code (Layer 2). Forks should replace these with their own brand names, URLs, and infrastructure resource names. The check-boundary.ts gate reads this file at startup — no recompilation needed to add or remove patterns.",
+  "forbiddenBrandPatterns": [
+    {
+      "pattern": "Aevum",
+      "flags": "g",
+      "message": "Application-specific brand name \"Aevum\" in platform code"
+    },
+    {
+      "pattern": "AEVUM",
+      "flags": "g",
+      "message": "Application-specific brand name \"AEVUM\" in platform code"
+    },
+    {
+      "pattern": "aevum\\.dev",
+      "flags": "g",
+      "message": "Application-specific URL \"aevum.dev\""
+    },
+    {
+      "pattern": "api\\.aevum\\.dev",
+      "flags": "g",
+      "message": "Application-specific API URL \"api.aevum.dev\""
+    },
+    {
+      "pattern": "aevum-edge",
+      "flags": "g",
+      "message": "Application-specific infrastructure resource \"aevum-edge\""
+    },
+    {
+      "pattern": "aevum-assets",
+      "flags": "g",
+      "message": "Application-specific infrastructure resource \"aevum-assets\""
+    },
+    {
+      "pattern": "aevum-tasks",
+      "flags": "g",
+      "message": "Application-specific infrastructure resource \"aevum-tasks\""
+    },
+    {
+      "pattern": "aevum-web",
+      "flags": "g",
+      "message": "Application-specific service name \"aevum-web\""
+    },
+    {
+      "pattern": "\\bJuwan\\b",
+      "flags": "g",
+      "message": "Person identifier \"Juwan\" in platform code"
+    },
+    {
+      "pattern": "\\bjuwanh\\b",
+      "flags": "gi",
+      "message": "Person identifier \"juwanh\" in platform code"
+    },
+    {
+      "pattern": "--aevum-",
+      "flags": "g",
+      "message": "Application-specific CSS variable prefix \"--aevum-\""
+    },
+    {
+      "pattern": "\\.aevum-",
+      "flags": "g",
+      "message": "Application-specific CSS class prefix \".aevum-\""
+    }
+  ],
+  "forbiddenImportNamespaces": ["aevum"]
+}

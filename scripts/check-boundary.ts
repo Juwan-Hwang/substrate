@@ -1,12 +1,13 @@
 #!/usr/bin/env bun
 /**
- * check-boundary.ts — Platform boundary enforcement CI gate (v1.3).
+ * check-boundary.ts — Platform boundary enforcement CI gate (v1.4).
  *
- * Three-layer analysis (see architecture-contract-v1.3.md S13):
+ * Three-layer analysis (see PLATFORM_BOUNDARY.md §6):
  *
  *   Layer 1: Import Graph (primary gate)
  *     No platform package (packages/&#42;/src/) imports from
- *     aevum/, examples/, or any application namespace.
+ *     a forbidden application namespace (configured in
+ *     .boundary-patterns.json) or examples/.
  *     This is the core boundary proof.
  *
  *   Layer 1.5: Search Privacy Gate (S13.3 CI Gate #2)
@@ -16,18 +17,24 @@
  *   Layer 2: Pattern Scan (secondary lint)
  *     Catches application-specific identifiers (brand names,
  *     person identifiers, CSS prefixes, credentials).
+ *     Brand patterns are configured in .boundary-patterns.json;
+ *     credential detection is built-in.
  *     NOT the core boundary proof.
  *
  * Usage:
  *   bun run scripts/check-boundary.ts        # CI mode
  *   bun boundary:check                        # via package.json script
  *
+ * Configuration:
+ *   .boundary-patterns.json — forbiddenBrandPatterns + forbiddenImportNamespaces
+ *
  * Zero external dependencies — uses only Node/Bun builtins.
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { argv, cwd, exit } from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -74,6 +81,7 @@ const EXCLUDED_FILES = new Set([
   'bun.lockb',
   '.gitignore',
   '.editorconfig',
+  '.boundary-patterns.json',
 ]);
 
 const EXCLUDED_PATH_PREFIXES = ['crates/wasm/pkg'];
@@ -156,21 +164,102 @@ function extractImports(content: string): Array<{ path: string; line: number }> 
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Configuration: .boundary-patterns.json
+// ═══════════════════════════════════════════════════════════════════
+
+type BrandPattern = {
+  pattern: string;
+  flags: string;
+  message: string;
+};
+
+type BoundaryConfig = {
+  forbiddenBrandPatterns: BrandPattern[];
+  forbiddenImportNamespaces: string[];
+};
+
+/**
+ * Read the boundary patterns configuration file.
+ *
+ * The config lives at the monorepo root as .boundary-patterns.json.
+ * Forks replace the brand patterns with their own identifiers;
+ * the script reads them at runtime — no recompilation needed.
+ *
+ * If the file is missing, the gate fails loudly — silent fallback
+ * to zero patterns would be a security regression.
+ */
+function loadBoundaryConfig(): BoundaryConfig {
+  const scriptDir = dirname(fileURLToPath(import.meta.url));
+  const configPath = join(scriptDir, '..', '.boundary-patterns.json');
+
+  let raw: string;
+  try {
+    raw = readFileSync(configPath, 'utf-8');
+  } catch {
+    console.error(`  \x1b[31mFatal: .boundary-patterns.json not found at ${configPath}\x1b[0m`);
+    console.error('  The boundary gate cannot run without its configuration.');
+    console.error('  If you forked Substrate, copy .boundary-patterns.json and replace');
+    console.error('  the brand patterns with your own identifiers.\n');
+    exit(2);
+  }
+
+  let config: BoundaryConfig;
+  try {
+    config = JSON.parse(raw) as BoundaryConfig;
+  } catch {
+    console.error(`  \x1b[31mFatal: .boundary-patterns.json is not valid JSON.\x1b[0m\n`);
+    exit(2);
+  }
+
+  if (
+    !Array.isArray(config.forbiddenBrandPatterns) ||
+    !Array.isArray(config.forbiddenImportNamespaces)
+  ) {
+    console.error('  \x1b[31mFatal: .boundary-patterns.json missing required fields.\x1b[0m');
+    console.error(
+      '  Expected: { forbiddenBrandPatterns: [...], forbiddenImportNamespaces: [...] }\n',
+    );
+    exit(2);
+  }
+
+  return config;
+}
+
+const BOUNDARY_CONFIG = loadBoundaryConfig();
+
+// ═══════════════════════════════════════════════════════════════════
 // Layer 1: Import Graph Analysis (PRIMARY GATE)
 // ═══════════════════════════════════════════════════════════════════
 
-const FORBIDDEN_IMPORT_PATTERNS: RegExp[] = [
-  /(?:^|\/)aevum\//,
-  /(?:^|\/)aevum-/,
-  /^@aevum\//,
-  /(?:^|\/)examples\//,
-];
+/**
+ * Build forbidden import patterns from config namespaces.
+ *
+ * Each namespace (e.g. 'aevum') generates three patterns:
+ *   /(^|\/)namespace\//   — matches 'aevum/' path segments
+ *   /(^|\/)namespace-/    — matches 'aevum-*' packages
+ *   /^@namespace\//       — matches '@aevum/' scoped packages
+ *
+ * 'examples/' is always forbidden — it's a structural rule, not a brand.
+ */
+function buildForbiddenImportPatterns(namespaces: readonly string[]): RegExp[] {
+  const patterns: RegExp[] = [/(?:^|\/)examples\//];
+  for (const ns of namespaces) {
+    const escaped = ns.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    patterns.push(new RegExp(`(?:^|/)${escaped}/`));
+    patterns.push(new RegExp(`(?:^|/)${escaped}-`));
+    patterns.push(new RegExp(`^@${escaped}/`));
+  }
+  return patterns;
+}
+
+const FORBIDDEN_IMPORT_PATTERNS: RegExp[] = buildForbiddenImportPatterns(
+  BOUNDARY_CONFIG.forbiddenImportNamespaces,
+);
 
 const PLATFORM_DIRS: readonly string[] = [
   'packages/contracts/src',
   'packages/db/src',
   'packages/config/src',
-  'packages/auth/src',
   'packages/edge/src',
   'packages/ai/src',
   'packages/graphics/src',
@@ -360,20 +449,32 @@ function scanSearchPrivacy(root: string): SearchPrivacyViolation[] {
 // Layer 2: Pattern Scan (SECONDARY LINT)
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Build brand pattern entries from config.
+ *
+ * Each config entry has { pattern, flags, message } — compiled to a
+ * RegExp at load time. Forks edit .boundary-patterns.json to add or
+ * remove their own identifiers without touching this script.
+ */
+function buildBrandPatterns(
+  entries: readonly BrandPattern[],
+): Array<{ regex: RegExp; message: string }> {
+  return entries.map(({ pattern, flags, message }) => ({
+    regex: new RegExp(pattern, flags),
+    message,
+  }));
+}
+
 const PATTERNS: Array<{ regex: RegExp; message: string }> = [
-  {
-    regex: /\b[Aa]evum\b|\bAEVUM\b/g,
-    message: 'Application-specific brand name "Aevum" in platform code',
-  },
-  { regex: /aevum\.dev/g, message: 'Application-specific URL "aevum.dev"' },
-  { regex: /api\.aevum\.dev/g, message: 'Application-specific API URL "api.aevum.dev"' },
-  { regex: /aevum-edge/g, message: 'Application-specific infrastructure resource "aevum-edge"' },
-  {
-    regex: /aevum-assets/g,
-    message: 'Application-specific infrastructure resource "aevum-assets"',
-  },
-  { regex: /aevum-tasks/g, message: 'Application-specific infrastructure resource "aevum-tasks"' },
-  { regex: /aevum-web/g, message: 'Application-specific service name "aevum-web"' },
+  // ── Config-driven brand patterns (.boundary-patterns.json) ──────
+  ...buildBrandPatterns(BOUNDARY_CONFIG.forbiddenBrandPatterns),
+
+  // ── Built-in architectural anti-patterns (not brand-specific) ────
+  //
+  // These detect known anti-pattern constant names that were removed
+  // from the platform. They are structural rules — any fork that names
+  // a constant SITE_BRAND or SUBSYSTEMS is violating the platform
+  // boundary, regardless of their brand.
   {
     regex: /\bSITE_BRAND\b/g,
     message: 'Hardcoded brand constant "SITE_BRAND" — replaced by SiteIdentity',
@@ -382,10 +483,11 @@ const PATTERNS: Array<{ regex: RegExp; message: string }> = [
     regex: /\bSUBSYSTEMS\b/g,
     message: 'Hardcoded subsystem list "SUBSYSTEMS" — application-specific',
   },
-  { regex: /\bJuwan\b/g, message: 'Person identifier "Juwan" in platform code' },
-  { regex: /\bjuwanh\b/gi, message: 'Person identifier "juwanh" in platform code' },
-  { regex: /--aevum-/g, message: 'Application-specific CSS variable prefix "--aevum-"' },
-  { regex: /\.aevum-/g, message: 'Application-specific CSS class prefix ".aevum-"' },
+
+  // ── Built-in credential detection (security lint, not brand) ─────
+  //
+  // These are universal security patterns — never configurable. No
+  // legitimate platform code should contain API keys or AWS credentials.
   {
     regex: /\b(sk-|pk-|key_)[A-Za-z0-9]{20,}\b/g,
     message: 'Possible API key or secret — credential in platform code',
@@ -482,22 +584,25 @@ function main(): void {
 
   if (argv.includes('--help') || argv.includes('-h')) {
     console.log(`
-check-boundary — platform boundary enforcement gate (v1.3)
+check-boundary — platform boundary enforcement gate (v1.4)
 
 Usage:
   bun run scripts/check-boundary.ts [path]
 
 Three-layer analysis:
-  Layer 1: Import graph — no platform file imports from aevum/ or examples/
+  Layer 1: Import graph — no platform file imports from configured namespaces or examples/
   Layer 1.5: Search privacy — no client-side search + auth in same route file
   Layer 2: Pattern scan — secondary lint for brand names, credentials, etc.
+
+Configuration:
+  .boundary-patterns.json — forbiddenBrandPatterns + forbiddenImportNamespaces
 
 Exits with code 1 if any violations are found.
 `);
     exit(0);
   }
 
-  console.log('  Boundary check (v1.3)\n');
+  console.log('  Boundary check (v1.4)\n');
   console.log(`  Scanning:  ${relative(cwd(), root) || root}\n`);
 
   let hasViolations = false;

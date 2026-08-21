@@ -488,13 +488,14 @@ These are hard guarantees enforced by the
 - **No hardcoded lifecycle states** — `draft`, `published`, `archived`
   are your names.
 - **No hardcoded visibility levels** — `private`, `public` are your names.
-- **No brand names** — `Aevum`, `Juwan`, `juwanh.com` are scrubbed from
-  all platform packages.
+- **No brand names** — brand names, person identifiers, and site
+  URLs are scrubbed from all platform packages. The forbidden patterns
+  are configured in `.boundary-patterns.json`.
 - **No application-specific tables** — the platform provides only
   generic metadata tables (`entities`, `associations`, `snapshots`).
   Your typed tables live in your own migration.
-- **No import from `examples/` or `aevum/`** — the dependency direction
-  is `Application → Platform`, never the reverse.
+- **No import from `examples/` or application namespaces** — the
+  dependency direction is `Application → Platform`, never the reverse.
 
 If you ever find platform code that references your site's identity,
 that's a bug — report it.
