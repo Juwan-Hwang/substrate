@@ -33,6 +33,26 @@ See [§ Standalone Mode](#standalone-mode) below for the standalone workflow.
 
 ## 2. Scaffold a new site
 
+### Option A: Install from npm (recommended)
+
+Scaffold a standalone project with versioned npm dependencies — no monorepo
+clone required:
+
+```bash
+bun create-substrate-site my-site --preset minimal --standalone
+cd my-site
+bun install
+bun dev
+```
+
+Or start from an existing Next.js project and install packages manually:
+
+```bash
+npm install @substrate-platform/site@canary @substrate-platform/ui@canary @substrate-platform/config@canary
+```
+
+### Option B: Monorepo workspace (contributors)
+
 From the monorepo root:
 
 ```bash
@@ -43,16 +63,16 @@ bun create-site
 bun create-site my-site --preset minimal --author Alice --url https://alice.dev
 ```
 
-This copies the `northstar` consumer template, rewrites all branding,
-identity, and feature configuration to match your input, and generates a
-`.env.example` and `README.md` for your site.
-
 Then:
 
 ```bash
 bun install
 bun dev --filter my-site
 ```
+
+Both options copy the `northstar` consumer template, rewrite all branding,
+identity, and feature configuration to match your input, and generate a
+`.env.example` and `README.md` for your site.
 
 Open `http://localhost:3000`.
 
@@ -510,24 +530,17 @@ that's a bug — report it.
 
 ---
 
-## Standalone Mode
+## npm Packages
 
-`create-substrate-site --standalone` generates a project with versioned
-npm dependencies instead of `workspace:*` links. Substrate packages are
-published to npm under the `@substrate-platform` scope, so standalone
-sites install directly from the registry.
+Substrate packages are published to npm under the `@substrate-platform` scope.
+Any package manager — npm, pnpm, or Bun — can consume them.
 
-```bash
-bun create-site my-site --preset minimal --standalone
-cd my-site
-bun install
-bun dev
-```
+### Channels
 
-### Installing published packages
-
-Any package manager — npm, pnpm, or Bun — can consume Substrate from the
-npm registry:
+| Channel | Tag | Stability |
+|---------|-----|-----------|
+| Canary | `@canary` | Bleeding-edge — every CI build |
+| Stable | `@latest` | Production-ready releases |
 
 ```bash
 # npm
@@ -538,20 +551,6 @@ pnpm add @substrate-platform/site@canary
 
 # Bun
 bun add @substrate-platform/site@canary
-```
-
-### Channels
-
-| Channel | Tag | Stability |
-|---------|-----|-----------|
-| Canary | `@canary` | Bleeding-edge — every CI build |
-| Stable | `@latest` | Production-ready releases |
-
-Install a specific channel:
-
-```bash
-npm install @substrate-platform/site@canary   # latest canary
-npm install @substrate-platform/site@latest   # latest stable
 ```
 
 ### Verified externally

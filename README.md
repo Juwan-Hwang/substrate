@@ -31,57 +31,71 @@ Substrate (this repo)
 
 ## Quick Start
 
-Requires [Bun](https://bun.sh) `>= 1.4.0` and [Node.js](https://nodejs.org) `>= 22.0.0`. A [Rust toolchain](https://rustup.rs) is optional — only needed for WASM builds.
+### Install from npm
+
+Substrate packages are published to npm under the `@substrate-platform` scope.
+You don't need to clone this repo.
+
+Requires [Bun](https://bun.sh) `>= 1.4.0` or [Node.js](https://nodejs.org) `>= 22.00`.
 
 ```bash
-# Install dependencies
+# Scaffold a new site with versioned npm dependencies
+bun create-substrate-site my-site --preset minimal --standalone
+cd my-site
 bun install
-
-# Start the dev server (runs all packages via turbo)
 bun dev
+```
 
-# Build everything
+Or install individual packages directly:
+
+```bash
+npm install @substrate-platform/site@canary
+```
+
+See [`docs/CONSUMER_GUIDE.md`](./docs/CONSUMER_GUIDE.md) for a complete walkthrough.
+
+### Develop in the monorepo (contributors)
+
+If you're contributing to Substrate itself:
+
+```bash
+bun install
+bun dev
 bun build
-
-# Run tests
 bun test
-
-# Lint
 bun lint
 
-# Build WASM bindings (requires the Rust toolchain)
+# Build WASM bindings (requires Rust toolchain)
 bun wasm:build
 
-# Check platform boundary (CI gate — detects application-specific contamination)
+# Check platform boundary (CI gate)
 bun boundary:check
 ```
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for architectural rules.
 
 ## Create Your Own Site
 
 ```bash
-# Interactive — prompts for name, preset, author, URL
-bun create-site
-
-# Non-interactive
-bun create-site my-site --preset minimal --author Alice --url https://alice.dev
+# Scaffold with npm dependencies (no monorepo clone needed)
+bun create-substrate-site my-site --preset minimal --standalone
+cd my-site
+bun install
+bun dev
 ```
 
-This scaffolds a new site from Substrate's consumer template —
-a project using `@substrate-platform/site` platform primitives (SubstrateLayout,
-createMetadata, registerInstrumentation, error/loading shells).
-The script rewrites site identity, package metadata, feature preset, starter
-content, and theme defaults to match your input. Then:
+This generates a Next.js project using `@substrate-platform/site` platform
+primitives (SubstrateLayout, createMetadata, registerInstrumentation,
+error/loading shells). The script rewrites site identity, package metadata,
+feature preset, starter content, and theme defaults to match your input.
+
+Or start from an existing Next.js project and install packages manually:
 
 ```bash
-bun install
-bun dev --filter my-site
+npm install @substrate-platform/site@canary @substrate-platform/ui@canary @substrate-platform/config@canary
 ```
 
-See [`docs/CONSUMER_GUIDE.md`](./docs/CONSUMER_GUIDE.md) for a complete
-walkthrough — every file, every platform primitive, every customisation
-point.
-
-Customise:
+Then customise:
 
 | File | What to change |
 |------|---------------|
@@ -90,29 +104,33 @@ Customise:
 | `src/lib/<content>.ts` | Your content |
 | `src/instrumentation.ts` | Feature preset (or define your own manifest) |
 
-### Standalone Mode
-
-Standalone mode generates a project with versioned npm dependencies instead
-of `workspace:*` links. Substrate packages are published to npm under the
-`@substrate-platform` scope — standalone sites install directly from the
-registry.
-
-```bash
-bun create-site my-site --preset minimal --standalone
-cd my-site
-bun install
-bun dev
-```
-
-Standalone mode has been independently verified: a clean project outside
-the monorepo can install `@substrate-platform/*@canary` and import all
-platform primitives without errors.
-
-For development and contribution, use monorepo (workspace) mode — see
-[`CONTRIBUTING.md`](./CONTRIBUTING.md).
-
 The three things that define a site are the **preset**, the **feature manifest**,
 and the **content**. Everything else is yours to shape.
+
+### npm Channels
+
+| Channel | Tag | Stability |
+|---------|-----|-----------|
+| Canary | `@canary` | Bleeding-edge — every CI build |
+| Stable | `@latest` | Production-ready releases |
+
+```bash
+npm install @substrate-platform/site@canary   # latest canary
+npm install @substrate-platform/site@latest   # latest stable
+```
+
+### Monorepo Mode (contributors)
+
+If you're contributing to Substrate, scaffold from within the monorepo
+using `workspace:*` dependencies:
+
+```bash
+# From the monorepo root
+bun create-site my-site --preset minimal
+bun dev --filter my-site
+```
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the full development workflow.
 
 ## Feature Presets
 
