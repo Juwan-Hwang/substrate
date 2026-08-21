@@ -1,41 +1,30 @@
 /**
  * Root layout — dark "knowledge base" shell with Geist fonts.
  *
- * The CSS variables for the fonts are emitted by `geist/font` and
- * consumed by the `@theme` block in `globals.css`.
+ * Uses SubstrateLayout for the HTML shell and "Powered by Substrate" footer.
+ * The Nav component and main content area are passed as children.
  */
-
+import { aiArchiveFeatures, initFeatures } from '@substrate/config/features';
+import { SubstrateLayout } from '@substrate/site/layout';
+import { createMetadata } from '@substrate/site/metadata';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
-import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Nav } from './nav';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: { default: 'AI Archive', template: '%s — AI Archive' },
-  description:
-    'AI-driven content retrieval and RAG Q&A — hybrid search, citations, and an ingestion pipeline.',
-  metadataBase: new URL('https://ai-archive.example'),
-  openGraph: {
-    title: 'AI Archive',
-    description: 'Hybrid search + RAG with transparent citations.',
-    type: 'website',
-    images: [{ url: '/api/og' }],
-  },
-};
+initFeatures(aiArchiveFeatures);
+
+export const metadata = createMetadata({
+  name: 'AI Archive',
+  url: 'https://ai-archive.example',
+});
 
 export default function RootLayout({ children }: { children: ReactNode }): ReactNode {
   return (
-    <html
-      lang="en"
-      className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
-      suppressHydrationWarning
-    >
-      <body>
-        <Nav />
-        <main className="container-page py-10">{children}</main>
-      </body>
-    </html>
+    <SubstrateLayout fontClass={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <Nav />
+      <main className="container-page py-10">{children}</main>
+    </SubstrateLayout>
   );
 }

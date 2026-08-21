@@ -3,7 +3,7 @@
  * handles its first request. The minimal-site preset disables every backend
  * capability, leaving a pure static content site.
  */
-export async function register(): Promise<void> {
-  const { initFeatures, minimalSiteFeatures } = await import('@substrate/config/features');
-  initFeatures(minimalSiteFeatures);
-}
+export const register = (await import('@substrate/site/instrumentation')).registerInstrumentation({
+  featurePreset: 'minimal',
+  serviceName: 'minimal-site',
+});

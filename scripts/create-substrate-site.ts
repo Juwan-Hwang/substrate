@@ -428,9 +428,9 @@ function rewriteBranding(destDir: string, answers: Answers): void {
   const manifestConst = PRESET_TO_MANIFEST[preset];
 
   // ── layout.tsx ──────────────────────────────────────────────────
-  // Replace the Northstar-specific comment block with a generic one.
-  // The regex matches from "Northstar is the first example site" through
-  // the closing "*/" of the comment block.
+  // Rewrite the Northstar comment block and identity tokens.
+  // The template uses SubstrateLayout with the default "Powered by
+  // Substrate" footer — no poweredBy override to strip.
   rewriteFile(join(destDir, 'src/app/layout.tsx'), [
     [/minimalSiteFeatures/g, manifestConst],
     [/Northstar/g, displayName],
@@ -443,17 +443,6 @@ function rewriteBranding(destDir: string, answers: Answers): void {
       /Northstar is the first example site that consumes @substrate\/site's[\s\S]*?See globals\.css for the full contract documentation\.\s*\*\//g,
       `A personal site built on the Substrate platform.\n */`,
     ],
-    // Remove the Northstar-specific poweredBy override and custom footer.
-    // The generated site uses the platform default footer ("Powered by Substrate").
-    [/\s+poweredBy=\{\{ enabled: false \}\}\s*/g, ' '],
-    [/\s*<footer[\s\S]*?<\/footer>\s*/g, ''],
-    // Remove `features` from the import (only used by the removed footer).
-    [
-      /import \{ minimalSiteFeatures, initFeatures, features \} from '@substrate\/config\/features'/g,
-      "import { minimalSiteFeatures, initFeatures } from '@substrate/config/features'",
-    ],
-    // Remove the `const manifest = features()` line.
-    [/\s*const manifest = features\(\);\s*\n/g, '\n'],
   ]);
 
   // ── page.tsx ────────────────────────────────────────────────────

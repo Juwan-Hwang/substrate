@@ -1,5 +1,5 @@
 /** Initialise feature manifest with realtimeRoomFeatures preset. */
-export async function register() {
-  const { initFeatures, realtimeRoomFeatures } = await import('@substrate/config/features');
-  initFeatures(realtimeRoomFeatures);
-}
+export const register = (await import('@substrate/site/instrumentation')).registerInstrumentation({
+  featurePreset: 'realtime',
+  serviceName: 'realtime-room',
+});

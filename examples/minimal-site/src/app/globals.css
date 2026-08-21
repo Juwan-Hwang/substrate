@@ -1,10 +1,18 @@
 /**
  * Global styles for the minimal-site example.
  *
- * A restrained dark theme built on CSS custom properties. The accent token
- * (--accent-primary) is intentionally consumed by @substrate/ui, so the
+ * Three-tier CSS contract:
+ *   1. @import "tailwindcss"            — Tailwind v4 entry (consumer)
+ *   2. @import "@substrate/ui/styles.css" — platform design tokens + components
+ *   3. @import "@substrate/site/globals.css" — Tailwind theme bridge + utilities
+ *
+ * The accent token (--accent-primary) is consumed by @substrate/ui, so the
  * shared component library inherits the site's identity without a fork.
  */
+@import "tailwindcss";
+@import "@substrate/ui/styles.css";
+@import "@substrate/site/globals.css";
+
 :root {
   --bg-primary: #0a0a0c;
   --bg-secondary: #131316;

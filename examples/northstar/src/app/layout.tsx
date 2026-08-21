@@ -26,7 +26,7 @@
  *
  * See globals.css for the full contract documentation.
  */
-import { features, initFeatures, minimalSiteFeatures } from '@substrate/config/features';
+import { initFeatures, minimalSiteFeatures } from '@substrate/config/features';
 import { SubstrateLayout } from '@substrate/site/layout';
 import { createMetadata } from '@substrate/site/metadata';
 import { GeistMono } from 'geist/font/mono';
@@ -43,23 +43,9 @@ export const metadata = createMetadata({
 });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const manifest = features();
-
   return (
-    <SubstrateLayout
-      fontClass={`${GeistSans.variable} ${GeistMono.variable}`}
-      poweredBy={{ enabled: false }}
-    >
+    <SubstrateLayout fontClass={`${GeistSans.variable} ${GeistMono.variable}`}>
       {children}
-      <footer
-        className="container"
-        style={{ paddingBlock: '4rem 2rem', borderTop: '1px solid var(--border-primary)' }}
-      >
-        <p className="muted" style={{ fontSize: '0.875rem', margin: 0 }}>
-          Northstar — a fictional interstellar technology journal. Built on Substrate. Search:{' '}
-          {manifest.search}.
-        </p>
-      </footer>
     </SubstrateLayout>
   );
 }

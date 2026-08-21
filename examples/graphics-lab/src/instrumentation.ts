@@ -1,5 +1,5 @@
 /** Initialise feature manifest with graphicsLabFeatures preset. */
-export async function register() {
-  const { initFeatures, graphicsLabFeatures } = await import('@substrate/config/features');
-  initFeatures(graphicsLabFeatures);
-}
+export const register = (await import('@substrate/site/instrumentation')).registerInstrumentation({
+  featurePreset: 'graphics',
+  serviceName: 'graphics-lab',
+});

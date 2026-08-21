@@ -1,23 +1,27 @@
-/** Root layout — dark theme, Geist fonts. */
-
+/**
+ * Root layout — server component.
+ *
+ * Uses SubstrateLayout for the HTML shell and "Powered by Substrate" footer.
+ * Graphics Lab demonstrates WebGPU/WGSL/R3F with full fallback chain.
+ */
+import { graphicsLabFeatures, initFeatures } from '@substrate/config/features';
+import { SubstrateLayout } from '@substrate/site/layout';
+import { createMetadata } from '@substrate/site/metadata';
 import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
-import type { Metadata } from 'next';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: { default: 'Graphics Lab', template: '%s — Graphics Lab' },
-  description: 'WebGPU/WGSL, R3F, Rust/WASM graphics experiments.',
-};
+initFeatures(graphicsLabFeatures);
+
+export const metadata = createMetadata({
+  name: 'Graphics Lab',
+  url: 'https://graphics-lab.example.com',
+});
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
-      suppressHydrationWarning
-    >
-      <body>{children}</body>
-    </html>
+    <SubstrateLayout fontClass={`${GeistSans.variable} ${GeistMono.variable}`}>
+      {children}
+    </SubstrateLayout>
   );
 }

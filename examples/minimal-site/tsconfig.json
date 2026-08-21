@@ -16,7 +16,9 @@
       "@substrate/content": ["../../packages/content/src"],
       "@substrate/content/*": ["../../packages/content/src/*"],
       "@substrate/config": ["../../packages/config/src"],
-      "@substrate/config/*": ["../../packages/config/src/*"]
+      "@substrate/config/*": ["../../packages/config/src/*"],
+      "@substrate/site": ["../../packages/site/src"],
+      "@substrate/site/*": ["../../packages/site/src/*"]
     }
   },
   "include": ["src", "next.config.ts", "next-env.d.ts"],

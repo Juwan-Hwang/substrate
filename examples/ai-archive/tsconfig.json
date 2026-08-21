@@ -8,7 +8,9 @@
     "noEmit": true,
     "incremental": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@substrate/site": ["../../packages/site/src"],
+      "@substrate/site/*": ["../../packages/site/src/*"]
     }
   },
   "include": ["src", "next-env.d.ts", "*.ts"],

@@ -6,7 +6,12 @@ const nextConfig = {
     viewTransition: true,
     useTypeScriptCli: true,
   },
-  transpilePackages: ['@substrate/graphics', '@substrate/config'],
+  transpilePackages: [
+    '@substrate/graphics',
+    '@substrate/config',
+    '@substrate/site',
+    '@substrate/ui',
+  ],
   // ── Security headers ────────────────────────────────────────────────
   async headers() {
     return [
