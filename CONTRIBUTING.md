@@ -158,6 +158,11 @@ data, use `@substrate-platform/db` (PostgreSQL) — not Turso.
 
 ## Development Setup
 
+Development uses the Bun monorepo workspace. Published packages are
+consumed through the npm Registry — contributors do not need to publish
+locally to test consumer workflows; install from `@substrate-platform/*@canary`
+instead.
+
 ```bash
 # Install dependencies
 bun install

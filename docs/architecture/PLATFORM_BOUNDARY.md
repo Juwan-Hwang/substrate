@@ -102,6 +102,11 @@ This is a deliberate trade-off: Substrate ships working defaults so most
 consumers can start immediately, while remaining architecturally replaceable
 for those who need different infrastructure.
 
+Platform packages are independently distributable through the
+`@substrate-platform` npm scope; concrete infrastructure packages remain
+opinionated implementations. Consumers install from npm without cloning
+the monorepo.
+
 ### Examples (`examples/`)
 
 Examples are **consumers**, not platform code. They demonstrate platform

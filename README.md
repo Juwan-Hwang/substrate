@@ -1,5 +1,9 @@
 # Substrate
 
+[![npm](https://img.shields.io/npm/v/@substrate-platform/site?include_prereleases&label=%40substrate-platform%2Fsite)](https://www.npmjs.com/package/@substrate-platform/site)
+[![npm canary](https://img.shields.io/npm/v/@substrate-platform/contracts@canary?label=canary)](https://www.npmjs.com/package/@substrate-platform/contracts)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
+
 An open-source platform for building modern personal sites.
 
 TypeScript / React frontend, Rust → WASM core, edge-native deployment.
@@ -86,23 +90,26 @@ Customise:
 | `src/lib/<content>.ts` | Your content |
 | `src/instrumentation.ts` | Feature preset (or define your own manifest) |
 
-### Standalone Mode (not yet available)
+### Standalone Mode
 
-> **Not yet available.** Standalone mode generates versioned npm dependencies,
-> but Substrate packages are not yet published to npm. Standalone-generated
-> sites **cannot install dependencies today** — `bun install` will fail.
-> Use monorepo (workspace) mode, which is fully functional and is the primary
-> supported workflow.
-
-When the npm publishing pipeline is in place, standalone mode will work as
-follows:
+Standalone mode generates a project with versioned npm dependencies instead
+of `workspace:*` links. Substrate packages are published to npm under the
+`@substrate-platform` scope — standalone sites install directly from the
+registry.
 
 ```bash
-bun run ./scripts/create-substrate-site.ts my-site --standalone
+bun create-site my-site --preset minimal --standalone
 cd my-site
 bun install
 bun dev
 ```
+
+Standalone mode has been independently verified: a clean project outside
+the monorepo can install `@substrate-platform/*@canary` and import all
+platform primitives without errors.
+
+For development and contribution, use monorepo (workspace) mode — see
+[`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 The three things that define a site are the **preset**, the **feature manifest**,
 and the **content**. Everything else is yours to shape.

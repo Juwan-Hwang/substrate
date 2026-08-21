@@ -12,10 +12,10 @@
  *   bun create-site my-site --preset minimal --author Alice --url https://alice.dev
  *
  * From any directory (standalone mode — versioned npm deps):
- *   bun run ./scripts/create-substrate-site.ts my-site --preset minimal
+ *   bun run ./scripts/create-substrate-site.ts my-site --preset minimal --standalone
  *
- *   NOTE: Standalone mode is not yet functional — Substrate packages
- *   are not published to npm. Use monorepo (workspace) mode for now.
+ *   Standalone mode generates versioned npm dependencies. Substrate packages
+ *   are published to npm under the @substrate-platform scope.
  *
  * ## Interactive mode
  *

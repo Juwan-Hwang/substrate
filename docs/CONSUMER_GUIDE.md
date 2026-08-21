@@ -17,9 +17,17 @@
 | [Node.js](https://nodejs.org) | `>= 22.0.0` | Yes — Next.js runtime |
 | [Rust toolchain](https://rustup.rs) | stable | Only for WASM builds (`wasm:build`) |
 
-Substrate packages are **not yet published to npm**. You must work within
-the monorepo (workspace mode). See
-[§ Standalone Mode](#standalone-mode-not-yet-available) below.
+Substrate packages are published to npm under the `@substrate-platform`
+scope. Consumers can install them directly — no monorepo clone required.
+
+**Two ways to consume Substrate:**
+
+| Mode | How | Best for |
+|------|-----|----------|
+| **Standalone (recommended)** | `npm install @substrate-platform/site@canary` | Building a site |
+| **Monorepo (workspace)** | Clone this repo, use `bun install` | Contributing to the platform |
+
+See [§ Standalone Mode](#standalone-mode) below for the standalone workflow.
 
 ---
 
@@ -502,25 +510,58 @@ that's a bug — report it.
 
 ---
 
-## Standalone Mode (not yet available)
+## Standalone Mode
 
 `create-substrate-site --standalone` generates a project with versioned
-npm dependencies instead of `workspace:*`. However, **Substrate packages
-are not yet published to npm**, so standalone-generated sites cannot
-install dependencies today.
-
-When the npm publishing pipeline is in place, standalone mode will work
-as follows:
+npm dependencies instead of `workspace:*` links. Substrate packages are
+published to npm under the `@substrate-platform` scope, so standalone
+sites install directly from the registry.
 
 ```bash
-bun run ./scripts/create-substrate-site.ts my-site --standalone
+bun create-site my-site --preset minimal --standalone
 cd my-site
 bun install
 bun dev
 ```
 
-Until then, use monorepo (workspace) mode — it is fully functional and
-is the primary supported workflow.
+### Installing published packages
+
+Any package manager — npm, pnpm, or Bun — can consume Substrate from the
+npm registry:
+
+```bash
+# npm
+npm install @substrate-platform/site@canary
+
+# pnpm
+pnpm add @substrate-platform/site@canary
+
+# Bun
+bun add @substrate-platform/site@canary
+```
+
+### Channels
+
+| Channel | Tag | Stability |
+|---------|-----|-----------|
+| Canary | `@canary` | Bleeding-edge — every CI build |
+| Stable | `@latest` | Production-ready releases |
+
+Install a specific channel:
+
+```bash
+npm install @substrate-platform/site@canary   # latest canary
+npm install @substrate-platform/site@latest   # latest stable
+```
+
+### Verified externally
+
+Standalone mode has been independently verified: a clean project outside
+the monorepo can install `@substrate-platform/*@canary`, import all
+platform primitives, and build successfully.
+
+For development and contribution, use monorepo (workspace) mode — see
+[`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 ---
 
