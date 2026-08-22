@@ -2,7 +2,7 @@
   "name": "@substrate-platform/wasm",
   "type": "module",
   "description": "Substrate WASM — browser bindings with GPU acceleration",
-  "version": "0.1.0",
+  "version": "0.2.0-canary.0",
   "license": "Apache-2.0",
   "files": [
     "substrate_wasm_bg.wasm",
