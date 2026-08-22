@@ -111,8 +111,11 @@ export function SubstrateFooter({ enabled = true }: { enabled?: boolean } = {}) 
   if (!enabled) return null;
 
   return (
-    <footer className="mx-auto max-w-5xl px-6 pb-8 pt-4 text-center">
-      <p className="text-xs" style={{ color: 'var(--substrate-text-tertiary)', opacity: 0.6 }}>
+    <footer className="mx-auto max-w-5xl px-6 pb-4 pt-4 text-center">
+      <p
+        className="text-[0.6875rem]"
+        style={{ color: 'var(--substrate-text-tertiary)', opacity: 0.35 }}
+      >
         Powered by{' '}
         <a
           href={SUBSTRATE_REPOSITORY}
