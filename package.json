@@ -22,7 +22,7 @@
     "wasm:component-embed": "wasm-tools component new target/wasm32-wasip2/release/substrate_wasm.wasm -o crates/wasm/substrate.component.wasm",
     "wasm:wasip3": "cargo +nightly build -p substrate-wasm --no-default-features --features component --target wasm32-wasip3 --release",
     "devshell": "nix develop --impure",
-    "create-site": "bun run scripts/create-substrate-site.ts",
+    "create-site": "bun run packages/create-substrate-site/src/cli.ts",
     "boundary:check": "bun run scripts/check-boundary.ts",
     "changeset": "changeset",
     "changeset:version": "changeset version",

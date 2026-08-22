@@ -17,7 +17,7 @@ Changesets prerelease (canary) or stable (latest)
     ↓
 npm Trusted Publishing (OIDC, no long-lived tokens)
     ↓
-npm Registry (@substrate-platform/*)
+npm Registry (@substrate-platform/* + create-substrate-site)
 ```
 
 ---
@@ -60,7 +60,7 @@ npm install @substrate-platform/site@latest
    - Enters Changesets prerelease mode (canary only)
    - Runs `changeset version` (bumps all linked packages)
    - Replaces `workspace:*` with semver ranges
-   - Publishes in topological order (12 packages, Layer 0 → 3)
+   - Publishes in topological order (13 packages, Layer 0 → 3)
    - Exits prerelease mode
    - Pushes version commits back to `main`
 
@@ -71,7 +71,7 @@ npm install @substrate-platform/site@latest
 npm Trusted Publishing uses GitHub Actions OIDC tokens — no `NPM_TOKEN`
 secret needed. Configure **once per package** on npmjs.com:
 
-For each of the 12 `@substrate-platform/*` packages:
+For each of the 13 published packages (12 `@substrate-platform/*` + 1 `create-substrate-site`):
 
 1. Go to the package page → **Settings** → **Trusted Publishing**
 2. Add a trusted publisher with exactly:
@@ -94,20 +94,29 @@ Layer 0: contracts, config, tokens        (no internal deps)
 Layer 1: wasm                               (no internal deps)
 Layer 2: ui, content, db, observability     (depend on Layer 0)
 Layer 3: edge, ai, site, graphics           (depend on Layer 0–2)
+Layer 4: create-substrate-site              (standalone CLI, ships templates)
 ```
 
 **Critical:** `@substrate-platform/wasm` must be published before
 `@substrate-platform/graphics` — graphics depends on wasm at runtime.
 
+**CLI:** `create-substrate-site` ships embedded northstar templates and
+resolves platform packages via dist-tags (`canary` / `latest`) at install
+time — it has no build-time dependency on any platform package.
+
 ---
 
 ## Linked Group
 
-All 12 packages are in a Changesets `linked` group (see
+All 12 platform packages are in a Changesets `linked` group (see
 `.changeset/config.json`). This ensures version coordination: when any
 package is bumped, all linked packages receive the same version. This
 guarantees a consistent release set — no package is left at a stale
 version while its dependencies move forward.
+
+The `create-substrate-site` CLI package is versioned independently — it
+ships embedded templates and doesn't need to track platform package
+versions (it resolves them at install time via dist-tags).
 
 ---
 

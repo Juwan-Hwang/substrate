@@ -10,6 +10,9 @@ target/
 wasm-pack/
 storybook-static/
 
+# npm pack tarballs
+*.tgz
+
 # TypeScript
 *.tsbuildinfo
 .tsbuildinfo

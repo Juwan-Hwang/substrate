@@ -1,0 +1,61 @@
+{
+  "name": "create-substrate-site",
+  "version": "0.1.1",
+  "license": "Apache-2.0",
+  "type": "module",
+  "description": "Scaffolding CLI for Substrate — create a new site from the northstar consumer template.",
+  "keywords": [
+    "substrate",
+    "scaffold",
+    "cli",
+    "create",
+    "personal-site",
+    "next.js"
+  ],
+  "author": "Juwan Hwang <juwanh.com>",
+  "homepage": "https://github.com/Juwan-Hwang/substrate",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juwan-Hwang/substrate.git",
+    "directory": "packages/create-substrate-site"
+  },
+  "bugs": {
+    "url": "https://github.com/Juwan-Hwang/substrate/issues"
+  },
+  "bin": {
+    "create-substrate-site": "dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/cli.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json && bun run ../../scripts/fix-import-extensions.ts dist",
+    "dev": "tsc --watch --project tsconfig.build.json",
+    "lint": "biome check src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist .turbo"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "vitest": "^3.2.0"
+  },
+  "files": [
+    "dist/**",
+    "templates/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.0.0",
+    "bun": ">=1.4.0"
+  }
+}

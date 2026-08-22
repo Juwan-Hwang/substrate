@@ -1,0 +1,111 @@
+/**
+ * Global styles for the Northstar example site.
+ *
+ * ## CSS Package Boundary — Three-Tier Contract
+ *
+ *   Tier 1: @import "tailwindcss"
+ *     The Tailwind v4 entry point. Processed by @tailwindcss/postcss
+ *     in the consumer's PostCSS environment. Must be declared by the
+ *     application, not by a platform package.
+ *
+ *   Tier 2: @import "@substrate-platform/ui/styles.css"
+ *     Platform design tokens (--substrate-*) and component styles
+ *     (.substrate-glass-card, .substrate-badge, .btn, etc.).
+ *     Uses relative @import only — zero external module dependencies.
+ *
+ *   Tier 3: @import "@substrate-platform/site/globals.css"
+ *     Tailwind v4 @theme bridge: maps --substrate-* tokens into
+ *     Tailwind's --color-* / --font-* / --radius-* namespace.
+ *     Platform utility classes (.glass, .text-gradient, paint worklets).
+ *     Does NOT @import "tailwindcss" — that is Tier 1's job.
+ *
+ * Northstar uses a warm amber accent on a deep navy backdrop — deliberately
+ * distinct from minimal-site's cool slate palette, proving that the platform's
+ * CSS custom property system adapts to any brand identity.
+ *
+ * The accent token (--accent-primary) is consumed by @substrate-platform/ui, so the
+ * shared component library inherits Northstar's identity without a fork.
+ */
+@import "tailwindcss";
+@import "@substrate-platform/ui/styles.css";
+@import "@substrate-platform/site/globals.css";
+
+:root {
+  --bg-primary: #0b0d14;
+  --bg-secondary: #12141f;
+  --bg-elevated: #1a1d2c;
+  --text-primary: #e6e4dc;
+  --text-secondary: #9b988e;
+  --text-tertiary: #5e5c54;
+  --border-primary: #282b3d;
+  --accent-primary: #d4a052;
+  --accent-glow: rgba(212, 160, 82, 0.15);
+
+  --max-width: 680px;
+  --gutter: 1.5rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+a:hover {
+  opacity: 0.8;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+code,
+pre {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.tertiary {
+  color: var(--text-tertiary);
+}
+
+/* View Transitions API — smooth route cross-fades where supported. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.25s;
+  animation-timing-function: ease-out;
+}

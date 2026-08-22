@@ -36,11 +36,11 @@ Substrate (this repo)
 Substrate packages are published to npm under the `@substrate-platform` scope.
 You don't need to clone this repo.
 
-Requires [Bun](https://bun.sh) `>= 1.4.0` or [Node.js](https://nodejs.org) `>= 22.00`.
+Requires [Bun](https://bun.sh) `>= 1.4.0` or [Node.js](https://nodejs.org) `>= 22.0.0`.
 
 ```bash
-# Scaffold a new site with versioned npm dependencies
-bun create-substrate-site my-site --preset minimal --standalone
+# Scaffold a new site — resolves @substrate-platform/*@canary from npm
+bun create-substrate-site my-site --preset minimal
 cd my-site
 bun install
 bun dev
@@ -78,11 +78,15 @@ See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for architectural rules.
 
 ```bash
 # Scaffold with npm dependencies (no monorepo clone needed)
-bun create-substrate-site my-site --preset minimal --standalone
+bun create-substrate-site my-site --preset minimal
 cd my-site
 bun install
 bun dev
 ```
+
+The CLI resolves platform packages from npm using the `--channel` flag
+(default: `canary`). Use `--channel latest` for stable releases, or
+`--version 0.2.0` to pin an exact version.
 
 This generates a Next.js project using `@substrate-platform/site` platform
 primitives (SubstrateLayout, createMetadata, registerInstrumentation,
@@ -166,16 +170,18 @@ substrate/
 │  ├─ ai-archive/               #   RAG, hybrid search, chat capability demo
 │  ├─ realtime-room/            #   Durable Objects, presence capability demo
 │  └─ northstar/                #   Independent consumer validation (fictional site)
-├─ packages/                    # Reusable platform modules
+├─ packages/                    # Reusable platform modules (13 published packages)
+│  ├─ create-substrate-site/    #   create-substrate-site             — Scaffolding CLI
+│  ├─ contracts/                #   @substrate-platform/contracts     — Type contracts & schemas
+│  ├─ config/                   #   @substrate-platform/config        — Feature manifest & presets
+│  ├─ tokens/                   #   @substrate-platform/tokens        — Design tokens (Style Dictionary)
 │  ├─ site/                     #   @substrate-platform/site          — Site shell primitives
 │  ├─ ui/                       #   @substrate-platform/ui            — Component library
 │  ├─ content/                  #   @substrate-platform/content       — MDX & content layer
 │  ├─ graphics/                 #   @substrate-platform/graphics      — GPU / WebGL / rendering
-│  ├─ contracts/                #   @substrate-platform/contracts     — Type contracts & schemas
 │  ├─ db/                       #   @substrate-platform/db            — Database access (Drizzle)
 │  ├─ edge/                     #   @substrate-platform/edge          — Cloudflare Workers (Hono)
-│  ├─ config/                   #   @substrate-platform/config        — Feature manifest & presets
-│  ├─ tokens/                   #   @substrate-platform/tokens        — Design tokens (Style Dictionary)
+│  ├─ ai/                       #   @substrate-platform/ai            — Vercel AI SDK & RAG
 │  └─ observability/            #   @substrate-platform/observability — OpenTelemetry & telemetry
 ├─ crates/                      # Rust core
 │  ├─ core/                     #   substrate-core          — Graph, SIMD, content

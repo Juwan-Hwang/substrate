@@ -39,11 +39,16 @@ Scaffold a standalone project with versioned npm dependencies — no monorepo
 clone required:
 
 ```bash
-bun create-substrate-site my-site --preset minimal --standalone
+bun create-substrate-site my-site --preset minimal
 cd my-site
 bun install
 bun dev
 ```
+
+The CLI resolves platform packages from npm using `--channel` (default:
+`canary`). Use `--channel latest` for stable releases, or `--version 0.2.0`
+to pin an exact version. The `--standalone` flag is implied when running
+outside the monorepo.
 
 Or start from an existing Next.js project and install packages manually:
 
@@ -288,12 +293,28 @@ can declare a unique social card via metadata.
 
 ### `next.config.ts` — Build configuration
 
-Key settings the scaffold provides:
+The scaffold generates different configs depending on the mode:
+
+**Standalone mode** (npm install — the default for consumers):
 
 ```ts
 const nextConfig: NextConfig = {
   reactCompiler: true,           // React 19 Compiler
   cacheComponents: true,          // Partial Prerendering
+  // Security headers (HSTS, CSP, X-Frame-Options, etc.)
+  async headers() { /* ... */ },
+};
+```
+
+No `transpilePackages` is needed — the published npm packages ship
+pre-built JavaScript.
+
+**Monorepo mode** (workspace — for contributors):
+
+```ts
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+  cacheComponents: true,
   experimental: {
     viewTransition: true,         // View Transitions API
   },
@@ -307,21 +328,38 @@ const nextConfig: NextConfig = {
 };
 ```
 
-`transpilePackages` lets your site consume raw TypeScript source from
+`transpilePackages` lets the site consume raw TypeScript source from
 workspace packages — no separate build step needed.
 
 ### `tsconfig.json` — Path aliases
 
-The scaffold maps `@substrate-platform/*` package names to workspace `src/`
-directories, and `@/*` to your `src/`:
+**Standalone mode** — self-contained, no monorepo paths:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    /* ... */
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+Platform packages resolve via `node_modules` — no path aliases needed.
+
+**Monorepo mode** — maps `@substrate-platform/*` to workspace `src/`:
 
 ```json
 {
   "paths": {
     "@/*": ["./src/*"],
     "@substrate-platform/site": ["../../packages/site/src"],
-    "@substrate-platform/site/*": ["../../packages/site/src/*"],
-    // ... etc for each platform package
+    "@substrate-platform/site/*": ["../../packages/site/src/*"]
   }
 }
 ```

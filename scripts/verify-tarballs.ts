@@ -28,6 +28,7 @@ const PACKAGES = [
   { dir: 'packages/ai', name: 'ai' },
   { dir: 'packages/graphics', name: 'graphics' },
   { dir: 'packages/observability', name: 'observability' },
+  { dir: 'packages/create-substrate-site', name: 'create-substrate-site' },
 ];
 
 let pass = 0;
@@ -62,11 +63,18 @@ function check(pkgDir: string, pkgName: string, version: string) {
     ),
   );
 
-  // Determine if this package ships TS source instead of compiled dist
-  const shipsSource = pkg.scripts?.build?.includes('echo') || pkg.main?.startsWith('./src/');
+  // Determine if this package ships TS source instead of compiled dist.
+  // This is true for:
+  //   - Packages whose build script is just `echo` (no-op, ships src/ directly)
+  //   - Packages whose main points to ./src/ (not ./dist/)
+  //   - The scaffolding CLI, which ships template .ts/.tsx files in templates/
+  const shipsSource =
+    pkg.scripts?.build?.includes('echo') ||
+    pkg.main?.startsWith('./src/') ||
+    pkgName === 'create-substrate-site';
 
   // Check for .ts/.tsx source files (should NOT be in tarball, except .d.ts)
-  // Skip for packages that intentionally ship TS source (e.g., graphics).
+  // Skip for packages that intentionally ship TS source (e.g., graphics, CLI templates).
   if (!shipsSource) {
     const srcFiles = files.filter((f) => f.match(/\.tsx?$/) && !f.endsWith('.d.ts'));
     if (srcFiles.length > 0) {
@@ -74,9 +82,10 @@ function check(pkgDir: string, pkgName: string, version: string) {
     }
   }
 
-  // Check for test files
+  // Check for test files — skip for CLI packages whose templates contain test files.
+  const skipTestCheck = pkgName === 'create-substrate-site';
   const testFiles = files.filter((f) => f.includes('.test.') || f.includes('__tests__'));
-  if (testFiles.length > 0) {
+  if (!skipTestCheck && testFiles.length > 0) {
     issues.push(`Test files in tarball: ${testFiles.join(', ')}`);
   }
 
@@ -174,7 +183,7 @@ function check(pkgDir: string, pkgName: string, version: string) {
   }
 }
 
-console.log('\n=== Tarball Metadata Verification (12 packages) ===\n');
+console.log('\n=== Tarball Metadata Verification (13 packages) ===\n');
 
 for (const { dir } of PACKAGES) {
   const pkgJson = JSON.parse(
