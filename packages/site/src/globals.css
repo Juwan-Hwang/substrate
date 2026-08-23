@@ -57,6 +57,20 @@
  * consumer's CSS, where the PostCSS environment can resolve it correctly.
  */
 
+/* ── Tailwind v4 content detection ──────────────────────────────────
+ *
+ * Platform components (SubstrateLayout, SubstrateFooter, shells, etc.)
+ * use Tailwind utility class names in their compiled dist output.
+ * By default Tailwind v4 ignores node_modules — so consumers would
+ * get unstyled components. These @source directives register the
+ * platform packages' dist directories for class name scanning.
+ *
+ * Paths are relative to this stylesheet, which is resolved from the
+ * consumer's node_modules via @import "@substrate-platform/site/globals.css".
+ */
+@source "../node_modules/@substrate-platform/site/dist";
+@source "../node_modules/@substrate-platform/ui/dist";
+
 /* ── Tailwind v4 theme bridge ───────────────────────────────────────
  *
  * Maps the platform's --substrate-* design tokens into Tailwind v4's
