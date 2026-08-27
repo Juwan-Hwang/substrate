@@ -14,22 +14,6 @@
 
 /**
  * A declarative state-machine definition.
- *
- * The application creates a `LifecycleDefinition<string, string>` with
- * its own state and event names. The platform validates transitions
- * against this definition at runtime.
- *
- * @example
- * ```typescript
- * const myLifecycle: LifecycleDefinition<string, string> = {
- *   initial: 'draft',
- *   states: ['draft', 'published'] as const,
- *   transitions: {
- *     publish: ['draft', 'published'] as const,
- *     unpublish: ['published', 'draft'] as const,
- *   },
- * };
- * ```
  */
 export interface LifecycleDefinition<State extends string = string, Event extends string = string> {
   /** The initial state a new entity occupies. */
@@ -95,11 +79,6 @@ export function validateLifecycle<S extends string, E extends string>(
 
 /**
  * Resolve the target state for a given event from a given current state.
- *
- * Returns `null` if the transition is not defined or the current state
- * does not match the transition's `from`.
- *
- * Pure function — no side effects.
  */
 export function resolveTransition<S extends string, E extends string>(
   def: LifecycleDefinition<S, E>,
@@ -114,8 +93,6 @@ export function resolveTransition<S extends string, E extends string>(
 
 /**
  * Returns all events that can be fired from the given state.
- *
- * Pure function — no side effects.
  */
 export function availableTransitions<S extends string, E extends string>(
   def: LifecycleDefinition<S, E>,
@@ -125,4 +102,38 @@ export function availableTransitions<S extends string, E extends string>(
     readonly [E, readonly [S, S]]
   >;
   return entries.filter(([, [from]]) => from === current).map(([event]) => event);
+}
+
+// ── Lifecycle Engine ───────────────────────────────────────────────
+
+export interface LifecycleEngine<State extends string = string, Event extends string = string> {
+  readonly definition: LifecycleDefinition<State, Event>;
+  canTransition(current: State, event: Event): boolean;
+  transition(current: State, event: Event): State | null;
+  getAvailableEvents(current: State): readonly Event[];
+}
+
+/**
+ * Create a validated LifecycleEngine instance.
+ */
+export function createLifecycleEngine<S extends string, E extends string>(
+  def: LifecycleDefinition<S, E>,
+): LifecycleEngine<S, E> {
+  const validation = validateLifecycle(def);
+  if (!validation.valid) {
+    throw new Error(`Invalid LifecycleDefinition: ${validation.errors.join(', ')}`);
+  }
+
+  return {
+    definition: def,
+    canTransition(current: S, event: E): boolean {
+      return resolveTransition(def, current, event) !== null;
+    },
+    transition(current: S, event: E): S | null {
+      return resolveTransition(def, current, event);
+    },
+    getAvailableEvents(current: S): readonly E[] {
+      return availableTransitions(def, current);
+    },
+  };
 }

@@ -241,10 +241,10 @@ describe('executePublish', () => {
 
 // ── Hash functions ───────────────────────────────────────────────
 
-describe('hashPreviewState / hashPublicImpact', () => {
-  it('produces stable 8-char hex hash', () => {
+describe('hashPreviewState / hashPublicImpact / calculateAssessmentFingerprint', () => {
+  it('produces stable 64-char hex SHA-256 hash', () => {
     const h = hashPreviewState(preview);
-    expect(h).toMatch(/^[0-9a-f]{8}$/);
+    expect(h).toMatch(/^[0-9a-f]{64}$/);
     expect(hashPreviewState(preview)).toBe(h); // deterministic
   });
 
@@ -256,7 +256,7 @@ describe('hashPreviewState / hashPublicImpact', () => {
 
   it('hashPublicImpact is deterministic', () => {
     const h = hashPublicImpact(impact);
-    expect(h).toMatch(/^[0-9a-f]{8}$/);
+    expect(h).toMatch(/^[0-9a-f]{64}$/);
     expect(hashPublicImpact(impact)).toBe(h);
   });
 });

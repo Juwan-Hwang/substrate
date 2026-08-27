@@ -16,6 +16,8 @@
  *   - entity_indexes (query optimization)
  *   - snapshots (immutable state snapshots)
  *   - cas_objects (content-addressed storage)
+ *   - publication_attempts (generic execution tracking)
+ *   - publishing_confirmations (generic authorization confirmations)
  *
  * Application-specific tables are defined by the application
  * in its own migration and schema files.
@@ -30,25 +32,14 @@ import {
   text,
   timestamp,
   uuid,
+  varchar,
 } from 'drizzle-orm/pg-core';
 
 // ── Platform Core Tables ─────────────────────────────────────────────
-//
-// These tables are the platform's generic metadata authority.
-// Application typed tables store ONLY
-// business/extension fields — lifecycle_state, visibility, owner_id
-// all live in `entities`.
-//
-// See: architecture-contract-v1.3.md §11 + §14.3.
 
 /**
  * Generic Entity Registry — sole authority for lifecycle, visibility,
  * owner, timestamps, and deletion state.
- *
- * `type` is app-defined ('writing', 'project', etc.).
- * `lifecycle_state` is app-defined ('draft', 'published', etc.).
- * `visibility` is app-defined ('private', 'restricted', 'public').
- * The platform NEVER hardcodes any of these values.
  */
 export const entities = pgTable(
   'entities',
@@ -71,10 +62,6 @@ export const entities = pgTable(
 
 /**
  * Association — undirected, untyped entity relation.
- *
- * NO `kind` column. NO `relation_type` column.
- * Association only expresses "A and B are related."
- * See: architecture-contract-v1.3.md §9.
  */
 export const associations = pgTable(
   'associations',
@@ -94,10 +81,6 @@ export const associations = pgTable(
 
 /**
  * Entity indexes — query optimization for the entities table.
- *
- * Composite primary key on (entity_type, entity_id) prevents duplicate
- * rows for the same entity. Each (type, id) pair has exactly one index
- * row reflecting its current lifecycle state and visibility.
  */
 export const entityIndexes = pgTable(
   'entity_indexes',
@@ -114,20 +97,10 @@ export const entityIndexes = pgTable(
 );
 
 // ── History Layer Tables ───────────────────────────────────────────
-//
-// Platform primitives only: snapshots + cas_objects.
-// NO revisions table — Revision is an application entity.
-// The application creates revisions in its own migration.
-//
-// See: architecture-contract-v1.3.md §2.5 + §14.3.
 
 /**
  * Site-level State Snapshot — immutable point-in-time copy of the
  * entire application state at publish time.
- *
- * `state_ref`: when CAS is enabled -> Manifest hash -> CAS objects.
- *              when CAS is disabled -> direct serialized state blob identifier.
- * NO entity_type, NO entity_id — one Snapshot = entire application state.
  */
 export const snapshots = pgTable('snapshots', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -138,7 +111,6 @@ export const snapshots = pgTable('snapshots', {
 
 /**
  * Content-Addressed Storage objects — immutable, content-addressed blobs.
- * Orphans are GC-safe (idempotent, content-addressed).
  */
 export const casObjects = pgTable('cas_objects', {
   hash: text('hash').primaryKey(),
@@ -146,6 +118,50 @@ export const casObjects = pgTable('cas_objects', {
   storageBackend: text('storage_backend').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+/**
+ * Publication Attempts — execution tracking for publish protocol.
+ */
+export const publicationAttempts = pgTable(
+  'publication_attempts',
+  {
+    id: varchar('id', { length: 255 }).primaryKey(),
+    entityType: varchar('entity_type', { length: 64 }).notNull(),
+    entityId: varchar('entity_id', { length: 255 }).notNull(),
+    changesetId: varchar('changeset_id', { length: 255 }),
+    state: varchar('state', { length: 32 }).notNull(),
+    errorMessage: text('error_message'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    committedAt: timestamp('committed_at', { withTimezone: true }),
+    failedAt: timestamp('failed_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('publication_attempts_entity_idx').on(table.entityType, table.entityId),
+    index('publication_attempts_state_idx').on(table.state),
+  ],
+);
+
+/**
+ * Publishing Confirmations — authorization records for public impact.
+ */
+export const publishingConfirmations = pgTable(
+  'publishing_confirmations',
+  {
+    id: varchar('id', { length: 255 }).primaryKey(),
+    changesetId: varchar('changeset_id', { length: 255 }).notNull(),
+    confirmedBy: varchar('confirmed_by', { length: 255 }).notNull(),
+    assessmentFingerprint: varchar('assessment_fingerprint', { length: 255 }).notNull(),
+    status: varchar('status', { length: 32 }).default('confirmed').notNull(),
+    confirmedAt: timestamp('confirmed_at', { withTimezone: true }).defaultNow().notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    revokedBy: varchar('revoked_by', { length: 255 }),
+    revocationReason: text('revocation_reason'),
+  },
+  (table) => [
+    index('publishing_confirmations_changeset_idx').on(table.changesetId),
+    index('publishing_confirmations_status_idx').on(table.status),
+  ],
+);
 
 // ── Inferred types ───────────────────────────────────────────────────
 
@@ -159,3 +175,7 @@ export type Snapshot = typeof snapshots.$inferSelect;
 export type NewSnapshot = typeof snapshots.$inferInsert;
 export type CasObject = typeof casObjects.$inferSelect;
 export type NewCasObject = typeof casObjects.$inferInsert;
+export type PublicationAttemptRow = typeof publicationAttempts.$inferSelect;
+export type NewPublicationAttemptRow = typeof publicationAttempts.$inferInsert;
+export type PublishingConfirmationRow = typeof publishingConfirmations.$inferSelect;
+export type NewPublishingConfirmationRow = typeof publishingConfirmations.$inferInsert;

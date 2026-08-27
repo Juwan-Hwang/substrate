@@ -85,7 +85,7 @@ export function mustUseServer(mode: SearchMode, principal: Principal): boolean {
  */
 export function assertStaticIndexIsPublic(
   items: readonly { visibility: string }[],
-  isPublic: (visibility: string) => boolean,
+  isPublic: (visibility: string) => boolean = (v) => v === 'public',
 ): void {
   for (const item of items) {
     if (!isPublic(item.visibility)) {

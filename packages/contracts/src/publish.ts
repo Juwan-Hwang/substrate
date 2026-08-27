@@ -8,7 +8,7 @@
  *     2. Preflight Authorization (advisory)
  *     3. Preview State (render for user)
  *     4. Public Impact Assessment
- *     5. User Confirms
+ *     5. User Confirms (PublishConfirmation with SHA-256 fingerprint)
  *
  *   Phase B (inside transaction):
  *     6. CAS pre-write (if enabled — precondition)
@@ -22,16 +22,10 @@
  *    14. Write Snapshot Reference + application revision row
  *    15. COMMIT
  *
- * The user's confirmed preview is a snapshot of the preview content +
- * public impact result — NOT a permanent authorization ticket.
- *
- * The platform executes the two-phase publish protocol and calls
- * `commitWork(tx)` inside the transaction. The **application** decides
- * what to write — the platform does not mandate any specific table
- * name, revision model, or history structure.
- *
  * See: architecture-contract-v1.3.md §4.
  */
+
+import { createHash } from 'node:crypto';
 
 import type { AuthorizationBundle, AuthorizationContext, Principal } from './authorization';
 import type {
@@ -41,13 +35,13 @@ import type {
   TransactionalCommitEngine,
 } from './changeset';
 import type { EntityRef, EntityResolver, EntitySnapshot } from './entity-resolver';
+import { entityRefKey } from './entity-resolver';
 
 export type {
   AuthorizationBundle,
   AuthorizationContext,
   Principal,
 } from './authorization';
-// Re-export types consumers need.
 export type {
   ChangeSet,
   CommitResult,
@@ -57,11 +51,10 @@ export type {
 } from './changeset';
 export type { EntityRef, EntityResolver, EntitySnapshot } from './entity-resolver';
 
-// ── Preview Types ───────────────────────────────────────────────────
+// ── Preview & Impact Types ──────────────────────────────────────────
 
 /**
  * The projected state after applying a ChangeSet, before commit.
- * This is what the user sees and confirms.
  */
 export interface PreviewState {
   /** Affected entities with their projected post-change metadata. */
@@ -71,23 +64,42 @@ export interface PreviewState {
 }
 
 /**
- * Assessment of what will become publicly visible after this publish.
+ * Assessment of what will become publicly visible or modified after this publish.
  */
 export interface PublicImpactAssessment {
-  /** Will any entity transition to a publicly visible state? */
+  /** Will any entity transition to a publicly visible state or create public content? */
   readonly becomesPublic: boolean;
   /** Entities that will be newly exposed publicly. */
   readonly newlyExposedEntities: readonly EntityRef[];
+  /** Entities whose public content or metadata is modified. */
+  readonly modifiedPublicEntities?: readonly EntityRef[];
+  /** Entities removed from public visibility. */
+  readonly removedPublicEntities?: readonly EntityRef[];
   /** Serialised representation of the impact (for comparison). */
   readonly serializedImpact: string;
 }
 
+// ── Confirmation & Fingerprint ──────────────────────────────────────
+
+export type ConfirmationStatus = 'confirmed' | 'revoked';
+
 /**
- * The user's confirmation of the preview.
- *
- * This captures a hash of the preview state + public impact at
- * confirmation time. After locking, the platform recomputes and
- * verifies this hash matches — preventing stale-preview commits.
+ * The user's explicit confirmation of the public impact.
+ */
+export interface PublishConfirmation {
+  readonly id: string;
+  readonly changesetId: string;
+  readonly confirmedBy: string;
+  readonly confirmedAt: number; // epoch ms
+  readonly assessmentFingerprint: string;
+  readonly status: ConfirmationStatus;
+  readonly revokedAt?: number;
+  readonly revokedBy?: string;
+  readonly revocationReason?: string;
+}
+
+/**
+ * Backward-compatible PreviewConfirmation capture.
  */
 export interface PreviewConfirmation {
   readonly previewHash: string;
@@ -96,19 +108,45 @@ export interface PreviewConfirmation {
 }
 
 /**
- * Compute a stable hash from a PreviewState's serialized form.
- * Uses a simple FNV-1a hash for portability (no crypto dependency needed
- * for comparison — this is not a security hash, just a staleness check).
+ * Compute deterministic SHA-256 fingerprint for a PublicImpactAssessment.
  */
-export function hashPreviewState(state: PreviewState): string {
-  return fnv1a(state.serializedState);
+export function calculateAssessmentFingerprint(impact: PublicImpactAssessment): string {
+  const normalized = {
+    becomesPublic: impact.becomesPublic,
+    newlyExposed: [...impact.newlyExposedEntities].map(entityRefKey).sort(),
+    modified: [...(impact.modifiedPublicEntities ?? [])].map(entityRefKey).sort(),
+    removed: [...(impact.removedPublicEntities ?? [])].map(entityRefKey).sort(),
+  };
+
+  return createHash('sha256').update(JSON.stringify(normalized)).digest('hex');
 }
 
 /**
- * Compute a stable hash from a PublicImpactAssessment.
+ * Compute stable SHA-256 hash from a PreviewState's serialized form.
+ */
+export function hashPreviewState(state: PreviewState): string {
+  return createHash('sha256').update(state.serializedState).digest('hex');
+}
+
+/**
+ * Compute stable SHA-256 hash from a PublicImpactAssessment.
  */
 export function hashPublicImpact(impact: PublicImpactAssessment): string {
-  return fnv1a(impact.serializedImpact);
+  return calculateAssessmentFingerprint(impact);
+}
+
+// ── Publication Attempt & Recovery ──────────────────────────────────
+
+export type AttemptState = 'pending' | 'committed' | 'failed' | 'recovered';
+
+export interface PublicationAttempt {
+  readonly attemptId: string;
+  readonly changesetId: string;
+  readonly state: AttemptState;
+  readonly createdAt: number;
+  readonly committedAt?: number;
+  readonly failedAt?: number;
+  readonly error?: string;
 }
 
 // ── Publish Protocol Error ──────────────────────────────────────────
@@ -118,6 +156,9 @@ export function hashPublicImpact(impact: PublicImpactAssessment): string {
  */
 export type PublishError =
   | { type: 'preflight_denied'; reason: string }
+  | { type: 'confirmation_required'; reason: string }
+  | { type: 'confirmation_mismatch'; expected: string; actual: string }
+  | { type: 'confirmation_revoked'; reason: string }
   | { type: 'cas_prewrite_failed'; reason: string }
   | { type: 'preview_mismatch'; expected: string; actual: string }
   | { type: 'auth_revalidation_denied' }
@@ -125,50 +166,24 @@ export type PublishError =
 
 // ── Publish Dependencies ────────────────────────────────────────────
 
-/**
- * All dependencies required by the publish protocol.
- * The application assembles this bundle at startup.
- */
 export interface PublishDeps {
   readonly authBundle: AuthorizationBundle;
   readonly entityResolver: EntityResolver;
   readonly commitEngine: TransactionalCommitEngine;
-  /**
-   * Project the state after applying a ChangeSet (outside transaction).
-   * Used for preview rendering and public impact assessment.
-   */
   readonly projectPreview: (changeset: ChangeSet) => Promise<PreviewState>;
-  /**
-   * Assess what becomes publicly visible after this ChangeSet.
-   */
   readonly assessPublicImpact: (preview: PreviewState) => Promise<PublicImpactAssessment>;
-  /**
-   * Re-project the state after locking (inside transaction).
-   * Must reflect any concurrent changes that happened before lock acquisition.
-   */
   readonly reprojectAfterLock: (changeset: ChangeSet, tx: Transaction) => Promise<PreviewState>;
-  /**
-   * Optional CAS pre-write. If contentAddressedStorage is enabled,
-   * this writes CAS objects to external storage before the transaction.
-   * Returns the list of CAS object hashes for orphan tracking.
-   */
   readonly casPreWrite?: (changeset: ChangeSet) => Promise<readonly string[]>;
 }
 
-// ── Publish Protocol ────────────────────────────────────────────────
+// ── Publish Protocol Execution ──────────────────────────────────────
 
-/**
- * Result of a successful publish.
- */
 export interface PublishSuccess<T> {
   readonly ok: true;
   readonly value: T;
   readonly snapshot?: SnapshotReference;
 }
 
-/**
- * Result of a failed publish.
- */
 export interface PublishFailure {
   readonly ok: false;
   readonly error: PublishError;
@@ -178,35 +193,34 @@ export interface PublishFailure {
 export type PublishResult<T> = PublishSuccess<T> | PublishFailure;
 
 /**
- * Execute the full publish protocol (§4.1).
- *
- * This function orchestrates the two-phase publish:
- *   Phase A (advisory): preflight → preview → impact → confirm
- *   Phase B (binding): CAS pre-write → lock → recompute → verify → revalidate → commit
- *
- * The caller is responsible for:
- *   - Building the ChangeSet
- *   - Rendering the preview to the user
- *   - Obtaining user confirmation
- *   - Supplying the PreviewConfirmation (hash of what the user saw)
- *
- * The protocol enforces:
- *   I2: Public Site == Public Archive (atomic publish)
- *   I6: Authorization revalidation occurs inside the transaction
- *   I13: User's confirmed preview is verified against recomputed state
- *   I14: CAS pre-write is a precondition, not part of DB atomicity
+ * Execute the full two-phase publish protocol.
  */
 export async function executePublish<T>(
   deps: PublishDeps,
   changeset: ChangeSet,
   principal: Principal,
-  confirmation: PreviewConfirmation,
+  confirmation: PreviewConfirmation | PublishConfirmation,
   commitWork: (tx: Transaction) => Promise<T>,
 ): Promise<PublishResult<T>> {
-  // ── Phase A: Preflight (advisory) ──────────────────────────────
+  // Normalize confirmation input
+  const expectedImpactHash =
+    'assessmentFingerprint' in confirmation
+      ? confirmation.assessmentFingerprint
+      : confirmation.impactHash;
 
-  // For each affected entity, run preflight authorization.
-  // This is a fast reject for UX — the binding decision is in Phase B.
+  const expectedPreviewHash = 'previewHash' in confirmation ? confirmation.previewHash : undefined;
+
+  if ('status' in confirmation && confirmation.status === 'revoked') {
+    return {
+      ok: false,
+      error: {
+        type: 'confirmation_revoked',
+        reason: confirmation.revocationReason ?? 'Confirmation was revoked.',
+      },
+    };
+  }
+
+  // ── Phase A: Preflight (advisory) ──────────────────────────────
   const affectedRefs = changeset.operations
     .map((op) => getOperationRef(op))
     .filter((r): r is EntityRef => r !== null);
@@ -227,8 +241,6 @@ export async function executePublish<T>(
   }
 
   // ── Phase B: Transaction (binding) ──────────────────────────────
-
-  // Step 6: CAS pre-write (precondition, not in DB transaction)
   let casHashes: readonly string[] = [];
   if (deps.casPreWrite) {
     try {
@@ -244,26 +256,28 @@ export async function executePublish<T>(
     }
   }
 
-  // Steps 7-15: Transaction
   const commitResult = await deps.commitEngine.commit<T>(changeset, async (tx) => {
     // Step 8: Lock all affected entities
     for (const ref of affectedRefs) {
       await tx.lockEntity(ref);
     }
 
-    // Steps 9-10: Recompute projected state + public impact
+    // Steps 9-10: Recompute projected state + public impact inside transaction
     const recomputedPreview = await deps.reprojectAfterLock(changeset, tx);
     const recomputedImpact = await deps.assessPublicImpact(recomputedPreview);
 
-    // Step 11: Verify user's confirmed preview matches recomputed state
-    const recomputedPreviewHash = hashPreviewState(recomputedPreview);
-    const recomputedImpactHash = hashPublicImpact(recomputedImpact);
+    // Step 11: Verify user's confirmed impact/preview matches recomputed state
+    const recomputedImpactHash = calculateAssessmentFingerprint(recomputedImpact);
 
-    if (
-      recomputedPreviewHash !== confirmation.previewHash ||
-      recomputedImpactHash !== confirmation.impactHash
-    ) {
-      throw new PreviewMismatchError(recomputedPreviewHash, confirmation.previewHash);
+    if (expectedImpactHash && recomputedImpactHash !== expectedImpactHash) {
+      throw new PreviewMismatchError(recomputedImpactHash, expectedImpactHash);
+    }
+
+    if (expectedPreviewHash) {
+      const recomputedPreviewHash = hashPreviewState(recomputedPreview);
+      if (recomputedPreviewHash !== expectedPreviewHash) {
+        throw new PreviewMismatchError(recomputedPreviewHash, expectedPreviewHash);
+      }
     }
 
     // Step 12: Revalidate Authorization (binding, inside transaction)
@@ -279,26 +293,24 @@ export async function executePublish<T>(
       }
     }
 
-    // Steps 13-14: Write current state + snapshot (via commitWork callback)
+    // Steps 13-14: Write current state + snapshot
     return commitWork(tx);
   });
 
-  // Step 15: Result handling
   if (commitResult.ok && commitResult.value !== undefined) {
     return { ok: true, value: commitResult.value };
   }
 
-  // Determine error type from the thrown exception
   if (commitResult.error?.startsWith('PREVIEW_MISMATCH')) {
     return casHashes.length > 0
       ? {
           ok: false,
-          error: { type: 'preview_mismatch', expected: confirmation.previewHash, actual: '' },
+          error: { type: 'preview_mismatch', expected: expectedImpactHash, actual: '' },
           orphanCasObjects: casHashes,
         }
       : {
           ok: false,
-          error: { type: 'preview_mismatch', expected: confirmation.previewHash, actual: '' },
+          error: { type: 'preview_mismatch', expected: expectedImpactHash, actual: '' },
         };
   }
 
@@ -319,10 +331,6 @@ export async function executePublish<T>(
 
 // ── Preview Builder ────────────────────────────────────────────────
 
-/**
- * Build a PreviewState from entity snapshots.
- * Convenience for application implementations of `projectPreview`.
- */
 export function buildPreview(
   snapshots: readonly EntitySnapshot[],
   serializedState: string,
@@ -330,32 +338,29 @@ export function buildPreview(
   return { entities: snapshots, serializedState };
 }
 
-/**
- * Build a PublicImpactAssessment.
- * Convenience for application implementations of `assessPublicImpact`.
- */
 export function buildImpact(
   becomesPublic: boolean,
   newlyExposed: readonly EntityRef[],
   serializedImpact: string,
+  modifiedPublic?: readonly EntityRef[],
+  removedPublic?: readonly EntityRef[],
 ): PublicImpactAssessment {
   return {
     becomesPublic,
     newlyExposedEntities: newlyExposed,
+    ...(modifiedPublic ? { modifiedPublicEntities: modifiedPublic } : {}),
+    ...(removedPublic ? { removedPublicEntities: removedPublic } : {}),
     serializedImpact,
   };
 }
 
-/**
- * Create a PreviewConfirmation from a PreviewState + PublicImpactAssessment.
- */
 export function confirmPreview(
   preview: PreviewState,
   impact: PublicImpactAssessment,
 ): PreviewConfirmation {
   return {
     previewHash: hashPreviewState(preview),
-    impactHash: hashPublicImpact(impact),
+    impactHash: calculateAssessmentFingerprint(impact),
     confirmedAt: Date.now(),
   };
 }
@@ -380,9 +385,6 @@ class AuthRevalidationError extends Error {
   }
 }
 
-/**
- * Extract the primary EntityRef from a DomainOperation.
- */
 function getOperationRef(op: import('./changeset').DomainOperation): EntityRef | null {
   switch (op.kind) {
     case 'create_entity':
@@ -394,36 +396,16 @@ function getOperationRef(op: import('./changeset').DomainOperation): EntityRef |
       return op.ref;
     case 'create_association':
     case 'delete_association':
-      return op.a; // primary ref is `a`; `b` is also affected
+      return op.a;
     default:
       return null;
   }
 }
 
-/**
- * Map a DomainOperation to its AuthOperation type.
- */
 function getOperationAuthType(
   ops: readonly import('./changeset').DomainOperation[],
   _ref: EntityRef,
 ): import('./authorization').AuthOperation {
-  // Simplified: any write operation in a changeset is 'publish'
-  // if it contains a transition_lifecycle to a published state,
-  // otherwise 'write'. The application can override this.
   const hasTransition = ops.some((op) => op.kind === 'transition_lifecycle');
   return hasTransition ? 'publish' : 'write';
-}
-
-/**
- * FNV-1a hash (32-bit). Simple, fast, non-cryptographic.
- * Used for staleness detection, not security.
- */
-function fnv1a(input: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  // Convert to unsigned 32-bit hex string
-  return (hash >>> 0).toString(16).padStart(8, '0');
 }

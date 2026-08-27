@@ -38,7 +38,11 @@ export type {
   NewCasObject,
   NewEntity,
   NewEntityIndex,
+  NewPublicationAttemptRow,
+  NewPublishingConfirmationRow,
   NewSnapshot,
+  PublicationAttemptRow,
+  PublishingConfirmationRow,
   Snapshot,
 } from './tables';
 export {
@@ -46,8 +50,24 @@ export {
   casObjects,
   entities,
   entityIndexes,
+  publicationAttempts,
+  publishingConfirmations,
   snapshots,
 } from './tables';
+
+// ── Transaction Management ───────────────────────────────────────────
+
+export type {
+  ClientLike,
+  GenericTransactionManager,
+  PoolLike,
+} from './transaction';
+export {
+  createNoopTransactionManager,
+  createPgTransactionManager,
+  getTransactionClient,
+  transactionContext,
+} from './transaction';
 
 // ── Turso / libSQL (edge READ-ONLY replica) ────────────────────────
 // Turso is a read-only projection of PostgreSQL. Writes go through

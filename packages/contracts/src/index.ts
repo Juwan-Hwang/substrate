@@ -64,6 +64,8 @@ export type {
   ChangeSet,
   CommitResult,
   DomainOperation,
+  ExecutionPlan,
+  ExecutionStep,
   SnapshotReference,
   Transaction,
   TransactionalCommitEngine,
@@ -72,22 +74,33 @@ export {
   commitFail,
   commitOk,
   createChangeSet,
+  createExecutionPlan,
+  foldDomainOperations,
 } from './changeset';
 // Entity resolver — pure types, no deps.
 export type { EntityRef, EntityResolver, EntitySnapshot } from './entity-resolver';
 export { entityRef, entityRefKey } from './entity-resolver';
 // Lifecycle primitive — pure types, no deps.
-export type { LifecycleDefinition, LifecycleValidationResult } from './lifecycle';
+export type {
+  LifecycleDefinition,
+  LifecycleEngine,
+  LifecycleValidationResult,
+} from './lifecycle';
 export {
   availableTransitions,
+  createLifecycleEngine,
   resolveTransition,
   validateLifecycle,
 } from './lifecycle';
 // Publish protocol — depends on all above.
 export type {
+  AttemptState,
+  ConfirmationStatus,
   PreviewConfirmation,
   PreviewState,
+  PublicationAttempt,
   PublicImpactAssessment,
+  PublishConfirmation,
   PublishDeps,
   PublishError,
   PublishFailure,
@@ -97,6 +110,7 @@ export type {
 export {
   buildImpact,
   buildPreview,
+  calculateAssessmentFingerprint,
   confirmPreview,
   executePublish,
   hashPreviewState,

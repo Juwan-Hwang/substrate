@@ -13,6 +13,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   availableTransitions,
+  createLifecycleEngine,
   type LifecycleDefinition,
   resolveTransition,
   validateLifecycle,
@@ -126,5 +127,28 @@ describe('validateLifecycle', () => {
     });
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('"z"'))).toBe(true);
+  });
+});
+
+// ── createLifecycleEngine ─────────────────────────────────────────
+
+describe('createLifecycleEngine', () => {
+  it('creates an active engine for valid definition', () => {
+    const engine = createLifecycleEngine(draftPublish);
+    expect(engine.canTransition('draft', 'publish')).toBe(true);
+    expect(engine.canTransition('draft', 'unpublish')).toBe(false);
+    expect(engine.transition('draft', 'publish')).toBe('published');
+    expect(engine.getAvailableEvents('draft')).toEqual(['publish']);
+    expect(engine.getAvailableEvents('published')).toEqual(['unpublish']);
+  });
+
+  it('throws on invalid definition', () => {
+    expect(() =>
+      createLifecycleEngine({
+        initial: 'unknown',
+        states: ['draft'],
+        transitions: {},
+      }),
+    ).toThrow('Invalid LifecycleDefinition');
   });
 });

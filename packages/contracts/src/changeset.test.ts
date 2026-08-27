@@ -14,7 +14,9 @@ import {
   commitFail,
   commitOk,
   createChangeSet,
+  createExecutionPlan,
   type DomainOperation,
+  foldDomainOperations,
   type Transaction,
   type TransactionalCommitEngine,
 } from './changeset';
@@ -206,5 +208,50 @@ describe('createChangeSet', () => {
     expect(cs.authorId).toBe('user-1');
     expect(cs.operations).toEqual([]);
     expect(cs.createdAt).toBeGreaterThan(0);
+  });
+});
+
+// ── foldDomainOperations & createExecutionPlan ───────────────────
+
+describe('foldDomainOperations & createExecutionPlan', () => {
+  it('folds consecutive updates to the same entity', () => {
+    const folded = foldDomainOperations([
+      {
+        kind: 'create_entity',
+        ref: refA,
+        payload: { title: 'First' },
+        targetVisibility: 'private',
+      },
+      { kind: 'update_entity', ref: refA, payload: { title: 'Second', summary: 'Brief' } },
+      { kind: 'change_visibility', ref: refA, target: 'public' },
+    ]);
+
+    expect(folded).toHaveLength(1);
+    expect(folded[0]).toEqual({
+      kind: 'create_entity',
+      ref: refA,
+      payload: { title: 'Second', summary: 'Brief' },
+      targetVisibility: 'public',
+    });
+  });
+
+  it('generates a deterministic execution plan sorted by operation dependency', () => {
+    const cs = createChangeSet(
+      [
+        { kind: 'purge', ref: refA },
+        { kind: 'create_entity', ref: refB, payload: { name: 'New Project' } },
+        { kind: 'create_association', a: refA, b: refB },
+      ],
+      'user-admin',
+    );
+
+    const plan = createExecutionPlan(cs);
+    expect(plan.isExecutable).toBe(true);
+    expect(plan.totalSteps).toBe(3);
+    expect(plan.steps.map((s) => s.operation.kind)).toEqual([
+      'create_entity',
+      'create_association',
+      'purge',
+    ]);
   });
 });
