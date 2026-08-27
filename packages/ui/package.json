@@ -1,6 +1,6 @@
 {
   "name": "@substrate-platform/ui",
-  "version": "0.2.0-canary.3",
+  "version": "0.2.0-canary.4",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
