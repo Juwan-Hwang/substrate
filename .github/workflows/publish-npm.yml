@@ -152,7 +152,9 @@ jobs:
         run: |
           # Changesets prerelease mode appends a prerelease suffix (e.g. 0.1.1-canary.0)
           # so each canary publish gets a unique version number.
-          bunx changeset pre enter canary
+          if [ ! -f .changeset/pre.json ] || grep -q '"mode": "exit"' .changeset/pre.json 2>/dev/null; then
+            bunx changeset pre enter canary || true
+          fi
 
       - name: Version packages (Changesets)
         run: |
