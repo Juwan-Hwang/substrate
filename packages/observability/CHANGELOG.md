@@ -1,5 +1,12 @@
 # @substrate-platform/observability
 
+## 0.2.0-canary.5
+
+### Patch Changes
+
+- Updated dependencies [a51ca04]
+  - @substrate-platform/contracts@0.2.0-canary.5
+
 ## 0.2.0-canary.4
 
 ### Patch Changes
