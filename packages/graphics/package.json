@@ -30,5 +30,14 @@
     "src/**",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juwan-Hwang/substrate.git",
+    "directory": "packages/graphics"
+  },
+  "homepage": "https://github.com/Juwan-Hwang/substrate#readme",
+  "bugs": {
+    "url": "https://github.com/Juwan-Hwang/substrate/issues"
+  }
 }

@@ -32,5 +32,14 @@
     "dist/**",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juwan-Hwang/substrate.git",
+    "directory": "packages/edge"
+  },
+  "homepage": "https://github.com/Juwan-Hwang/substrate#readme",
+  "bugs": {
+    "url": "https://github.com/Juwan-Hwang/substrate/issues"
+  }
 }

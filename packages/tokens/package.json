@@ -15,5 +15,14 @@
   },
   "devDependencies": {
     "style-dictionary": "^4.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juwan-Hwang/substrate.git",
+    "directory": "packages/tokens"
+  },
+  "homepage": "https://github.com/Juwan-Hwang/substrate#readme",
+  "bugs": {
+    "url": "https://github.com/Juwan-Hwang/substrate/issues"
   }
 }

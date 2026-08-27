@@ -59,5 +59,14 @@
     "README.md",
     "LICENSE",
     "src/**/*.css"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juwan-Hwang/substrate.git",
+    "directory": "packages/ui"
+  },
+  "homepage": "https://github.com/Juwan-Hwang/substrate#readme",
+  "bugs": {
+    "url": "https://github.com/Juwan-Hwang/substrate/issues"
+  }
 }

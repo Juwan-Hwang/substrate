@@ -73,5 +73,14 @@
     "openapi3-ts": {
       "optional": true
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juwan-Hwang/substrate.git",
+    "directory": "packages/contracts"
+  },
+  "homepage": "https://github.com/Juwan-Hwang/substrate#readme",
+  "bugs": {
+    "url": "https://github.com/Juwan-Hwang/substrate/issues"
   }
 }

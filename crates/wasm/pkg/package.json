@@ -13,5 +13,14 @@
   "types": "substrate_wasm.d.ts",
   "sideEffects": [
     "./snippets/*"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juwan-Hwang/substrate.git",
+    "directory": "crates/wasm/pkg"
+  },
+  "homepage": "https://github.com/Juwan-Hwang/substrate#readme",
+  "bugs": {
+    "url": "https://github.com/Juwan-Hwang/substrate/issues"
+  }
 }
