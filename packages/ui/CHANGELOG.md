@@ -1,5 +1,11 @@
 # @substrate-platform/ui
 
+## 0.2.0-canary.6
+
+### Patch Changes
+
+- 1b6d557: fix(ui): use fillRect for substrate-noise paint worklet to avoid unsupported createImageData
+
 ## 0.2.0-canary.5
 
 ### Patch Changes

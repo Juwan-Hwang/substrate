@@ -1,5 +1,12 @@
 # @substrate-platform/site
 
+## 0.2.0-canary.6
+
+### Patch Changes
+
+- Updated dependencies [1b6d557]
+  - @substrate-platform/ui@0.2.0-canary.6
+
 ## 0.2.0-canary.5
 
 ### Patch Changes
