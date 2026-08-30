@@ -9,7 +9,9 @@ import { useEffect } from 'react';
 
 export function PaintRegistrar() {
   useEffect(() => {
-    registerPaintWorklets();
+    registerPaintWorklets().catch(() => {
+      // Gracefully ignore in unsupported browsers
+    });
   }, []);
 
   return null;

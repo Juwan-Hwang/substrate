@@ -95,9 +95,12 @@ registerPaint('substrate-mesh', class {
 /** Full worklet source — write to a .js file and load via CSS.paintWorklet.addModule(). */
 export const paintWorkletSource = `${noiseWorklet}\n${meshWorklet}`;
 
+/** Module-level registration promise cache for StrictMode idempotency. */
+let registrationPromise: Promise<void> | null = null;
+
 /**
- * Register paint worklets in the browser.
- * Call this from a client component on mount.
+ * Register paint worklets in the browser with idempotent caching and error protection.
+ * Safe to call multiple times or inside React StrictMode effects.
  *
  * ```ts
  * useEffect(() => { registerPaintWorklets(); }, []);
@@ -107,12 +110,23 @@ export async function registerPaintWorklets(): Promise<void> {
   const css = CSS as CSSWithPaintWorklet;
   if (typeof CSS === 'undefined' || !('paintWorklet' in css)) return;
 
-  const blob = new Blob([paintWorkletSource], { type: 'text/javascript' });
-  const url = URL.createObjectURL(blob);
-
-  try {
-    await css.paintWorklet?.addModule(url);
-  } finally {
-    URL.revokeObjectURL(url);
+  if (registrationPromise) {
+    return registrationPromise;
   }
+
+  registrationPromise = (async () => {
+    const blob = new Blob([paintWorkletSource], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+
+    try {
+      await css.paintWorklet?.addModule(url);
+    } catch {
+      // Gracefully ignore duplicate registration (e.g. InvalidModificationError)
+      // or CSP module loading restrictions in dev/test environments.
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  })();
+
+  return registrationPromise;
 }
