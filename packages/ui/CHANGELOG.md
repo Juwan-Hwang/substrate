@@ -1,5 +1,11 @@
 # @substrate-platform/ui
 
+## 0.2.0-canary.7
+
+### Patch Changes
+
+- 9d568dc: fix(ui,site): add idempotency guard and error suppression to registerPaintWorklets for React StrictMode
+
 ## 0.2.0-canary.6
 
 ### Patch Changes
