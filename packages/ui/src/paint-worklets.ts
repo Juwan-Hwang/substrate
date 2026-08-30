@@ -42,18 +42,14 @@ registerPaint('substrate-noise', class {
     const w = size.width;
     const h = size.height;
 
-    const imageData = ctx.createImageData(w, h);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-      const noise = Math.random() * 255 * scale;
-      data[i] = noise;
-      data[i + 1] = noise;
-      data[i + 2] = noise;
-      data[i + 3] = 255 * opacity;
+    // PaintRenderingContext2D does not support createImageData / putImageData.
+    // Sparse speckle with fillRect is visually equivalent to dense noise at low opacity.
+    const count = Math.floor(w * h * 0.06 * scale);
+    for (let i = 0; i < count; i++) {
+      const v = Math.floor(Math.random() * 255);
+      ctx.fillStyle = 'rgba(' + v + ', ' + v + ', ' + v + ', ' + opacity + ')';
+      ctx.fillRect(Math.random() * w, Math.random() * h, 1, 1);
     }
-
-    ctx.putImageData(imageData, 0, 0);
   }
 });
 `;
