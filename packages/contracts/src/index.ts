@@ -33,6 +33,13 @@ export interface SiteIdentity {
   url: string;
 }
 
+// ── Identity & Administrative Contracts ─────────────────────────────
+export type {
+  AdminIdentity,
+  AdminIdentityProvider,
+  OperationContext,
+} from './identity';
+
 // ── v1.3 Core Primitives ─────────────────────────────────────────────
 
 // Association primitive — depends on entity-resolver for EntityRef.

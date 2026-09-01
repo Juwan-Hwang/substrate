@@ -23,7 +23,7 @@
     },
     "crates/wasm/pkg": {
       "name": "@substrate-platform/wasm",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.0",
     },
     "examples/ai-archive": {
       "name": "@example/ai-archive",
@@ -174,7 +174,7 @@
     },
     "packages/ai": {
       "name": "@substrate-platform/ai",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.5",
       "dependencies": {
         "@ai-sdk/anthropic": "^2.0.0",
         "@ai-sdk/google": "^2.0.0",
@@ -193,9 +193,19 @@
         "react": "^19.0.0",
       },
     },
+    "packages/auth": {
+      "name": "@substrate-platform/auth",
+      "version": "0.2.0-canary.7",
+      "dependencies": {
+        "@substrate-platform/contracts": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.0.0",
+      },
+    },
     "packages/config": {
       "name": "@substrate-platform/config",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.0",
       "dependencies": {
         "zod": "^3.24.0",
       },
@@ -205,7 +215,7 @@
     },
     "packages/content": {
       "name": "@substrate-platform/content",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.5",
       "dependencies": {
         "@mdx-js/react": "^3.1.0",
         "@orama/orama": "^3.1.0",
@@ -223,7 +233,7 @@
     },
     "packages/contracts": {
       "name": "@substrate-platform/contracts",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.5",
       "dependencies": {
         "zod": "^3.24.0",
       },
@@ -252,7 +262,7 @@
     },
     "packages/create-substrate-site": {
       "name": "create-substrate-site",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "bin": {
         "create-substrate-site": "./dist/cli.js",
       },
@@ -263,7 +273,7 @@
     },
     "packages/db": {
       "name": "@substrate-platform/db",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.5",
       "dependencies": {
         "@libsql/client": "^0.14.0",
         "@substrate-platform/contracts": "workspace:*",
@@ -279,7 +289,7 @@
     },
     "packages/edge": {
       "name": "@substrate-platform/edge",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.5",
       "dependencies": {
         "@cloudflare/workers-types": "^4.20250101.0",
         "@substrate-platform/contracts": "workspace:*",
@@ -297,7 +307,7 @@
     },
     "packages/graphics": {
       "name": "@substrate-platform/graphics",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.5",
       "dependencies": {
         "@react-three/drei": "^10.0.0",
         "@react-three/fiber": "^9.1.0",
@@ -315,7 +325,7 @@
     },
     "packages/observability": {
       "name": "@substrate-platform/observability",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.5",
       "dependencies": {
         "@opentelemetry/api": "^1.9.0",
         "@opentelemetry/auto-instrumentations-node": "^0.79.0",
@@ -334,8 +344,9 @@
     },
     "packages/site": {
       "name": "@substrate-platform/site",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.7",
       "dependencies": {
+        "@substrate-platform/auth": "workspace:*",
         "@substrate-platform/config": "workspace:*",
         "@substrate-platform/contracts": "workspace:*",
         "@substrate-platform/observability": "workspace:*",
@@ -356,14 +367,14 @@
     },
     "packages/tokens": {
       "name": "@substrate-platform/tokens",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.0",
       "devDependencies": {
         "style-dictionary": "^4.3.0",
       },
     },
     "packages/ui": {
       "name": "@substrate-platform/ui",
-      "version": "0.1.0",
+      "version": "0.2.0-canary.7",
       "dependencies": {
         "@radix-ui/react-slot": "^1.1.2",
         "@substrate-platform/contracts": "workspace:*",
@@ -1394,6 +1405,8 @@
     "@storybook/theming": ["@storybook/theming@8.6.18", "https://registry.npmmirror.com/@storybook/theming/-/theming-8.6.18.tgz", { "peerDependencies": { "storybook": "^8.2.0 || ^8.3.0-0 || ^8.4.0-0 || ^8.5.0-0 || ^8.6.0-0" } }, "sha512-n6OEjEtHupa2PdTwWzRepr7cO8NkDd4rgF6BKLitRbujOspLxzMBEqdphs+QLcuiCIgf33SqmEA64QWnbSMhPw=="],
 
     "@substrate-platform/ai": ["@substrate-platform/ai@workspace:packages/ai"],
+
+    "@substrate-platform/auth": ["@substrate-platform/auth@workspace:packages/auth"],
 
     "@substrate-platform/config": ["@substrate-platform/config@workspace:packages/config"],
 

@@ -16,6 +16,7 @@
       "@substrate-platform/edge",
       "@substrate-platform/ai",
       "@substrate-platform/site",
+      "@substrate-platform/auth",
       "@substrate-platform/graphics"
     ]
   ],

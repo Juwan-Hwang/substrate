@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "incremental": true,
+    "types": ["node"],
+    "erasableSyntaxOnly": false,
+    "exactOptionalPropertyTypes": false,
+    "paths": {
+      "@substrate-platform/contracts": ["../contracts/dist/index.d.ts", "../contracts/src"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", ".turbo"]
+}

@@ -258,6 +258,7 @@ const FORBIDDEN_IMPORT_PATTERNS: RegExp[] = buildForbiddenImportPatterns(
 
 const PLATFORM_DIRS: readonly string[] = [
   'packages/contracts/src',
+  'packages/auth/src',
   'packages/db/src',
   'packages/config/src',
   'packages/edge/src',

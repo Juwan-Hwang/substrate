@@ -103,11 +103,12 @@ jobs:
           echo "║  Workflow:    $WORKFLOW_PATH"
           echo "║  Environment: (none)                                       ║"
           echo "║                                                            ║"
-          echo "║  Packages to configure (12 total):                        ║"
+          echo "║  Packages to configure (13 total):                        ║"
           echo "║    @substrate-platform/contracts                                    ║"
           echo "║    @substrate-platform/config                                       ║"
           echo "║    @substrate-platform/tokens                                       ║"
           echo "║    @substrate-platform/wasm                                         ║"
+          echo "║    @substrate-platform/auth                                         ║"
           echo "║    @substrate-platform/ui                                           ║"
           echo "║    @substrate-platform/site                                         ║"
           echo "║    @substrate-platform/content                                      ║"
@@ -201,6 +202,7 @@ jobs:
             packages/config
             packages/tokens
             crates/wasm/pkg
+            packages/auth
             packages/ui
             packages/content
             packages/db
@@ -251,21 +253,24 @@ jobs:
         run: |
           npm init -y
           echo "Installing @substrate-platform/contracts@canary from real npm registry..."
-          npm install @substrate-platform/contracts@canary @substrate-platform/config@canary @substrate-platform/wasm@canary @substrate-platform/observability@canary
+          npm install @substrate-platform/contracts@canary @substrate-platform/auth@canary @substrate-platform/config@canary @substrate-platform/wasm@canary @substrate-platform/observability@canary
 
       - name: Verify Node.js import
         working-directory: /tmp/registry-test
         run: |
           node --input-type=module -e "
             import * as contracts from '@substrate-platform/contracts';
+            import * as auth from '@substrate-platform/auth';
             import * as config from '@substrate-platform/config';
             import * as wasm from '@substrate-platform/wasm';
             import * as obs from '@substrate-platform/observability';
             if (Object.keys(contracts).length === 0) throw new Error('contracts: no exports');
+            if (Object.keys(auth).length === 0) throw new Error('auth: no exports');
             if (Object.keys(config).length === 0) throw new Error('config: no exports');
             if (Object.keys(wasm).length === 0) throw new Error('wasm: no exports');
             if (Object.keys(obs).length === 0) throw new Error('observability: no exports');
             console.log('contracts:', Object.keys(contracts).length, 'exports');
+            console.log('auth:', Object.keys(auth).length, 'exports');
             console.log('config:', Object.keys(config).length, 'exports');
             console.log('wasm:', Object.keys(wasm).length, 'exports');
             console.log('observability:', Object.keys(obs).length, 'exports');

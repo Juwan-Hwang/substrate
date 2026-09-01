@@ -29,6 +29,7 @@
       "@substrate-platform/db": ["./packages/db/src"],
       "@substrate-platform/edge": ["./packages/edge/src"],
       "@substrate-platform/observability": ["./packages/observability/src"],
+      "@substrate-platform/auth": ["./packages/auth/src"],
       "@substrate-platform/site": ["./packages/site/src"]
     }
   }
