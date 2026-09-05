@@ -1,5 +1,12 @@
 # @substrate-platform/content
 
+## 0.2.0-canary.10
+
+### Patch Changes
+
+- Updated dependencies [b33903d]
+  - @substrate-platform/contracts@0.2.0-canary.10
+
 ## 0.2.0-canary.8
 
 ### Patch Changes

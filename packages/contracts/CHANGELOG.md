@@ -1,5 +1,11 @@
 # @substrate-platform/contracts
 
+## 0.2.0-canary.10
+
+### Patch Changes
+
+- b33903d: feat(auth): introduce Passkey / WebAuthn registration and authentication ceremonies, PasskeyCredentialStore contract seam, in-memory store, stateless challenge cookies, and amr-stamped unified session issuance
+
 ## 0.2.0-canary.8
 
 ### Patch Changes

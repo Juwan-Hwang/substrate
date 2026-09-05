@@ -1,5 +1,13 @@
 # @substrate-platform/edge
 
+## 0.2.0-canary.10
+
+### Patch Changes
+
+- Updated dependencies [b33903d]
+  - @substrate-platform/contracts@0.2.0-canary.10
+  - @substrate-platform/db@0.2.0-canary.10
+
 ## 0.2.0-canary.8
 
 ### Patch Changes
