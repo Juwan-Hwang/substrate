@@ -106,7 +106,11 @@ export function createStaticTokenIdentityProvider(
           if (sessionIssuer) {
             const session = await sessionIssuer.verify(bearerToken);
             if (session) {
-              return { subject: session.subject, mechanism: 'bearer-session' };
+              return {
+                subject: session.subject,
+                mechanism: 'bearer-session',
+                ...(session.amr ? { amr: session.amr } : {}),
+              };
             }
           }
         }
@@ -126,7 +130,11 @@ export function createStaticTokenIdentityProvider(
           if (sessionIssuer) {
             const session = await sessionIssuer.verify(cookieToken);
             if (session) {
-              return { subject: session.subject, mechanism: 'cookie-session' };
+              return {
+                subject: session.subject,
+                mechanism: 'cookie-session',
+                ...(session.amr ? { amr: session.amr } : {}),
+              };
             }
           }
         }

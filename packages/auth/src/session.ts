@@ -36,7 +36,7 @@ export function createSessionIssuer(
   const defaultTtl = options.defaultTtlSeconds ?? 60 * 60 * 24 * 7; // 7 days
 
   return {
-    async issue(subject: string, ttlSeconds?: number): Promise<string> {
+    async issue(subject: string, ttlSeconds?: number, meta?: { amr?: string }): Promise<string> {
       if (!secret) {
         throw new Error('Cannot issue session token: auth secret is not configured.');
       }
@@ -50,6 +50,7 @@ export function createSessionIssuer(
         iat: now,
         exp,
         nonce: generateSecureNonce(),
+        ...(meta?.amr ? { amr: meta.amr } : {}),
       };
 
       const encodedPayload = base64UrlEncode(JSON.stringify(payload));

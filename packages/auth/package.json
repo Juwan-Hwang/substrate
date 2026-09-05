@@ -1,6 +1,6 @@
 {
   "name": "@substrate-platform/auth",
-  "version": "0.2.0-canary.8",
+  "version": "0.2.0-canary.9",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,6 +19,7 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@simplewebauthn/server": "^13.3.3",
     "@substrate-platform/contracts": "workspace:*"
   },
   "devDependencies": {

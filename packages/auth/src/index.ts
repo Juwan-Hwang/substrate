@@ -3,7 +3,7 @@
  *
  * Provides domain-agnostic identity contracts, timing-safe static token providers,
  * dual-channel Bearer/Cookie extraction, stateless HMAC sessions, rate-limited login/logout handlers,
- * and page/API guard primitives.
+ * Passkey / WebAuthn ceremonies, and page/API guard primitives.
  */
 
 // ── Cryptographic Primitives ─────────────────────────────────────────
@@ -32,7 +32,12 @@ export {
   extractClientIp,
   type InMemoryRateLimiterOptions,
 } from './handlers';
-
+// ── Passkey / WebAuthn Primitives ────────────────────────────────────
+export {
+  createInMemoryPasskeyCredentialStore,
+  createPasskeyAuthenticationHandlers,
+  createPasskeyRegistrationHandlers,
+} from './passkey';
 // ── Identity Providers ───────────────────────────────────────────────
 export {
   createDevelopmentIdentityProvider,
@@ -57,9 +62,17 @@ export type {
   LoginHandlerOptions,
   LogoutHandlerOptions,
   OperationContext,
+  PasskeyAuthenticationHandlers,
+  PasskeyAuthenticationOptions,
+  PasskeyCredential,
+  PasskeyCredentialStore,
+  PasskeyRegistrationHandlers,
+  PasskeyRegistrationOptions,
   RateLimiter,
   RateLimiterCheckResult,
+  RelyingPartyConfig,
   SessionIssuer,
   SessionPayload,
   StaticTokenProviderOptions,
+  WebAuthnUser,
 } from './types';

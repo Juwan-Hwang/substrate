@@ -168,9 +168,92 @@ export function LoginForm() {
     const returnTo = sanitizeReturnTo(searchParams.get('returnTo'), '/console');
     router.push(returnTo);
   }
-  // ...
 }
 ```
+
+### 5. Passkey / WebAuthn Ceremony Integration
+
+Passkey provides hardware-bound authentication (Windows Hello, Touch ID, YubiKey) emitting standard signed session cookies tagged with `amr: 'fido2'`.
+
+#### 1. Implement `PasskeyCredentialStore`
+The auth package is 100% database-agnostic. Implement the seam with Postgres, Drizzle, or Upstash KV:
+
+```ts
+import type { PasskeyCredential, PasskeyCredentialStore } from '@substrate-platform/auth';
+import { db, passkeyCredentialsTable, eq } from '@/lib/db';
+
+export const passkeyStore: PasskeyCredentialStore = {
+  async create(cred) {
+    await db.insert(passkeyCredentialsTable).values(cred);
+  },
+  async findByCredentialId(id) {
+    const [found] = await db.select().from(passkeyCredentialsTable).where(eq(passkeyCredentialsTable.credentialId, id));
+    return found ?? null;
+  },
+  async listByUser(userHandle) {
+    return db.select().from(passkeyCredentialsTable).where(eq(passkeyCredentialsTable.userHandle, userHandle));
+  },
+  async updateCounter(credentialId, counter) {
+    await db.update(passkeyCredentialsTable).set({ counter }).where(eq(passkeyCredentialsTable.credentialId, credentialId));
+  },
+  async delete(credentialId) {
+    await db.delete(passkeyCredentialsTable).where(eq(passkeyCredentialsTable.credentialId, credentialId));
+  },
+};
+```
+
+#### 2. Mount Registration & Authentication Handlers
+```ts
+import {
+  createPasskeyRegistrationHandlers,
+  createPasskeyAuthenticationHandlers,
+  createSessionIssuer,
+  getAdminIdentityProvider,
+} from '@substrate-platform/auth';
+
+const rp = {
+  rpID: process.env.NEXT_PUBLIC_RP_ID ?? 'localhost',
+  rpName: 'Aevum Platform',
+  expectedOrigins: [process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'],
+};
+
+const sessionIssuer = createSessionIssuer(process.env.AUTH_SECRET);
+
+// Registration (Requires Admin Session, fail-closed)
+export const regHandlers = createPasskeyRegistrationHandlers({
+  store: passkeyStore,
+  rp,
+  secret: process.env.AUTH_SECRET, // Signs challenge cookies with server-side expiration
+  user: { id: 'admin', name: 'admin', displayName: 'Administrator' },
+  adminProvider: getAdminIdentityProvider(), // REQUIRED: Guards registration endpoints
+  path: '/api/auth/passkey/register', // Optional: scopes challenge cookie
+});
+
+// Authentication (Emits standard aevum_admin_token session cookie)
+export const authHandlers = createPasskeyAuthenticationHandlers({
+  store: passkeyStore,
+  rp,
+  secret: process.env.AUTH_SECRET, // Signs challenge cookies with server-side expiration
+  sessionIssuer,
+  cookieName: 'aevum_admin_token',
+  path: '/api/auth/passkey/login', // Optional: scopes challenge cookie
+});
+```
+
+Mount Next.js Route Handlers:
+- `src/app/api/auth/passkey/register/options/route.ts` ➔ `export const POST = regHandlers.options;`
+- `src/app/api/auth/passkey/register/verify/route.ts` ➔ `export const POST = regHandlers.verify;`
+- `src/app/api/auth/passkey/login/options/route.ts` ➔ `export const POST = authHandlers.options;`
+- `src/app/api/auth/passkey/login/verify/route.ts` ➔ `export const POST = authHandlers.verify;`
+
+#### Security Guarantees:
+- **Fail-Closed Registration**: `adminProvider` is mandatory; unauthenticated callers cannot trigger registration options or verify.
+- **Signed Challenge Envelope & Production Secret Guard**: Challenges are HMAC-signed with server-side cryptographic timestamps, preventing replay attacks and challenge forging. In production (`NODE_ENV=production`), missing secret throws on initialization.
+- **W3C Standard User Verification**: `userVerification` defaults to `'preferred'` (requesting biometric/PIN prompt while accepting User Presence touch from hardware keys without false rejections). Setting `userVerification: 'required'` strictly enforces UV at both options and verification stages.
+- **Credential Uniqueness & Nickname Sanitization**: Rejects duplicate credential IDs with 409 Conflict before persistence and caps nickname length at 64 characters.
+- **Clone Detection**: Signature counters are verified against the stored credential counter; counter rewinds or freezes trigger 403 Forbidden.
+- **Default Rate Limiting & Proxy Configuration**: Built-in in-memory rate limiting defends registration and authentication ceremonies against brute-force attacks, with full `trustProxy` and `proxyHeader` support.
+- **Information Leak Defense**: Route handlers return generic safe error messages on verification failures to avoid leaking internal parser or COSE structure details.
 
 ---
 

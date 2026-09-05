@@ -5,14 +5,33 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 
 /**
+ * Constant-time byte array comparison (constant-time XOR accumulator).
+ */
+export function timingSafeEqualBytes(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
+  }
+  return diff === 0;
+}
+
+/**
  * Constant-time comparison between two strings using SHA-256 digests.
  * Safe against timing attacks regardless of string lengths.
+ * Includes graceful fallback for strict edge environments without node:crypto.
  */
 export function timingSafeEqualStrings(a: string, b: string): boolean {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const digestA = createHash('sha256').update(a).digest();
-  const digestB = createHash('sha256').update(b).digest();
-  return timingSafeEqual(digestA, digestB);
+  try {
+    const digestA = createHash('sha256').update(a).digest();
+    const digestB = createHash('sha256').update(b).digest();
+    return timingSafeEqual(digestA, digestB);
+  } catch {
+    const bufA = new TextEncoder().encode(a);
+    const bufB = new TextEncoder().encode(b);
+    return timingSafeEqualBytes(bufA, bufB);
+  }
 }
 
 /**

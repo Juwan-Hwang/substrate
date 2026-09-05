@@ -13,6 +13,8 @@ export interface AdminIdentity {
   readonly subject: string;
   /** How the identity was established (e.g. 'static-token', 'session-cookie', 'dev-trust'). */
   readonly mechanism: string;
+  /** Authentication Methods References (e.g. 'pwd', 'fido2', 'hwk') indicating the factor used. */
+  readonly amr?: string;
 }
 
 /**
