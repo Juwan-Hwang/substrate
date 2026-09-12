@@ -1,5 +1,13 @@
 # @substrate-platform/content
 
+## 0.2.0-canary.11
+
+### Patch Changes
+
+- feat(syndication): universal RSS 2.0, Atom 1.0, and JSON Feed 1.1 engine with native Web Response builder
+- Updated dependencies
+  - @substrate-platform/contracts@0.2.0-canary.11
+
 ## 0.2.0-canary.10
 
 ### Patch Changes

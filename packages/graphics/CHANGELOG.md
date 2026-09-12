@@ -1,5 +1,12 @@
 # @substrate-platform/graphics
 
+## 0.2.0-canary.11
+
+### Patch Changes
+
+- Updated dependencies
+  - @substrate-platform/contracts@0.2.0-canary.11
+
 ## 0.2.0-canary.10
 
 ### Patch Changes

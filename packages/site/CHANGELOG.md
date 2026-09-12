@@ -1,5 +1,15 @@
 # @substrate-platform/site
 
+## 0.2.0-canary.11
+
+### Patch Changes
+
+- Updated dependencies
+  - @substrate-platform/contracts@0.2.0-canary.11
+  - @substrate-platform/auth@0.2.0-canary.11
+  - @substrate-platform/observability@0.2.0-canary.11
+  - @substrate-platform/ui@0.2.0-canary.11
+
 ## 0.2.0-canary.10
 
 ### Patch Changes
