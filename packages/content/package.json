@@ -13,6 +13,10 @@
     "./search": {
       "import": "./dist/search.js",
       "types": "./dist/search.d.ts"
+    },
+    "./syndication": {
+      "import": "./dist/syndication.js",
+      "types": "./dist/syndication.d.ts"
     }
   },
   "scripts": {

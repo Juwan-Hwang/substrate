@@ -159,6 +159,24 @@ export type {
   StoredSnapshot,
 } from './storage';
 
+// Syndication & Web Feeds — RSS 2.0, Atom 1.0, JSON Feed 1.1 contracts.
+export type {
+  FeedAuthor,
+  FeedAuthorInput,
+  FeedChannel,
+  FeedChannelInput,
+  FeedEnclosure,
+  FeedEnclosureInput,
+  FeedItem,
+  FeedItemInput,
+} from './syndication';
+export {
+  FeedAuthorSchema,
+  FeedChannelSchema,
+  FeedEnclosureSchema,
+  FeedItemSchema,
+} from './syndication';
+
 // ── Optional integration subpaths ───────────────────────────────────
 //
 // The following capabilities are NOT re-exported from this root entry.

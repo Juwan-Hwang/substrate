@@ -25,6 +25,10 @@
     "./store": {
       "import": "./dist/store.js",
       "types": "./dist/store.d.ts"
+    },
+    "./syndication": {
+      "import": "./dist/syndication.js",
+      "types": "./dist/syndication.d.ts"
     }
   },
   "scripts": {
