@@ -7,9 +7,10 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AIConfig, ProviderType } from '../config';
+import { resolveModel } from '../actions';
+import { type AIConfig, createAI, type ProviderType } from '../config';
 import { createWorkersAIProvider, providerAdapter } from '../provider-adapter';
-import { hybridRetrieval, type RetrievalResult, rerank } from '../retrieval';
+import { hybridRetrieval, type RetrievalResult, rerank, rrf } from '../retrieval';
 
 // ── providerAdapter ──────────────────────────────────────────────────
 
@@ -287,5 +288,169 @@ describe('rerank', () => {
     const result = await rerank('query', [], rerankerFn);
     expect(result).toEqual([]);
     expect(rerankerFn).toHaveBeenCalledWith('query', []);
+  });
+
+  it('uses r.text when available instead of falling back to r.id', async () => {
+    const rerankerFn = vi.fn().mockResolvedValue([0.9]);
+    const items: RetrievalResult[] = [
+      {
+        id: 'doc-1',
+        text: 'This is the actual document text about machine translation.',
+        score: 0.5,
+        source: 'hybrid',
+        citation: { type: 'search-result', ref: 'doc-1' },
+      },
+    ];
+
+    await rerank('translation', items, rerankerFn);
+    expect(rerankerFn).toHaveBeenCalledWith('translation', [
+      'This is the actual document text about machine translation.',
+    ]);
+  });
+
+  it('supports custom getText extractor', async () => {
+    const rerankerFn = vi.fn().mockResolvedValue([0.8]);
+    const items: RetrievalResult[] = [
+      {
+        id: 'doc-custom',
+        score: 0.5,
+        metadata: { snippet: 'Extracted custom snippet' },
+        source: 'hybrid',
+        citation: { type: 'search-result', ref: 'doc-custom' },
+      },
+    ];
+
+    await rerank('query', items, rerankerFn, (r) => (r.metadata?.snippet as string) ?? r.id);
+    expect(rerankerFn).toHaveBeenCalledWith('query', ['Extracted custom snippet']);
+  });
+});
+
+// ── rrf (Reciprocal Rank Fusion) ─────────────────────────────────────
+
+describe('rrf (Reciprocal Rank Fusion)', () => {
+  it('fuses unweighted ranked lists with standard 1 / (k + rank + 1)', () => {
+    const list1 = [{ id: 'doc-a' }, { id: 'doc-b' }];
+    const list2 = [{ id: 'doc-b' }, { id: 'doc-c' }];
+
+    const scores = rrf([list1, list2], 60);
+
+    // doc-b is rank 1 in list1 (1/62) and rank 0 in list2 (1/61)
+    // doc-a is rank 0 in list1 (1/61)
+    // doc-c is rank 1 in list2 (1/62)
+    const scoreB = scores.get('doc-b') ?? 0;
+    const scoreA = scores.get('doc-a') ?? 0;
+    const scoreC = scores.get('doc-c') ?? 0;
+
+    expect(scoreB).toBeCloseTo(1 / 61 + 1 / 62, 5);
+    expect(scoreA).toBeCloseTo(1 / 61, 5);
+    expect(scoreC).toBeCloseTo(1 / 62, 5);
+    expect(scoreB).toBeGreaterThan(scoreA);
+  });
+
+  it('applies list weights in Weighted RRF', () => {
+    const listFts = [{ id: 'doc-fts' }];
+    const listVec = [{ id: 'doc-vec' }];
+
+    // Vector search has weight 0.8, FTS has weight 0.2
+    const scores = rrf(
+      [
+        { items: listFts, weight: 0.2 },
+        { items: listVec, weight: 0.8 },
+      ],
+      60,
+    );
+
+    const ftsContribution = scores.get('doc-fts') ?? 0;
+    const vecContribution = scores.get('doc-vec') ?? 0;
+
+    expect(vecContribution).toBeGreaterThan(ftsContribution);
+    expect(vecContribution).toBeCloseTo(0.8 / 61, 5);
+    expect(ftsContribution).toBeCloseTo(0.2 / 61, 5);
+  });
+});
+
+// ── resolveModel & Provider routing ──────────────────────────────────
+
+describe('resolveModel', () => {
+  it('calls a function-style provider instance (AI SDK callable pattern)', () => {
+    const mockModelInstance = { modelId: 'mock-gemini' };
+    const mockCallableProvider = vi.fn().mockReturnValue(mockModelInstance);
+
+    const ai = {
+      config: { defaultProvider: 'google' as const },
+      providers: new Map<ProviderType, unknown>([['google', mockCallableProvider]]),
+    };
+
+    const resolved = resolveModel(ai, 'gemini-1.5-pro');
+    expect(mockCallableProvider).toHaveBeenCalledWith('gemini-1.5-pro');
+    expect(resolved).toBe(mockModelInstance);
+  });
+
+  it('delegates to .languageModel() if available', () => {
+    const mockModel = { id: 'claude-3-5' };
+    const mockProvider = { languageModel: vi.fn().mockReturnValue(mockModel) };
+
+    const ai = {
+      config: { defaultProvider: 'anthropic' as const },
+      providers: new Map<ProviderType, unknown>([['anthropic', mockProvider]]),
+    };
+
+    const resolved = resolveModel(ai, 'claude-3-5-sonnet');
+    expect(mockProvider.languageModel).toHaveBeenCalledWith('claude-3-5-sonnet');
+    expect(resolved).toBe(mockModel);
+  });
+
+  it('resolves model with prefix provider syntax (e.g. "custom:qwen-7b")', () => {
+    const mockLocalModel = { id: 'local-qwen' };
+    const mockLocalProvider = vi.fn().mockReturnValue(mockLocalModel);
+
+    const ai = {
+      config: { defaultProvider: 'openai' as const },
+      providers: new Map<ProviderType, unknown>([
+        ['openai', vi.fn()],
+        ['custom', mockLocalProvider],
+      ]),
+    };
+
+    const resolved = resolveModel(ai, 'custom:qwen-7b');
+    expect(mockLocalProvider).toHaveBeenCalledWith('qwen-7b');
+    expect(resolved).toBe(mockLocalModel);
+  });
+
+  it('respects providerOverride argument', () => {
+    const mockModel = { id: 'overridden' };
+    const mockProvider = vi.fn().mockReturnValue(mockModel);
+
+    const ai = {
+      config: { defaultProvider: 'openai' as const },
+      providers: new Map<ProviderType, unknown>([
+        ['openai', vi.fn()],
+        ['anthropic', mockProvider],
+      ]),
+    };
+
+    const resolved = resolveModel(ai, 'claude-3', 'anthropic');
+    expect(mockProvider).toHaveBeenCalledWith('claude-3');
+    expect(resolved).toBe(mockModel);
+  });
+});
+
+// ── createAI customProviders ─────────────────────────────────────────
+
+describe('createAI customProviders', () => {
+  it('registers custom OpenAI-compatible providers', () => {
+    const ai = createAI({
+      defaultProvider: 'local-llm',
+      customProviders: {
+        'local-llm': {
+          baseURL: 'http://localhost:8088/v1',
+          apiKey: 'test-key',
+        },
+      },
+    });
+
+    expect(ai.providers.has('local-llm')).toBe(true);
+    const provider = ai.providers.get('local-llm');
+    expect(typeof provider).toBe('function');
   });
 });

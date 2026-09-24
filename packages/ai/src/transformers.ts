@@ -15,6 +15,14 @@ import { env, pipeline } from '@huggingface/transformers';
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
+export type TransformersConfig = {
+  embedModel?: string;
+  rerankModel?: string;
+  classifierModel?: string;
+  allowLocalModels?: boolean;
+  useBrowserCache?: boolean;
+};
+
 export type Transformers = {
   embed: (text: string) => Promise<number[]>;
   embedBatch: (texts: string[]) => Promise<number[][]>;
@@ -22,7 +30,18 @@ export type Transformers = {
   classify: (text: string, labels: string[]) => Promise<{ label: string; score: number }[]>;
 };
 
-export async function createTransformers(): Promise<Transformers> {
+export async function createTransformers(config?: TransformersConfig): Promise<Transformers> {
+  const embedModel = config?.embedModel ?? 'Xenova/all-MiniLM-L6-v2';
+  const rerankModel = config?.rerankModel ?? 'Xenova/distilbart-mnli-12-9';
+  const classifierModel = config?.classifierModel ?? 'Xenova/distilbart-mnli-12-9';
+
+  if (config?.allowLocalModels !== undefined) {
+    env.allowLocalModels = config.allowLocalModels;
+  }
+  if (config?.useBrowserCache !== undefined) {
+    env.useBrowserCache = config.useBrowserCache;
+  }
+
   // Initialize pipelines lazily (loaded on first use).
   let embedder: Awaited<ReturnType<typeof pipeline>> | null = null;
   let reranker: Awaited<ReturnType<typeof pipeline>> | null = null;
@@ -30,21 +49,21 @@ export async function createTransformers(): Promise<Transformers> {
 
   async function getEmbedder() {
     if (!embedder) {
-      embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      embedder = await pipeline('feature-extraction', embedModel);
     }
     return embedder;
   }
 
-  async function _getReranker() {
+  async function getReranker() {
     if (!reranker) {
-      reranker = await pipeline('zero-shot-classification', 'Xenova/distilbart-mnli-12-9');
+      reranker = await pipeline('zero-shot-classification', rerankModel);
     }
     return reranker;
   }
 
   async function getClassifier() {
     if (!classifier) {
-      classifier = await pipeline('zero-shot-classification', 'Xenova/distilbart-mnli-12-9');
+      classifier = await pipeline('zero-shot-classification', classifierModel);
     }
     return classifier;
   }
@@ -73,10 +92,10 @@ export async function createTransformers(): Promise<Transformers> {
     rerank: async (query, documents) => {
       // Use zero-shot classification as a proxy reranker:
       // score each document against the query as a "hypothesis".
-      const clf = await getClassifier();
+      const rk = await getReranker();
       const scores: number[] = [];
       for (const doc of documents) {
-        const result = (await (clf as (text: string, labels: string[]) => Promise<unknown>)(doc, [
+        const result = (await (rk as (text: string, labels: string[]) => Promise<unknown>)(doc, [
           query,
         ])) as {
           scores: number[];

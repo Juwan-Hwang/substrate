@@ -13,52 +13,109 @@ import {
   streamText as aiStreamText,
 } from 'ai';
 import type { z } from 'zod';
-import type { AI } from './config.js';
+import type { AI, ProviderType } from './config.js';
 import type { LangfuseClient } from './langfuse.js';
 
+export type AIMessage = {
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string;
+};
+
 export type StreamTextOptions = {
+  provider?: ProviderType;
   model: string;
   system?: string;
-  prompt: string;
+  prompt?: string;
+  messages?: AIMessage[];
   temperature?: number;
   maxTokens?: number;
+  topP?: number;
+  topK?: number;
+  presencePenalty?: number;
+  frequencyPenalty?: number;
+  stopSequences?: string[];
+  seed?: number;
+  abortSignal?: AbortSignal;
+  headers?: Record<string, string>;
 };
 
 export type GenerateTextOptions = StreamTextOptions;
 
 export type GenerateObjectOptions<T extends z.ZodType> = {
+  provider?: ProviderType;
   model: string;
   system?: string;
-  prompt: string;
+  prompt?: string;
+  messages?: AIMessage[];
   schema: T;
+  schemaName?: string;
+  schemaDescription?: string;
   temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  seed?: number;
+  abortSignal?: AbortSignal;
 };
 
 /** Resolve a model reference from the AI config. */
-function resolveModel(ai: AI, modelId: string): unknown {
-  const provider = ai.config.defaultProvider;
-  const instance = ai.providers.get(provider);
-  if (!instance) {
-    throw new Error(`Provider "${provider}" not configured`);
+export function resolveModel(ai: AI, modelId: string, providerOverride?: ProviderType): unknown {
+  let targetProvider = providerOverride ?? ai.config.defaultProvider;
+  let targetModelId = modelId;
+
+  // Support provider:model syntax (e.g. "openai:gpt-4o", "anthropic:claude-3-5-sonnet")
+  const colonIndex = modelId.indexOf(':');
+  if (colonIndex > 0 && !providerOverride) {
+    const candidate = modelId.slice(0, colonIndex);
+    if (ai.providers.has(candidate as ProviderType)) {
+      targetProvider = candidate as ProviderType;
+      targetModelId = modelId.slice(colonIndex + 1);
+    }
   }
-  // Vercel AI SDK providers expose .model() or .chat() — delegate to the instance.
-  if (provider === 'openai' && typeof (instance as { chat?: unknown }).chat === 'function') {
-    return (instance as { chat: (id: string) => unknown }).chat(modelId);
+
+  const instance = ai.providers.get(targetProvider);
+  if (!instance) {
+    throw new Error(`Provider "${targetProvider}" not configured`);
+  }
+
+  // 1. In Vercel AI SDK, provider instances are typically functions: provider(modelId)
+  if (typeof instance === 'function') {
+    return (instance as (id: string) => unknown)(targetModelId);
+  }
+
+  // 2. Or they expose .languageModel(), .chat(), or .model()
+  if (typeof (instance as { languageModel?: unknown }).languageModel === 'function') {
+    return (instance as { languageModel: (id: string) => unknown }).languageModel(targetModelId);
+  }
+  if (typeof (instance as { chat?: unknown }).chat === 'function') {
+    return (instance as { chat: (id: string) => unknown }).chat(targetModelId);
   }
   if (typeof (instance as { model?: unknown }).model === 'function') {
-    return (instance as { model: (id: string) => unknown }).model(modelId);
+    return (instance as { model: (id: string) => unknown }).model(targetModelId);
   }
+
   return instance;
 }
 
 export function streamText(ai: AI, options: StreamTextOptions, langfuse?: LangfuseClient) {
-  const model = resolveModel(ai, options.model);
+  const model = resolveModel(ai, options.model, options.provider);
+  const promptPayload = options.messages
+    ? { messages: options.messages as never }
+    : { prompt: options.prompt ?? '' };
+
   const result = aiStreamText({
     model: model as never,
     system: options.system,
-    prompt: options.prompt,
+    ...promptPayload,
     temperature: options.temperature,
     maxOutputTokens: options.maxTokens,
+    topP: options.topP,
+    topK: options.topK,
+    presencePenalty: options.presencePenalty,
+    frequencyPenalty: options.frequencyPenalty,
+    stopSequences: options.stopSequences,
+    seed: options.seed,
+    abortSignal: options.abortSignal,
+    headers: options.headers,
   });
 
   if (langfuse) {
@@ -70,9 +127,47 @@ export function streamText(ai: AI, options: StreamTextOptions, langfuse?: Langfu
       generationId,
       name: 'streamText',
       model: options.model,
-      input: { system: options.system, prompt: options.prompt },
+      input: options.messages ?? { system: options.system, prompt: options.prompt },
       startTime,
     });
+
+    if (result && typeof result === 'object') {
+      const pText = 'text' in result && result.text instanceof Promise ? result.text : null;
+      const pUsage = 'usage' in result && result.usage instanceof Promise ? result.usage : null;
+      if (pText || pUsage) {
+        Promise.allSettled([pText, pUsage]).then(([textRes, usageRes]) => {
+          const text = textRes.status === 'fulfilled' ? textRes.value : undefined;
+          const usage =
+            usageRes.status === 'fulfilled'
+              ? (usageRes.value as
+                  | {
+                      inputTokens?: number;
+                      outputTokens?: number;
+                      promptTokens?: number;
+                      completionTokens?: number;
+                    }
+                  | undefined)
+              : undefined;
+          const isError = textRes.status === 'rejected';
+          langfuse.trace({
+            traceId,
+            generationId,
+            name: 'streamText',
+            model: options.model,
+            input: options.messages ?? { system: options.system, prompt: options.prompt },
+            output: isError ? textRes.reason : text,
+            startTime,
+            endTime: Date.now(),
+            tokens: usage
+              ? {
+                  prompt: usage.inputTokens ?? usage.promptTokens ?? 0,
+                  completion: usage.outputTokens ?? usage.completionTokens ?? 0,
+                }
+              : undefined,
+          });
+        });
+      }
+    }
   }
 
   return result;
@@ -83,14 +178,26 @@ export async function generateText(
   options: GenerateTextOptions,
   langfuse?: LangfuseClient,
 ) {
-  const model = resolveModel(ai, options.model);
+  const model = resolveModel(ai, options.model, options.provider);
   const startTime = Date.now();
+  const promptPayload = options.messages
+    ? { messages: options.messages as never }
+    : { prompt: options.prompt ?? '' };
+
   const result = await aiGenerateText({
     model: model as never,
     system: options.system,
-    prompt: options.prompt,
+    ...promptPayload,
     temperature: options.temperature,
     maxOutputTokens: options.maxTokens,
+    topP: options.topP,
+    topK: options.topK,
+    presencePenalty: options.presencePenalty,
+    frequencyPenalty: options.frequencyPenalty,
+    stopSequences: options.stopSequences,
+    seed: options.seed,
+    abortSignal: options.abortSignal,
+    headers: options.headers,
   });
 
   if (langfuse) {
@@ -99,7 +206,7 @@ export async function generateText(
       generationId: crypto.randomUUID(),
       name: 'generateText',
       model: options.model,
-      input: { system: options.system, prompt: options.prompt },
+      input: options.messages ?? { system: options.system, prompt: options.prompt },
       output: result.text,
       startTime,
       endTime: Date.now(),
@@ -118,15 +225,26 @@ export async function generateObject<T extends z.ZodType>(
   options: GenerateObjectOptions<T>,
   langfuse?: LangfuseClient,
 ) {
-  const model = resolveModel(ai, options.model);
+  const model = resolveModel(ai, options.model, options.provider);
   const startTime = Date.now();
-  const result: { object: unknown } = await aiGenerateObject({
-    model: model as never,
-    system: options.system,
-    prompt: options.prompt,
-    schema: options.schema,
-    temperature: options.temperature,
-  });
+  const promptPayload = options.messages
+    ? { messages: options.messages as never }
+    : { prompt: options.prompt ?? '' };
+
+  const result: { object: unknown; usage?: { inputTokens?: number; outputTokens?: number } } =
+    await aiGenerateObject({
+      model: model as never,
+      system: options.system,
+      ...promptPayload,
+      schema: options.schema,
+      schemaName: options.schemaName,
+      schemaDescription: options.schemaDescription,
+      temperature: options.temperature,
+      maxOutputTokens: options.maxTokens,
+      topP: options.topP,
+      seed: options.seed,
+      abortSignal: options.abortSignal,
+    } as never);
 
   if (langfuse) {
     langfuse.trace({
@@ -134,10 +252,16 @@ export async function generateObject<T extends z.ZodType>(
       generationId: crypto.randomUUID(),
       name: 'generateObject',
       model: options.model,
-      input: { system: options.system, prompt: options.prompt },
+      input: options.messages ?? { system: options.system, prompt: options.prompt },
       output: result.object,
       startTime,
       endTime: Date.now(),
+      tokens: result.usage
+        ? {
+            prompt: result.usage.inputTokens ?? 0,
+            completion: result.usage.outputTokens ?? 0,
+          }
+        : undefined,
     });
   }
 

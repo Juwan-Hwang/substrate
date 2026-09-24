@@ -18,6 +18,8 @@
 export type RetrievalResult = {
   id: string;
   score: number;
+  text?: string;
+  metadata?: Record<string, unknown>;
   /** Which retrieval channel produced this result. */
   source: 'hybrid' | 'fts' | 'vector';
   /** Provenance for transparent citations in RAG answers. */
@@ -32,6 +34,8 @@ export type HybridSearchParams = {
   limit?: number;
   ftsWeight?: number;
   vectorWeight?: number;
+  language?: string;
+  k?: number;
 };
 
 export type HybridSearchConfig = {
@@ -49,19 +53,41 @@ export type HybridSearchConfig = {
     statusColumn?: string;
     publishedValue?: string;
     embeddingColumn?: string;
+    language?: string;
   };
 };
 
-/** Reciprocal Rank Fusion — merges multiple ranked lists into one. */
-function rrf(rankedLists: { id: string; score: number }[][], k = 60): Map<string, number> {
+export type ScoredItem = {
+  id: string;
+  score?: number;
+  text?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type WeightedRankedList = {
+  items: ScoredItem[];
+  weight?: number;
+};
+
+/**
+ * Reciprocal Rank Fusion (RRF) with optional list weighting.
+ *
+ * Merges multiple ranked lists into a single score map.
+ * Score(d) = sum( weight_i * (1 / (k + rank_i + 1)) )
+ */
+export function rrf(
+  rankedLists: (ScoredItem[] | WeightedRankedList)[],
+  k = 60,
+): Map<string, number> {
   const scores = new Map<string, number>();
-  for (const list of rankedLists) {
+  for (const entry of rankedLists) {
+    const list = Array.isArray(entry) ? entry : entry.items;
+    const weight = Array.isArray(entry) ? 1 : (entry.weight ?? 1);
     for (let rank = 0; rank < list.length; rank++) {
-      const entry = list[rank];
-      if (!entry) continue;
-      const { id } = entry;
-      const contribution = 1 / (k + rank + 1);
-      scores.set(id, (scores.get(id) ?? 0) + contribution);
+      const item = list[rank];
+      if (!item) continue;
+      const contribution = weight * (1 / (k + rank + 1));
+      scores.set(item.id, (scores.get(item.id) ?? 0) + contribution);
     }
   }
   return scores;
@@ -71,23 +97,32 @@ export async function hybridRetrieval(
   params: HybridSearchParams,
   config: HybridSearchConfig,
 ): Promise<RetrievalResult[]> {
-  const { query, limit = 10, ftsWeight = 0.4, vectorWeight = 0.6 } = params;
-  const lists: { id: string; score: number }[][] = [];
+  const { query, limit = 10, ftsWeight = 0.4, vectorWeight = 0.6, k = 60 } = params;
+  const weightedLists: WeightedRankedList[] = [];
+  const textMap = new Map<string, string | undefined>();
 
   // 1. Keyword search via PostgreSQL FTS.
   const tbl = config.searchTable;
+  const rawLang = params.language ?? tbl?.language ?? 'english';
+  const lang = rawLang.replace(/[^a-zA-Z0-9_]/g, '');
+
   if (config.db && tbl) {
     const statusCond = tbl.statusColumn
       ? `${tbl.statusColumn} = '${tbl.publishedValue ?? 'published'}' AND `
       : '';
+    const bodyCol = tbl.bodyColumn;
     const ftsResults = (await config.db.query(
-      `SELECT id, ts_rank_cd(to_tsvector('english', ${tbl.bodyColumn}), plainto_tsquery('english', $1)) AS score
+      `SELECT id, ${bodyCol ? `${bodyCol} AS text, ` : ''}ts_rank_cd(to_tsvector('${lang}', ${tbl.bodyColumn}), plainto_tsquery('${lang}', $1)) AS score
        FROM ${tbl.name}
-       WHERE ${statusCond}to_tsvector('english', ${tbl.bodyColumn}) @@ plainto_tsquery('english', $1)
+       WHERE ${statusCond}to_tsvector('${lang}', ${tbl.bodyColumn}) @@ plainto_tsquery('${lang}', $1)
        ORDER BY score DESC LIMIT $2`,
       [query, limit * 2],
-    )) as { id: string; score: number }[];
-    lists.push(ftsResults.map((r) => ({ id: r.id, score: r.score * ftsWeight })));
+    )) as { id: string; score: number; text?: string }[];
+
+    for (const r of ftsResults) {
+      if (r.text && !textMap.has(r.id)) textMap.set(r.id, r.text);
+    }
+    weightedLists.push({ items: ftsResults, weight: ftsWeight });
   }
 
   // 2. Semantic search via pgvector.
@@ -100,17 +135,22 @@ export async function hybridRetrieval(
     const statusCond = tbl.statusColumn
       ? `WHERE ${tbl.statusColumn} = '${tbl.publishedValue ?? 'published'}'`
       : 'WHERE TRUE';
+    const bodyCol = tbl.bodyColumn;
     const vecResults = (await config.db.query(
-      `SELECT id, 1 - (${tbl.embeddingColumn} <=> $1::vector) AS score
+      `SELECT id, ${bodyCol ? `${bodyCol} AS text, ` : ''}1 - (${tbl.embeddingColumn} <=> $1::vector) AS score
        FROM ${tbl.name} ${statusCond}
        ORDER BY ${tbl.embeddingColumn} <=> $1::vector LIMIT $2`,
       [vecStr, limit * 2],
-    )) as { id: string; score: number }[];
-    lists.push(vecResults.map((r) => ({ id: r.id, score: r.score * vectorWeight })));
+    )) as { id: string; score: number; text?: string }[];
+
+    for (const r of vecResults) {
+      if (r.text && !textMap.has(r.id)) textMap.set(r.id, r.text);
+    }
+    weightedLists.push({ items: vecResults, weight: vectorWeight });
   }
 
   // 3. Fuse via RRF.
-  const fused = rrf(lists);
+  const fused = rrf(weightedLists, k);
   const sorted = [...fused.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
@@ -119,6 +159,7 @@ export async function hybridRetrieval(
   return sorted.map((r) => ({
     id: r.id,
     score: r.score,
+    text: textMap.get(r.id),
     source: 'hybrid' as const,
     citation: { type: 'search-result', ref: r.id },
   }));
@@ -132,10 +173,11 @@ export async function rerank(
   query: string,
   results: RetrievalResult[],
   rerankerFn?: (query: string, docs: string[]) => Promise<number[]>,
+  getText?: (result: RetrievalResult) => string,
 ): Promise<RetrievalResult[]> {
   if (!rerankerFn) return results;
 
-  const docTexts = results.map((r) => r.id); // In production, fetch actual text.
+  const docTexts = results.map((r) => (getText ? getText(r) : (r.text ?? r.id)));
   const scores = await rerankerFn(query, docTexts);
 
   return results
