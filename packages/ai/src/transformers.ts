@@ -8,12 +8,8 @@
  *  - Zero-shot classification (reranking)
  *
  * Models are cached in the browser after first download.
+ * Loaded dynamically on demand to avoid node-side runtime module resolution issues.
  */
-import { env, pipeline } from '@huggingface/transformers';
-
-// Configure to use remote models (downloaded and cached locally).
-env.allowLocalModels = false;
-env.useBrowserCache = true;
 
 export type TransformersConfig = {
   embedModel?: string;
@@ -31,39 +27,47 @@ export type Transformers = {
 };
 
 export async function createTransformers(config?: TransformersConfig): Promise<Transformers> {
+  const { env, pipeline } = await import('@huggingface/transformers');
+
+  // Configure to use remote models (downloaded and cached locally).
+  env.allowLocalModels = config?.allowLocalModels ?? false;
+  env.useBrowserCache = config?.useBrowserCache ?? true;
+
   const embedModel = config?.embedModel ?? 'Xenova/all-MiniLM-L6-v2';
   const rerankModel = config?.rerankModel ?? 'Xenova/distilbart-mnli-12-9';
   const classifierModel = config?.classifierModel ?? 'Xenova/distilbart-mnli-12-9';
 
-  if (config?.allowLocalModels !== undefined) {
-    env.allowLocalModels = config.allowLocalModels;
-  }
-  if (config?.useBrowserCache !== undefined) {
-    env.useBrowserCache = config.useBrowserCache;
-  }
-
   // Initialize pipelines lazily (loaded on first use).
-  let embedder: Awaited<ReturnType<typeof pipeline>> | null = null;
-  let reranker: Awaited<ReturnType<typeof pipeline>> | null = null;
-  let classifier: Awaited<ReturnType<typeof pipeline>> | null = null;
+  let embedder: unknown = null;
+  let reranker: unknown = null;
+  let classifier: unknown = null;
 
   async function getEmbedder() {
     if (!embedder) {
-      embedder = await pipeline('feature-extraction', embedModel);
+      embedder = await (pipeline as (task: string, model: string) => Promise<unknown>)(
+        'feature-extraction',
+        embedModel,
+      );
     }
     return embedder;
   }
 
   async function getReranker() {
     if (!reranker) {
-      reranker = await pipeline('zero-shot-classification', rerankModel);
+      reranker = await (pipeline as (task: string, model: string) => Promise<unknown>)(
+        'zero-shot-classification',
+        rerankModel,
+      );
     }
     return reranker;
   }
 
   async function getClassifier() {
     if (!classifier) {
-      classifier = await pipeline('zero-shot-classification', classifierModel);
+      classifier = await (pipeline as (task: string, model: string) => Promise<unknown>)(
+        'zero-shot-classification',
+        classifierModel,
+      );
     }
     return classifier;
   }

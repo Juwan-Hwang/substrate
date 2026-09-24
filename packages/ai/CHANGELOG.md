@@ -1,5 +1,11 @@
 # @substrate-platform/ai
 
+## 0.2.0-canary.13
+
+### Patch Changes
+
+- fix(ai): dynamically load transformers to prevent runtime node module resolution errors
+
 ## 0.2.0-canary.12
 
 ### Patch Changes
