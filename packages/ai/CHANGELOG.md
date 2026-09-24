@@ -1,5 +1,11 @@
 # @substrate-platform/ai
 
+## 0.2.0-canary.12
+
+### Patch Changes
+
+- feat(ai): enhance model resolution, weighted RRF, text reranking, and custom providers
+
 ## 0.2.0-canary.11
 
 ### Patch Changes

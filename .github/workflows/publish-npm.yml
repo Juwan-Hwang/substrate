@@ -252,8 +252,11 @@ jobs:
         working-directory: /tmp/registry-test
         run: |
           npm init -y
+          echo "Waiting 15s for npm registry propagation..."
+          sleep 15
           echo "Installing @substrate-platform/contracts@canary from real npm registry..."
-          npm install @substrate-platform/contracts@canary @substrate-platform/auth@canary @substrate-platform/config@canary @substrate-platform/wasm@canary @substrate-platform/observability@canary
+          npm install --registry=https://registry.npmjs.org/ @substrate-platform/contracts@canary @substrate-platform/auth@canary @substrate-platform/config@canary @substrate-platform/wasm@canary @substrate-platform/observability@canary
+
 
       - name: Verify Node.js import
         working-directory: /tmp/registry-test
